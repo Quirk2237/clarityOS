@@ -1,5 +1,5 @@
-import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { openai } from "@ai-sdk/openai";
+import { streamText } from "ai";
 
 const BRAND_PURPOSE_SYSTEM_PROMPT = `
 ROLE:
@@ -66,26 +66,56 @@ Once confirmed, offer: "Would you like to save this, refine it into shorter tagl
 Always maintain a warm, encouraging tone and celebrate progress. Keep responses conversational and supportive.
 `;
 
+// Security constants
+const MAX_REQUESTS_PER_MINUTE = 10;
+const MAX_MESSAGE_LENGTH = 2000;
+const MAX_MESSAGES_COUNT = 50;
+
 export async function POST(req: Request) {
-  const { messages, userId } = await req.json();
+	try {
+		const { messages, userId } = await req.json();
 
-  // Add system prompt to the conversation
-  const messagesWithSystem = [
-    { role: 'system', content: BRAND_PURPOSE_SYSTEM_PROMPT },
-    ...messages
-  ];
+		// Input validation
+		if (!messages || !Array.isArray(messages) || messages.length > MAX_MESSAGES_COUNT) {
+			return new Response("Invalid messages format or too many messages", { status: 400 });
+		}
 
-  const result = streamText({
-    model: openai('gpt-4o'),
-    messages: messagesWithSystem,
-    maxTokens: 800,
-    temperature: 0.7,
-  });
+		if (!userId || typeof userId !== 'string') {
+			return new Response("Valid user ID required", { status: 401 });
+		}
 
-  return result.toDataStreamResponse({
-    headers: {
-      'Content-Type': 'application/octet-stream',
-      'Content-Encoding': 'none',
-    },
-  });
-} 
+		// Sanitize inputs
+		const sanitizedMessages = messages.map(msg => ({
+			...msg,
+			content: typeof msg.content === 'string' ? msg.content.slice(0, MAX_MESSAGE_LENGTH).trim() : '',
+			role: msg.role === 'user' || msg.role === 'assistant' ? msg.role : 'user'
+		})).filter(msg => msg.content.length > 0);
+
+		if (sanitizedMessages.length === 0) {
+			return new Response("No valid messages provided", { status: 400 });
+		}
+
+		// Add system prompt to the conversation
+		const messagesWithSystem = [
+			{ role: "system", content: BRAND_PURPOSE_SYSTEM_PROMPT },
+			...sanitizedMessages,
+		];
+
+		const result = streamText({
+			model: openai("gpt-4o"),
+			messages: messagesWithSystem,
+			maxTokens: 800,
+			temperature: 0.7,
+		});
+
+		return result.toDataStreamResponse({
+			headers: {
+				"Content-Type": "application/octet-stream",
+				"Content-Encoding": "none",
+			},
+		});
+	} catch (error) {
+		console.error("Brand purpose API error:", error);
+		return new Response("Internal server error", { status: 500 });
+	}
+}

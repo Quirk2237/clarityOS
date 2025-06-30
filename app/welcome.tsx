@@ -23,7 +23,8 @@ export default function WelcomeScreen() {
 				<Image source={appIcon} className="w-16 h-16 rounded-xl" />
 				<H1 className="text-center">Welcome to ClarityOS</H1>
 				<Muted className="text-center">
-					Brand Strategy for the everyday business owner. Simple, accessible, and scalable tools to help you gain brand clarity.
+					Brand Strategy for the everyday business owner. Simple, accessible,
+					and scalable tools to help you gain brand clarity.
 				</Muted>
 			</View>
 			<View className="flex flex-col gap-y-4 web:m-4">

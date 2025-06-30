@@ -22,7 +22,7 @@ ClarityOS is a brand strategy app that helps business owners gain clarity throug
 - [ ] Add email verification flow
 
 ### 3. Onboarding Flow
-- [ ] Create onboarding screen layout with progress indicator
+- [✓] Create onboarding screen layout with progress indicator
 - [ ] Implement Question 1: "What's your goal?" with 5 options:
   - Get clarity
   - Build confidence in what I'm selling
@@ -50,14 +50,7 @@ ClarityOS is a brand strategy app that helps business owners gain clarity throug
 
 ### 5. Home Screen
 - [ ] Design and implement home screen layout
-- [ ] Create 7 brand category cards:
-  - Purpose
-  - Positioning
-  - Personality
-  - Product-Market Fit
-  - Perception
-  - Presentation
-  - Proof
+- [ ] Create brand category cards based on DB
 - [ ] Add card progress indicators
 - [ ] Implement start button navigation to respective card screens
 - [ ] Add card completion status visual indicators

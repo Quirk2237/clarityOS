@@ -50,15 +50,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
 		if (data.user && data.session) {
 			// Create profile record for the new user
-			const { error: profileError } = await supabase
-				.from('profiles')
-				.insert({
-					id: data.user.id,
-					email: data.user.email!,
-					name: null,
-					company_name: null,
-					subscription_status: 'free',
-				});
+			const { error: profileError } = await supabase.from("profiles").insert({
+				id: data.user.id,
+				email: data.user.email!,
+				name: null,
+				company_name: null,
+				subscription_status: "free",
+			});
 
 			if (profileError) {
 				console.error("Error creating user profile:", profileError);
@@ -121,7 +119,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 				SplashScreen.hideAsync();
 				if (session) {
 					// Check if user has completed onboarding
-					const completedOnboarding = await hasCompletedOnboarding(session.user.id);
+					const completedOnboarding = await hasCompletedOnboarding(
+						session.user.id,
+					);
 					if (completedOnboarding) {
 						router.replace("/" as any);
 					} else {
