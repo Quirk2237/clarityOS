@@ -10,6 +10,7 @@ import { SplashScreen, useRouter } from "expo-router";
 import { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/config/supabase";
+import { hasCompletedOnboarding } from "@/lib/database-helpers";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -44,10 +45,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
 		if (error) {
 			console.error("Error signing up:", error);
-			return;
+			throw error;
 		}
 
-		if (data.session) {
+		if (data.user && data.session) {
+			// Create profile record for the new user
+			const { error: profileError } = await supabase
+				.from('profiles')
+				.insert({
+					id: data.user.id,
+					email: data.user.email!,
+					name: null,
+					company_name: null,
+					subscription_status: 'free',
+				});
+
+			if (profileError) {
+				console.error("Error creating user profile:", profileError);
+				// Don't throw here as the user is already created in auth
+				// The profile can be created later if needed
+			}
+
 			setSession(data.session);
 			console.log("User signed up:", data.user);
 		} else {
@@ -98,14 +116,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
 	}, []);
 
 	useEffect(() => {
-		if (initialized) {
-			SplashScreen.hideAsync();
-			if (session) {
-				router.replace("/");
-			} else {
-				router.replace("/welcome");
+		const handleNavigation = async () => {
+			if (initialized) {
+				SplashScreen.hideAsync();
+				if (session) {
+					// Check if user has completed onboarding
+					const completedOnboarding = await hasCompletedOnboarding(session.user.id);
+					if (completedOnboarding) {
+						router.replace("/" as any);
+					} else {
+						router.replace("/onboarding" as any);
+					}
+				} else {
+					router.replace("/welcome" as any);
+				}
 			}
-		}
+		};
+
+		handleNavigation();
 		// eslint-disable-next-line
 	}, [initialized, session]);
 

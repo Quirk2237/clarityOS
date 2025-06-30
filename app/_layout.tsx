@@ -1,3 +1,4 @@
+import "../polyfills";
 import "../global.css";
 
 import { Stack } from "expo-router";
@@ -14,6 +15,7 @@ export default function AppLayout() {
 			<Stack screenOptions={{ headerShown: false, gestureEnabled: false }}>
 				<Stack.Screen name="(protected)" />
 				<Stack.Screen name="welcome" />
+				<Stack.Screen name="onboarding" />
 				<Stack.Screen
 					name="sign-up"
 					options={{

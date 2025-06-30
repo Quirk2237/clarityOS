@@ -1,0 +1,139 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Code Style and Structure
+
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files in this order: exported component, subcomponents, helpers, static content, types.
+- Follow Expo’s official documentation for setup:https://docs.expo.dev/
+
+---
+
+## Naming Conventions
+
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Favor named exports for components.
+- Follow atomic design principles when organizing components (e.g., atoms, molecules, organisms).
+
+---
+
+## TypeScript Usage
+
+- Use TypeScript for all code; prefer interface over type when defining shapes.
+- Avoid enum; use object maps or union types instead.
+- Use functional components with TypeScript interfaces.
+- Enable strict mode for maximum type safety.
+
+---
+
+## Syntax and Formatting
+
+- Use the function keyword for pure functions.
+- Avoid unnecessary curly braces in simple conditionals.
+- Keep JSX declarative and minimal.
+- Use Prettier for consistent code formatting across the project.
+
+---
+
+## UI and Styling
+
+- Use Expo’s built-in components for common UI patterns.
+- Use Flexbox and useWindowDimensions for responsive layout.
+- Style with styled-components or Tailwind CSS.
+- Add dark mode support via useColorScheme.
+- Meet accessibility (a11y) standards using ARIA roles and accessibility props.
+- Use react-native-reanimated and react-native-gesture-handler for performant animations and gestures.
+
+---
+
+## Developer Experience (DX)
+
+- pnpm start should run with no TypeScript errors or warnings.
+- Document key decisions and architecture in README.md or docs/.
+
+---
+
+## Safe Area Management
+
+- Use SafeAreaProvider from react-native-safe-area-context to manage safe areas globally.
+- Wrap top-level screens in SafeAreaView.
+- Use SafeAreaScrollView to handle scrollable layouts.
+- Avoid hardcoded padding or margins; rely on context-aware safe area values.
+
+---
+
+## Performance Optimization
+
+- Prefer useReducer and context over excessive useState/useEffect.
+- Use AppLoading and SplashScreen for optimized startup.
+- Optimize images with WebP (where supported), provide explicit dimensions, and use expo-image for lazy loading.
+- Lazy load non-critical components using React.Suspense and dynamic imports.
+- Monitor performance using React DevTools and Expo’s debug tools.
+- Prevent re-renders with React.memo, useMemo, and useCallback when appropriate.
+
+---
+
+## Navigation
+
+- Use react-navigation with stack, tab, and drawer navigators.
+- Implement deep linking and universal links.
+- Use expo-router for file-based routing and dynamic routes.
+
+---
+
+## State Management
+
+- Use React Context and useReducer for global state.
+- Use react-query for caching and fetching data efficiently.
+- Handle search params and deep links with expo-linking.
+
+---
+
+## Error Handling and Validation
+
+- Use Zod for runtime validation of inputs and API responses.
+- Prioritize early error handling:
+- Check for errors at the beginning of functions.
+- Use early returns to avoid deeply nested conditionals.
+- Avoid else after if-return patterns.
+- Implement global error boundaries for fatal errors.
+- Use expo-error-reporter in production for client-side error tracking.
+
+---
+
+## Security
+
+- Use .env.local for secrets and never commit it to Git.
+- Enable Row Level Security (RLS) on all tables.
+- Use auth.uid() or request.auth to enforce access.
+- Use server-side validation for sensitive logic.
+- Only use anon key in public client code.
+- Only use service_role key on secure server environments (e.g., edge functions).
+- Store edge function secrets in Supabase environment variables.
+- Sanitize all user input to prevent XSS and injection attacks.
+- Store sensitive data in react-native-encrypted-storage.
+- Ensure all API calls use HTTPS and token-based authentication.
+- Follow Expo’s security best practices:https://docs.expo.dev/guides/security/
+
+---
+
+## Key Conventions
+
+1. Use Expo’s managed workflow for development and deployment.
+2. Prioritize Mobile Web Vitals (load time, responsiveness, smoothness).
+3. Use expo-constants for accessing environment config.
+4. Use expo-permissions for runtime permission handling.
+5. Set up OTA updates using expo-updates.
+6. Follow Expo’s publishing best practices:https://docs.expo.dev/distribution/introduction/
+
+---
+
+## API Documentation
+
+- Rely on Expo’s official documentation for setup, configuration, and updates:https://docs.expo.dev/
+- Explore documentation on Views, Blueprints, and Extensions for scalable best practices.

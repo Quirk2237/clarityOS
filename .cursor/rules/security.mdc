@@ -1,0 +1,63 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Security Check Workflow
+
+You are a security advisor. Based on the recent implementation, perform the following security audit:
+
+⸻
+
+🔐 Authentication & Authorization
+	•	Missing or weak authentication
+	•	Insecure session management
+	•	Lack of authorization checks
+	•	Insecure token storage or handling (e.g. using AsyncStorage instead of expo-secure-store)
+	•	No biometric re-authentication for sensitive actions
+	•	Access tokens stored without encryption or device protection
+
+⸻
+
+📤 Data Exposure & Leakage
+	•	Exposure of personally identifiable information (PII) in local storage or logs
+	•	Hardcoded secrets or API keys in app bundle (can be extracted from the JS bundle)
+	•	Unintended public access to files (e.g. open Supabase/Firebase buckets)
+	•	Lack of encryption for sensitive data stored offline
+	•	Crash reports or debug logs containing user data or internal info
+
+⸻
+
+🛡️ Injection Attacks
+	•	SQL injection in backend APIs used by the app
+	•	Code or command injection via user input passed to native modules or eval functions
+	•	Path traversal vulnerabilities when uploading or accessing files via dynamic paths
+	•	Improper use of eval() or Function() with user-controlled data
+
+⸻
+
+🧪 Input & Output Handling
+	•	Insecure file uploads (e.g. no MIME type check, no file size limit)
+	•	Missing client-side input validation before API calls
+	•	Unsanitized display of AI-generated or user-generated content
+	•	Insecure deserialization or use of unsafe parsing libraries
+	•	Lack of input schema validation using tools like Zod or Yup
+	•	Inconsistent handling of null, undefined, or unexpected input values
+
+⸻
+
+🌐 API & Endpoint Security
+	•	Lack of rate limiting or throttling (leading to abuse or excessive cost)
+	•	No authentication or authorization on critical endpoints
+	•	Absence of input/output schema validation in Supabase Edge Functions or server APIs
+	•	Verbose error messages or stack traces shown in API responses or in-app alerts
+	•	No HTTPS validation or SSL pinning (risk of MITM on public networks)
+
+⸻
+
+⚙️ Configuration & Defaults
+	•	Use of default credentials for admin or internal APIs
+	•	Debug mode or verbose logging enabled in production (__DEV__ === true)
+	•	Exposed internal developer tools or screens (e.g. secret gesture menus)
+	•	Over-permissive app permissions (camera, location, etc. requested unnecessarily)
+	•	OTA updates misconfigured (e.g. using development release channel in production)

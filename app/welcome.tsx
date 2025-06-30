@@ -14,17 +14,16 @@ export default function WelcomeScreen() {
 	const { colorScheme } = useColorScheme();
 	const appIcon =
 		colorScheme === "dark"
-			? require("@/assets/icon.png")
-			: require("@/assets/icon-dark.png");
+			? require("@/assets/icon-dark.png")
+			: require("@/assets/icon.png");
 
 	return (
 		<SafeAreaView className="flex flex-1 bg-background p-4">
 			<View className="flex flex-1 items-center justify-center gap-y-4 web:m-4">
 				<Image source={appIcon} className="w-16 h-16 rounded-xl" />
-				<H1 className="text-center">Welcome to Expo Supabase Starter</H1>
+				<H1 className="text-center">Welcome to ClarityOS</H1>
 				<Muted className="text-center">
-					A comprehensive starter project for developing React Native and Expo
-					applications with Supabase as the backend.
+					Brand Strategy for the everyday business owner. Simple, accessible, and scalable tools to help you gain brand clarity.
 				</Muted>
 			</View>
 			<View className="flex flex-col gap-y-4 web:m-4">
