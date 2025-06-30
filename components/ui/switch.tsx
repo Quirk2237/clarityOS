@@ -7,7 +7,6 @@ import Animated, {
 	useDerivedValue,
 	withTiming,
 } from "react-native-reanimated";
-import { useColorScheme } from "@/lib/useColorScheme";
 import { cn } from "@/lib/utils";
 
 const SwitchWeb = React.forwardRef<
@@ -35,32 +34,29 @@ const SwitchWeb = React.forwardRef<
 
 SwitchWeb.displayName = "SwitchWeb";
 
+// Fixed light theme colors
 const RGB_COLORS = {
-	light: {
-		primary: "rgb(24, 24, 27)",
-		input: "rgb(228, 228, 231)",
-	},
-	dark: {
-		primary: "rgb(250, 250, 250)",
-		input: "rgb(39, 39, 42)",
-	},
-} as const;
+	primary: "rgb(24, 24, 27)",
+	input: "rgb(228, 228, 231)",
+};
 
 const SwitchNative = React.forwardRef<
 	SwitchPrimitives.RootRef,
 	SwitchPrimitives.RootProps
 >(({ className, ...props }, ref) => {
-	const { colorScheme } = useColorScheme();
 	const translateX = useDerivedValue(() => (props.checked ? 18 : 0));
+
 	const animatedRootStyle = useAnimatedStyle(() => {
+		const progress = translateX.value / 18;
 		return {
 			backgroundColor: interpolateColor(
-				translateX.value,
-				[0, 18],
-				[RGB_COLORS[colorScheme].input, RGB_COLORS[colorScheme].primary],
+				progress,
+				[0, 1],
+				[RGB_COLORS.input, RGB_COLORS.primary],
 			),
 		};
 	});
+
 	const animatedThumbStyle = useAnimatedStyle(() => ({
 		transform: [
 			{ translateX: withTiming(translateX.value, { duration: 200 }) },

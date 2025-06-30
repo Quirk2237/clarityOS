@@ -7,14 +7,10 @@ export const unstable_settings = {
 };
 
 export default function ProtectedLayout() {
-	const { initialized, session } = useAuth();
+	const { initialized } = useAuth();
 
 	if (!initialized) {
 		return null;
-	}
-
-	if (!session) {
-		return <Redirect href="/welcome" />;
 	}
 
 	return (

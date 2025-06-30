@@ -18,7 +18,7 @@ export interface SecurityValidationResult {
 
 export function validateRequest(
 	messages: any,
-	userId?: string
+	userId?: string,
 ): SecurityValidationResult {
 	// Validate messages array
 	if (!messages || !Array.isArray(messages)) {
@@ -57,8 +57,7 @@ export function sanitizeMessages(messages: any[]): any[] {
 				typeof msg.content === "string"
 					? msg.content.slice(0, SECURITY_CONSTANTS.MAX_MESSAGE_LENGTH).trim()
 					: "",
-			role:
-				msg.role === "user" || msg.role === "assistant" ? msg.role : "user",
+			role: msg.role === "user" || msg.role === "assistant" ? msg.role : "user",
 		}))
 		.filter((msg) => msg.content.length > 0);
 }
@@ -94,14 +93,15 @@ export function checkRateLimit(identifier: string): SecurityValidationResult {
 
 export function createSecureApiHandler(
 	systemPrompt: string,
-	endpointName: string
+	endpointName: string,
 ) {
 	return async function (req: Request) {
 		try {
 			const { messages, userId } = await req.json();
 
 			// Rate limiting (use IP or userId as identifier)
-			const clientId = userId || req.headers.get("x-forwarded-for") || "anonymous";
+			const clientId =
+				userId || req.headers.get("x-forwarded-for") || "anonymous";
 			const rateLimitResult = checkRateLimit(clientId);
 			if (!rateLimitResult.isValid) {
 				return new Response(rateLimitResult.error, {
@@ -160,7 +160,7 @@ export function logSecurityEvent(
 		ip?: string;
 		error?: string;
 		timestamp?: number;
-	}
+	},
 ) {
 	// Log security events for monitoring
 	console.warn(`[SECURITY] ${type}:`, {
@@ -187,4 +187,4 @@ export function cleanupRateLimitStore() {
 // Run cleanup every 5 minutes
 if (typeof setInterval !== "undefined") {
 	setInterval(cleanupRateLimitStore, 5 * 60 * 1000);
-} 
+}

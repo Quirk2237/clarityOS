@@ -1,12 +1,9 @@
-import { useColorScheme as useNativewindColorScheme } from "nativewind";
-
+// Fixed single theme for the app
 export function useColorScheme() {
-	const { colorScheme, setColorScheme, toggleColorScheme } =
-		useNativewindColorScheme();
 	return {
-		colorScheme: colorScheme ?? "dark",
-		isDarkColorScheme: colorScheme === "dark",
-		setColorScheme,
-		toggleColorScheme,
+		colorScheme: "light" as const,
+		isDarkColorScheme: false,
+		setColorScheme: () => {}, // No-op since we only have one theme
+		toggleColorScheme: () => {}, // No-op since we only have one theme
 	};
 }

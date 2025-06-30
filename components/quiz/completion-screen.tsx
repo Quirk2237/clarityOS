@@ -127,6 +127,7 @@ export function CompletionScreen({
 							<View className="flex-row justify-center gap-4 flex-wrap">
 								{achievements.map((achievement, index) => (
 									<AchievementBadge
+										id={achievement.id}
 										key={achievement.id}
 										icon={getAchievementIcon(achievement.achievement_type)}
 										title={getAchievementTitle(achievement.achievement_type)}
@@ -135,7 +136,6 @@ export function CompletionScreen({
 										)}
 										unlocked={true}
 										size="lg"
-										animated={true}
 									/>
 								))}
 							</View>

@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/context/supabase-provider";
 import { useChat } from "@ai-sdk/react";
-import { fetch as expoFetch } from "expo/fetch";
 import {
 	saveAIConversation,
 	getAIConversation,
@@ -39,6 +38,19 @@ interface ConversationState {
 	draftStatement?: string;
 }
 
+// Debugging utility
+const debug = {
+	log: (tag: string, data: any) => {
+		console.log(`[GuidedDiscovery:${tag}]`, data);
+	},
+	error: (tag: string, error: any) => {
+		console.error(`[GuidedDiscovery:${tag}]`, error);
+	},
+	warn: (tag: string, data: any) => {
+		console.warn(`[GuidedDiscovery:${tag}]`, data);
+	},
+};
+
 export function GuidedDiscovery({
 	card,
 	section,
@@ -47,94 +59,179 @@ export function GuidedDiscovery({
 	educationalScore,
 }: GuidedDiscoveryProps) {
 	const { session } = useAuth();
-	const [conversationState, setConversationState] = useState<ConversationState>({
-		step: "opening",
-		scores: { audience: 0, benefit: 0, belief: 0, impact: 0 },
-	});
+	const [conversationState, setConversationState] = useState<ConversationState>(
+		{
+			step: "opening",
+			scores: { audience: 0, benefit: 0, belief: 0, impact: 0 },
+		},
+	);
 	const [isCompleted, setIsCompleted] = useState(false);
-	const [showFallback, setShowFallback] = useState(false);
+	const [debugInfo, setDebugInfo] = useState<any>({});
+
+	// Initial debug logging
+	useEffect(() => {
+		debug.log("Component Initialized", {
+			cardSlug: card.slug,
+			sectionId: section.id,
+			userId: session?.user?.id,
+			educationalScore,
+			timestamp: new Date().toISOString(),
+		});
+
+		// Check environment variables (removed API key check for security)
+		debug.log("Environment Check", {
+			nodeEnv: process.env.NODE_ENV,
+			platform: Platform.OS,
+		});
+	}, []);
 
 	// Get the appropriate API endpoint based on card slug
 	const getApiEndpoint = (cardSlug: string) => {
 		const endpointMap: { [key: string]: string } = {
 			purpose: "/api/brand-purpose",
-			positioning: "/api/brand-positioning", 
+			positioning: "/api/brand-positioning",
 			personality: "/api/brand-personality",
 			"product-market-fit": "/api/product-market-fit",
 			perception: "/api/brand-perception",
 			presentation: "/api/brand-presentation",
 			proof: "/api/brand-proof",
 		};
-		return endpointMap[cardSlug] || "/api/chat";
+		const endpoint = endpointMap[cardSlug] || "/api/chat";
+
+		debug.log("API Endpoint", {
+			cardSlug,
+			endpoint,
+			available: Object.keys(endpointMap),
+		});
+
+		return endpoint;
 	};
 
-	const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-		api: getApiEndpoint(card.slug),
-		fetch: expoFetch as unknown as typeof globalThis.fetch,
-		body: {
-			userId: session?.user?.id,
-		},
-		initialMessages: [
-			{
-				id: 'initial',
-				role: 'assistant',
-				content: card.slug === 'purpose' 
-					? "Imagine your brand disappeared tomorrow. What would your customers miss most — and why would that matter?"
-					: `Let's discover your brand ${card.name.toLowerCase()}. Tell me about your brand and what makes it unique.`
-			}
-		],
-		onFinish: async (message) => {
-			// Look for completion indicators in AI response
-			const content = message.content.toLowerCase();
-			
-			// Check if AI has generated a brand statement (synthesis step)
-			if (content.includes("we exist to") || content.includes("brand purpose statement")) {
-				const statementMatch = message.content.match(/"([^"]*we exist to[^"]*)"/i);
-				if (statementMatch) {
-					setConversationState(prev => ({
-						...prev,
-						step: "synthesis",
-						draftStatement: statementMatch[1],
-					}));
-				}
-			}
-			
-			// Check for completion phrases
-			if (content.includes("perfect!") && content.includes("ready") || 
-			    content.includes("congratulations") ||
-			    content.includes("your brand purpose statement is complete")) {
-				await handleCompletion();
-			}
+	const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
+		useChat({
+			api: getApiEndpoint(card.slug),
+			body: {
+				userId: session?.user?.id,
+			},
+			initialMessages: [
+				{
+					id: "initial",
+					role: "assistant",
+					content:
+						card.slug === "purpose"
+							? "Imagine your brand disappeared tomorrow. What would your customers miss most — and why would that matter?"
+							: `Let's discover your brand ${card.name.toLowerCase()}. Tell me about your brand and what makes it unique.`,
+				},
+			],
+			headers: {
+				"Content-Type": "application/json",
+			},
+			onFinish: async (message) => {
+				debug.log("AI Response Received", {
+					messageId: message.id,
+					role: message.role,
+					contentLength: message.content.length,
+					contentPreview: message.content.substring(0, 100) + "...",
+					timestamp: new Date().toISOString(),
+				});
 
-			// Save conversation state
-			if (session?.user?.id) {
-				try {
-					await saveAIConversation(
-						session.user.id,
-						card.id,
-						{ messages, conversationState },
-						conversationState.step,
-						isCompleted
+				// Look for completion indicators in AI response
+				const content = message.content.toLowerCase();
+
+				// Check if AI has generated a brand statement (synthesis step)
+				if (
+					content.includes("we exist to") ||
+					content.includes("brand purpose statement")
+				) {
+					const statementMatch = message.content.match(
+						/"([^"]*we exist to[^"]*)"/i,
 					);
-				} catch (error) {
-					console.error("Error saving conversation:", error);
+					if (statementMatch) {
+						debug.log("Statement Detected", {
+							statement: statementMatch[1],
+							step: "synthesis",
+						});
+
+						setConversationState((prev) => ({
+							...prev,
+							step: "synthesis",
+							draftStatement: statementMatch[1],
+						}));
+					}
 				}
-			}
-		},
-		onError: (error) => {
-			console.error("Chat error:", error);
-			console.error("Error details:", {
-				message: error.message,
-				stack: error.stack,
-				endpoint: getApiEndpoint(card.slug),
-				userId: session?.user?.id
-			});
-			setShowFallback(true);
-		},
-	});
+
+				// Check for completion phrases
+				if (
+					(content.includes("perfect!") && content.includes("ready")) ||
+					content.includes("congratulations") ||
+					content.includes("your brand purpose statement is complete")
+				) {
+					debug.log("Completion Detected", {
+						content: content.substring(0, 200),
+					});
+					await handleCompletion();
+				}
+
+				// Save conversation state
+				if (session?.user?.id) {
+					try {
+						debug.log("Saving Conversation", {
+							userId: session.user.id,
+							cardId: card.id,
+							step: conversationState.step,
+							messageCount: messages.length,
+						});
+
+						await saveAIConversation(
+							session.user.id,
+							card.id,
+							{ messages, conversationState },
+							conversationState.step,
+							isCompleted,
+						);
+
+						debug.log("Conversation Saved", "Successfully");
+					} catch (error) {
+						debug.error("Save Conversation Error", error);
+					}
+				}
+			},
+			onError: (error) => {
+				debug.error("useChat Error", {
+					message: error.message,
+					stack: error.stack,
+					endpoint: getApiEndpoint(card.slug),
+					userId: session?.user?.id,
+					timestamp: new Date().toISOString(),
+				});
+
+				// Log error but don't throw - let useChat handle it gracefully
+				console.error("Chat API Error:", error.message);
+			},
+		});
+
+	// Debug useChat state changes
+	useEffect(() => {
+		debug.log("useChat State Update", {
+			isLoading,
+			messageCount: messages.length,
+			inputLength: input.length,
+		});
+
+		setDebugInfo((prev: any) => ({
+			...prev,
+			chatState: {
+				isLoading,
+				messageCount: messages.length,
+				lastUpdate: new Date().toISOString(),
+			},
+		}));
+	}, [isLoading, messages, input]);
 
 	// React Native compatible input handler
 	const handleTextChange = (text: string) => {
+		debug.log("Input Changed", { textLength: text.length });
+
 		// Create a synthetic event for the useChat hook that matches React Native patterns
 		const syntheticEvent = {
 			target: { value: text },
@@ -150,33 +247,65 @@ export function GuidedDiscovery({
 		}
 	}, [session]);
 
-	// Fallback opening question if AI SDK fails
-	const fallbackQuestion = card.slug === 'purpose' 
-		? "Imagine your brand disappeared tomorrow. What would your customers miss most — and why would that matter?"
-		: `Let's discover your brand ${card.name.toLowerCase()}. Tell me about your brand and what makes it unique.`;
-
 	const loadExistingConversation = async () => {
 		if (!session?.user?.id) return;
 
 		try {
+			debug.log("Loading Existing Conversation", {
+				userId: session.user.id,
+				cardId: card.id,
+			});
+
 			const { data, error } = await getAIConversation(session.user.id, card.id);
-			if (data && !data.is_completed && data.conversation_data.messages) {
-				// Restore previous conversation if it exists
-				console.log("Loading existing conversation:", data);
+
+			if (error) {
+				debug.error("Load Conversation Error", error);
+				// Don't fail the component if we can't load existing conversation
+				return;
+			}
+
+			if (data && !data.is_completed && data.conversation_data?.messages) {
+				debug.log("Previous Conversation Found", {
+					conversationId: data.id,
+					step: data.current_step,
+					isCompleted: data.is_completed,
+					messageCount: data.conversation_data.messages.length,
+				});
+
+				// Could restore the conversation state here if needed
+				// For now, we'll start fresh but could enhance this later
+			} else {
+				debug.log("No Previous Conversation", {
+					hasData: !!data,
+					isCompleted: data?.is_completed,
+					hasMessages: !!data?.conversation_data?.messages,
+				});
 			}
 		} catch (error) {
-			console.error("Error loading conversation:", error);
+			debug.error("Load Conversation Exception", error);
+			// Don't fail the component - just continue without loading previous conversation
 		}
 	};
 
 	const handleCompletion = async () => {
 		if (!session?.user?.id || isCompleted) return;
 
+		debug.log("Handling Completion", {
+			userId: session.user.id,
+			hasStatement: !!conversationState.draftStatement,
+			isAlreadyCompleted: isCompleted,
+		});
+
 		setIsCompleted(true);
-		
+
 		try {
 			// Save brand statement if it exists
 			if (conversationState.draftStatement) {
+				debug.log("Saving Brand Statement", {
+					statement: conversationState.draftStatement,
+					scores: conversationState.scores,
+				});
+
 				await saveBrandPurposeStatement(
 					session.user.id,
 					conversationState.draftStatement,
@@ -188,6 +317,12 @@ export function GuidedDiscovery({
 			}
 
 			// Update user progress - mark section as completed
+			debug.log("Updating User Progress", {
+				userId: session.user.id,
+				cardId: card.id,
+				sectionId: section.id,
+			});
+
 			await updateUserProgress(
 				session.user.id,
 				card.id,
@@ -204,29 +339,29 @@ export function GuidedDiscovery({
 				card.id,
 				{ messages, conversationState },
 				"complete",
-				true
+				true,
 			);
 
-			console.log("Progress saved successfully for section:", section.id);
+			debug.log("Progress Saved Successfully", { sectionId: section.id });
 
 			// Delay before calling onComplete to show success message
 			setTimeout(() => {
+				debug.log("Calling onComplete", "Starting completion callback");
 				onComplete();
 			}, 2000);
-
 		} catch (error) {
-			console.error("Error saving completion:", error);
+			debug.error("Completion Error", error);
 		}
 	};
 
 	// Calculate progress based on conversation length and AI responses
 	const calculateProgress = () => {
 		if (messages.length === 0) return 0;
-		
+
 		// Basic progress calculation based on conversation depth
-		const userMessages = messages.filter(m => m.role === 'user').length;
+		const userMessages = messages.filter((m) => m.role === "user").length;
 		const hasStatement = conversationState.draftStatement;
-		
+
 		if (isCompleted) return 100;
 		if (hasStatement) return 85;
 		if (userMessages >= 4) return 70;
@@ -236,6 +371,76 @@ export function GuidedDiscovery({
 	};
 
 	const progressPercentage = calculateProgress();
+
+	// Enhanced submit handler with debugging
+	const handleEnhancedSubmit = async () => {
+		if (!input.trim() || isLoading) {
+			debug.log("Submit Blocked", "Empty input or already loading");
+			return;
+		}
+
+		debug.log("Submit Initiated", {
+			inputLength: input.length,
+			isLoading,
+			endpoint: getApiEndpoint(card.slug),
+		});
+
+		// Check if the user is confirming completion
+		const userResponse = input.toLowerCase().trim();
+		if (
+			conversationState.step === "synthesis" &&
+			(userResponse.includes("yes") ||
+				userResponse.includes("perfect") ||
+				userResponse.includes("looks good") ||
+				userResponse.includes("that's right"))
+		) {
+			debug.log("User Confirmed Completion", "User accepted the statement");
+			handleCompletion();
+			return;
+		}
+
+		// Call the original handleSubmit - React Native compatible
+		try {
+			debug.log("Calling handleSubmit", {
+				inputValue: input,
+				messageCount: messages.length,
+				userId: session?.user?.id,
+				endpoint: getApiEndpoint(card.slug),
+			});
+
+			// Create a proper synthetic event for React Native
+			const syntheticEvent = {
+				preventDefault: () => {},
+				target: { value: input },
+				currentTarget: { value: input },
+				nativeEvent: { text: input },
+				type: "submit",
+			} as any;
+
+			await handleSubmit(syntheticEvent);
+
+			debug.log("handleSubmit Called", "Successfully completed");
+		} catch (submitError) {
+			debug.error("Submit Error", {
+				error: submitError,
+				message:
+					submitError instanceof Error ? submitError.message : "Unknown error",
+				stack: submitError instanceof Error ? submitError.stack : undefined,
+			});
+
+			// Re-throw the error instead of showing fallback
+			throw new Error(
+				`Failed to submit message: ${submitError instanceof Error ? submitError.message : "Unknown error"}`,
+			);
+		}
+	};
+
+	// Throw error if there's an API error
+	if (error) {
+		throw new Error(
+			`AI SDK Error: ${error.message}. Please check your OpenAI API key configuration and network connection.`,
+		);
+	}
 
 	return (
 		<SafeAreaView className="flex-1 bg-background">
@@ -269,56 +474,82 @@ export function GuidedDiscovery({
 					/>
 
 					<Text className="text-center text-sm text-muted-foreground mt-2">
-						{isCompleted 
-							? "🎉 Discovery complete!" 
+						{isCompleted
+							? "🎉 Discovery complete!"
 							: conversationState.draftStatement
-							? "Review your statement..."
-							: `Building your ${card.name.toLowerCase()} statement...`
-						}
+								? "Review your statement..."
+								: `Building your ${card.name.toLowerCase()} statement...`}
 					</Text>
 				</View>
 
 				{/* Conversation */}
 				<ScrollView className="flex-1 p-4">
 					<View className="gap-4">
-						{/* Progress Summary */}
-						{progressPercentage > 0 && (
-							<View className="bg-card rounded-xl p-4 border border-border">
-								<Text className="font-semibold mb-2">Discovery Progress</Text>
-								<Progress value={progressPercentage} max={100} showLabel={true} />
-								<Text className="text-xs text-muted-foreground mt-2">
-									{progressPercentage < 50 
-										? "Getting to know your brand..." 
-										: progressPercentage < 85
-										? "Building your statement..."
-										: "Almost there!"
-									}
+						{/* Debug Info Panel - Only in development */}
+						{__DEV__ && (
+							<View className="bg-yellow-100 rounded-xl p-4 border border-yellow-300">
+								<Text className="font-semibold mb-2 text-yellow-800">
+									🤖 AI SDK Debug
+								</Text>
+								<Text className="text-xs text-yellow-700">
+									Loading: {isLoading ? "YES" : "NO"} | Messages:{" "}
+									{messages.length} | AI Only Mode: ACTIVE
+								</Text>
+								<Text className="text-xs text-yellow-700 mt-1">
+									Endpoint: {getApiEndpoint(card.slug)} | Step:{" "}
+									{conversationState.step}
 								</Text>
 							</View>
 						)}
 
-						{/* Fallback Question - Show if AI SDK has errors or no messages */}
-						{(showFallback || (messages.length === 0 && !isLoading)) && (
-							<View className="bg-primary/10 rounded-xl p-4 border border-primary/20">
-								<Text className="whitespace-pre-wrap">{fallbackQuestion}</Text>
+						{/* Progress Summary */}
+						{progressPercentage > 0 && (
+							<View className="bg-card rounded-xl p-4 border border-border">
+								<Text className="font-semibold mb-2">Discovery Progress</Text>
+								<Progress
+									value={progressPercentage}
+									max={100}
+									showLabel={true}
+								/>
+								<Text className="text-xs text-muted-foreground mt-2">
+									{progressPercentage < 50
+										? "Getting to know your brand..."
+										: progressPercentage < 85
+											? "Building your statement..."
+											: "Almost there!"}
+								</Text>
 							</View>
 						)}
 
 						{/* Messages from AI SDK */}
-						{!showFallback && messages.map((message, index) => (
+						{messages.map((message, index) => (
 							<View key={message.id || index} className="gap-2">
-								{message.role === 'assistant' && (
+								{message.role === "assistant" && (
 									<View className="bg-primary/10 rounded-xl p-4 border border-primary/20">
-										<Text className="whitespace-pre-wrap">{message.content}</Text>
+										<Text className="whitespace-pre-wrap">
+											{message.content}
+										</Text>
 									</View>
 								)}
-								{message.role === 'user' && (
+								{message.role === "user" && (
 									<View className="bg-card rounded-xl p-4 border border-border ml-8">
 										<Text>{message.content}</Text>
 									</View>
 								)}
 							</View>
 						))}
+
+						{/* Loading State */}
+						{isLoading && (
+							<View className="items-center py-4">
+								<Text className="text-sm text-muted-foreground mb-2">
+									🤔 AI is analyzing your response...
+								</Text>
+								<Text className="text-xs text-muted-foreground">
+									Powered by OpenAI GPT-4
+								</Text>
+							</View>
+						)}
 
 						{/* Completion Message */}
 						{isCompleted && (
@@ -328,7 +559,8 @@ export function GuidedDiscovery({
 									Congratulations!
 								</Text>
 								<Text className="text-center text-muted-foreground">
-									Your {card.name.toLowerCase()} discovery is complete. Moving to results...
+									Your {card.name.toLowerCase()} discovery is complete. Moving
+									to results...
 								</Text>
 							</View>
 						)}
@@ -345,65 +577,16 @@ export function GuidedDiscovery({
 									textAlignVertical="top"
 								/>
 
-								{isLoading && (
-									<View className="items-center py-4">
-										<Text className="text-sm text-muted-foreground mb-2">
-											🤔 Analyzing your response...
-										</Text>
-									</View>
-								)}
-
 								<Button
 									variant="default"
 									size="lg"
-									onPress={() => {
-										if (showFallback) {
-											// Handle fallback mode - could implement simple scoring here
-											// For now, just show a completion message after a few responses
-											const userResponse = input.toLowerCase().trim();
-											if (userResponse.length > 20) {
-												setIsCompleted(true);
-												handleCompletion();
-											}
-										} else {
-											// Check if the user is confirming completion
-											const userResponse = input.toLowerCase().trim();
-											if (conversationState.step === "synthesis" && 
-											    (userResponse.includes("yes") || userResponse.includes("perfect") || 
-											     userResponse.includes("looks good") || userResponse.includes("that's right"))) {
-												handleCompletion();
-											}
-											
-											// Call the original handleSubmit - React Native compatible
-											try {
-												const syntheticSubmitEvent = {
-													preventDefault: () => {},
-													target: { value: input },
-													nativeEvent: { text: input },
-													type: 'submit'
-												} as any;
-												handleSubmit(syntheticSubmitEvent);
-											} catch (submitError) {
-												console.error("Submit error:", submitError);
-												setShowFallback(true);
-											}
-										}
-									}}
+									onPress={handleEnhancedSubmit}
 									disabled={!input.trim() || isLoading}
 								>
 									<Text className="font-semibold">
-										{isLoading ? "Processing..." : "Submit Response"}
+										{isLoading ? "AI Processing..." : "Submit Response"}
 									</Text>
 								</Button>
-							</View>
-						)}
-
-						{/* Error Display */}
-						{error && !showFallback && (
-							<View className="bg-destructive/10 rounded-xl p-4 border border-destructive/20">
-								<Text className="text-destructive">
-									AI temporarily unavailable. Using simplified mode.
-								</Text>
 							</View>
 						)}
 					</View>

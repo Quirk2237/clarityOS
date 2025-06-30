@@ -259,7 +259,10 @@ export async function getAIConversation(userId: string, cardId: string) {
 		.select("*")
 		.eq("user_id", userId)
 		.eq("card_id", cardId)
-		.single();
+		.order("updated_at", { ascending: false })
+		.order("created_at", { ascending: false })
+		.limit(1)
+		.maybeSingle();
 
 	return { data, error };
 }
@@ -373,7 +376,8 @@ export async function getCardProgress(userId: string, cardSlug: string) {
 		// Get the card and its sections
 		const { data: card, error: cardError } = await supabase
 			.from("cards")
-			.select(`
+			.select(
+				`
 				id,
 				name,
 				slug,
@@ -381,7 +385,8 @@ export async function getCardProgress(userId: string, cardSlug: string) {
 					id,
 					type
 				)
-			`)
+			`,
+			)
 			.eq("slug", cardSlug)
 			.single();
 
@@ -399,12 +404,16 @@ export async function getCardProgress(userId: string, cardSlug: string) {
 
 		if (progressError) {
 			console.error("Error fetching progress:", progressError);
-			return { progress: 0, total: card.card_sections.length, status: "not_started" };
+			return {
+				progress: 0,
+				total: card.card_sections.length,
+				status: "not_started",
+			};
 		}
 
 		const completedSections = progressData?.length || 0;
 		const totalSections = card.card_sections.length;
-		
+
 		// Determine overall status
 		let status = "not_started";
 		if (completedSections > 0 && completedSections < totalSections) {
@@ -430,7 +439,8 @@ export async function getAllCardsWithProgress(userId: string) {
 		// Get all cards with their sections
 		const { data: cards, error: cardsError } = await supabase
 			.from("cards")
-			.select(`
+			.select(
+				`
 				id,
 				name,
 				slug,
@@ -440,7 +450,8 @@ export async function getAllCardsWithProgress(userId: string) {
 					id,
 					type
 				)
-			`)
+			`,
+			)
 			.eq("is_active", true)
 			.order("order_index");
 
@@ -462,12 +473,11 @@ export async function getAllCardsWithProgress(userId: string) {
 
 		// Calculate progress for each card
 		const cardsWithProgress = cards.map((card) => {
-			const completedSections = progressData?.filter(
-				(p) => p.card_id === card.id
-			).length || 0;
-			
+			const completedSections =
+				progressData?.filter((p) => p.card_id === card.id).length || 0;
+
 			const totalSections = card.card_sections.length;
-			
+
 			let status = "not_started";
 			if (completedSections > 0 && completedSections < totalSections) {
 				status = "in_progress";

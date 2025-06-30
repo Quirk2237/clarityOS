@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#EC4899" rx="12"/>
+  <circle cx="200" cy="150" r="60" fill="white"/>
+  <g transform="translate(175, 125)">
+    <circle cx="25" cy="20" r="15" fill="none" stroke="#EC4899" stroke-width="3"/>
+    <circle cx="25" cy="20" r="8" fill="#EC4899"/>
+  </g>
+  <text x="200" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">PERCEPTION</text>
+</svg> 

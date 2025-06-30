@@ -56,10 +56,8 @@ export default function CardScreen() {
 				return;
 			}
 
-			const { data: progressData, error: progressError } = await getUserProgress(
-				session.user.id, 
-				cardData.id
-			);
+			const { data: progressData, error: progressError } =
+				await getUserProgress(session.user.id, cardData.id);
 
 			if (progressError) {
 				console.error("Error loading progress:", progressError);
@@ -67,10 +65,12 @@ export default function CardScreen() {
 
 			// Determine which section to start with based on progress
 			const educationalSection = cardData.card_sections.find(
-				(s: Database["public"]["Tables"]["card_sections"]["Row"]) => s.type === "educational"
+				(s: Database["public"]["Tables"]["card_sections"]["Row"]) =>
+					s.type === "educational",
 			);
 			const guidedSection = cardData.card_sections.find(
-				(s: Database["public"]["Tables"]["card_sections"]["Row"]) => s.type === "guided"
+				(s: Database["public"]["Tables"]["card_sections"]["Row"]) =>
+					s.type === "guided",
 			);
 
 			let startingSection: Section = "educational";
@@ -78,12 +78,13 @@ export default function CardScreen() {
 			if (progressData && progressData.length > 0) {
 				// Check if educational section is completed
 				const educationalCompleted = progressData.some(
-					p => p.section_id === educationalSection?.id && p.status === "completed"
+					(p) =>
+						p.section_id === educationalSection?.id && p.status === "completed",
 				);
 
 				// Check if guided section is completed
 				const guidedCompleted = progressData.some(
-					p => p.section_id === guidedSection?.id && p.status === "completed"
+					(p) => p.section_id === guidedSection?.id && p.status === "completed",
 				);
 
 				if (educationalCompleted && guidedCompleted) {
@@ -96,7 +97,7 @@ export default function CardScreen() {
 
 				// Set educational score if available (for completion screen)
 				const educationalProgress = progressData.find(
-					p => p.section_id === educationalSection?.id
+					(p) => p.section_id === educationalSection?.id,
 				);
 				if (educationalProgress?.score) {
 					setEducationalScore(educationalProgress.score);
@@ -106,7 +107,6 @@ export default function CardScreen() {
 			setCurrentSection(startingSection);
 
 			console.log("Starting with section:", startingSection);
-
 		} catch (error) {
 			console.error("Error loading card and progress:", error);
 			Alert.alert("Error", "Failed to load card content");
@@ -138,9 +138,9 @@ export default function CardScreen() {
 
 	if (loading) {
 		return (
-			<SafeAreaView className="flex-1 bg-background">
+			<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
 				<View className="flex-1 items-center justify-center">
-					<Text className="text-lg">Loading...</Text>
+					<Text className="text-lg text-white">Loading...</Text>
 				</View>
 			</SafeAreaView>
 		);
@@ -148,9 +148,9 @@ export default function CardScreen() {
 
 	if (!card) {
 		return (
-			<SafeAreaView className="flex-1 bg-background">
+			<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
 				<View className="flex-1 items-center justify-center">
-					<Text className="text-lg">Card not found</Text>
+					<Text className="text-lg text-white">Card not found</Text>
 				</View>
 			</SafeAreaView>
 		);
@@ -162,7 +162,7 @@ export default function CardScreen() {
 	const guidedSection = card.card_sections.find((s) => s.type === "guided");
 
 	return (
-		<SafeAreaView className="flex-1 bg-background">
+		<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
 			{currentSection === "educational" && educationalSection && (
 				<EducationalQuiz
 					card={card}

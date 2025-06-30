@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#7C3AED" rx="12"/>
+  <circle cx="200" cy="150" r="60" fill="white"/>
+  <g transform="translate(170, 120)">
+    <path d="M30 15 C30 6.716 23.284 0 15 0 S0 6.716 0 15 S6.716 30 15 30 S30 23.284 30 15 Z M15 20 C12.239 20 10 17.761 10 15 S12.239 10 15 10 S20 12.239 20 15 S17.761 20 15 20 Z" fill="#7C3AED"/>
+  </g>
+  <text x="200" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">PURPOSE</text>
+</svg> 

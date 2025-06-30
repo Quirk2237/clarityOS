@@ -1,167 +1,115 @@
+import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import * as React from "react";
 
-const streakVariants = cva(
-	"items-center justify-center rounded-xl p-4 shadow-md border-2",
-	{
-		variants: {
-			variant: {
-				active: "bg-duo-orange border-orange-600 shadow-orange-600/40",
-				inactive: "bg-duo-gray-100 border-duo-gray-300 shadow-duo-gray-300/40",
-				danger: "bg-red-100 border-red-300 shadow-red-300/40", // For nearly broken streaks
-			},
-			size: {
-				sm: "p-3",
-				md: "p-4",
-				lg: "p-6",
-			},
-		},
-		defaultVariants: {
-			variant: "inactive",
-			size: "md",
-		},
-	},
-);
+const streakVariants = {
+	active: "bg-brand-orange border-orange-600 shadow-orange-600/40",
+	inactive: "bg-brand-gray-100 border-brand-gray-300 shadow-brand-gray-300/40",
+};
 
-interface StreakCounterProps extends VariantProps<typeof streakVariants> {
+interface StreakCounterProps {
 	count: number;
-	isActive: boolean;
-	hoursUntilReset?: number; // Hours until streak resets
-	onPress?: () => void;
+	isActive?: boolean;
+	size?: "sm" | "md" | "lg";
 	className?: string;
-	showLabel?: boolean;
-	animated?: boolean;
+	onPress?: () => void;
 }
 
-const StreakCounter = React.forwardRef<View, StreakCounterProps>(
-	(
-		{
-			count,
-			isActive,
-			hoursUntilReset,
-			onPress,
-			variant,
-			size,
-			className,
-			showLabel = true,
-			animated = true,
-			...props
-		},
-		ref,
-	) => {
-		// Determine variant based on state
-		const streakVariant =
-			variant ||
-			(isActive
-				? "active"
-				: hoursUntilReset && hoursUntilReset < 6
-					? "danger"
-					: "inactive");
+const StreakCounter = ({
+	count,
+	isActive = true,
+	size = "md",
+	className,
+	onPress,
+}: StreakCounterProps) => {
+	const sizeStyles = {
+		sm: "w-12 h-12",
+		md: "w-16 h-16",
+		lg: "w-20 h-20",
+	};
 
-		const content = (
-			<View
-				className={cn(
-					streakVariants({ variant: streakVariant, size }),
-					className,
-				)}
-				ref={ref}
-				{...props}
-			>
-				{/* Fire icon for active streaks */}
-				{isActive && (
+	const textStyles = {
+		sm: "text-sm",
+		md: "text-lg",
+		lg: "text-xl",
+	};
+
+	const labelStyles = {
+		sm: "text-xs",
+		md: "text-sm",
+		lg: "text-base",
+	};
+
+	return (
+		<Pressable
+			onPress={onPress}
+			className={cn(
+				"items-center justify-center rounded-full border-2 shadow-lg active:scale-95",
+				isActive ? streakVariants.active : streakVariants.inactive,
+				sizeStyles[size],
+				className,
+			)}
+		>
+			<View className="items-center">
+				<Text
+					className={cn(
+						"font-bold",
+						textStyles[size],
+						isActive ? "text-white" : "text-brand-gray-700",
+					)}
+				>
+					{count}
+				</Text>
+				{size !== "sm" && (
 					<Text
 						className={cn(
-							"mb-1",
-							size === "sm" && "text-lg",
-							size === "md" && "text-2xl",
-							size === "lg" && "text-4xl",
-							animated && count > 0 && "animate-bounce-gentle",
+							"font-medium mt-0.5",
+							labelStyles[size],
+							isActive ? "text-white/90" : "text-brand-gray-600",
 						)}
 					>
 						🔥
 					</Text>
 				)}
+			</View>
+		</Pressable>
+	);
+};
 
-				{/* Streak count */}
+// Streak Status Component
+interface StreakStatusProps {
+	currentStreak: number;
+	hoursUntilReset?: number;
+	className?: string;
+}
+
+const StreakStatus = ({
+	currentStreak,
+	hoursUntilReset = 12,
+	className,
+}: StreakStatusProps) => {
+	return (
+		<View className={cn("items-center py-4", className)}>
+			<StreakCounter count={currentStreak} isActive={currentStreak > 0} />
+			<Text className="text-base font-semibold text-foreground mt-2">
+				{currentStreak} Day Streak
+			</Text>
+			{hoursUntilReset && (
 				<Text
 					className={cn(
-						"font-bold",
-						size === "sm" && "text-lg",
-						size === "md" && "text-2xl",
-						size === "lg" && "text-4xl",
-						isActive
-							? "text-white"
-							: hoursUntilReset && hoursUntilReset < 6
-								? "text-red-700"
-								: "text-duo-gray-700",
+						"text-sm mt-1",
+						hoursUntilReset < 6 ? "text-red-600" : "text-brand-gray-500",
 					)}
 				>
-					{count}
+					{hoursUntilReset}h until reset
 				</Text>
+			)}
+		</View>
+	);
+};
 
-				{/* Label */}
-				{showLabel && (
-					<Text
-						className={cn(
-							"font-semibold text-center",
-							size === "sm" && "text-xs",
-							size === "md" && "text-sm",
-							size === "lg" && "text-base",
-							isActive
-								? "text-white"
-								: hoursUntilReset && hoursUntilReset < 6
-									? "text-red-600"
-									: "text-duo-gray-600",
-						)}
-					>
-						{count === 1 ? "day streak" : "day streak"}
-					</Text>
-				)}
-
-				{/* Time warning for nearly broken streaks */}
-				{hoursUntilReset && hoursUntilReset < 12 && !isActive && (
-					<Text
-						className={cn(
-							"text-center mt-1 font-medium",
-							size === "sm" && "text-xs",
-							(size === "md" || size === "lg") && "text-xs",
-							hoursUntilReset < 6 ? "text-red-600" : "text-duo-gray-500",
-						)}
-					>
-						{hoursUntilReset < 1
-							? `${Math.floor(hoursUntilReset * 60)}m left`
-							: `${Math.floor(hoursUntilReset)}h left`}
-					</Text>
-				)}
-			</View>
-		);
-
-		if (onPress) {
-			return (
-				<Pressable
-					onPress={onPress}
-					className="active:scale-95 transition-transform"
-					accessibilityRole="button"
-					accessibilityLabel={`${count} day streak ${isActive ? "active" : "inactive"}`}
-					accessibilityHint={
-						hoursUntilReset ? `${hoursUntilReset} hours until reset` : undefined
-					}
-				>
-					{content}
-				</Pressable>
-			);
-		}
-
-		return content;
-	},
-);
-
-StreakCounter.displayName = "StreakCounter";
-
-// Streak milestones component
-interface StreakMilestoneProps {
+// Streak Milestones Component
+interface StreakMilestonesProps {
 	currentStreak: number;
 	milestones: number[];
 	className?: string;
@@ -171,66 +119,59 @@ const StreakMilestones = ({
 	currentStreak,
 	milestones,
 	className,
-}: StreakMilestoneProps) => {
+}: StreakMilestonesProps) => {
 	return (
-		<View className={cn("flex-row justify-between items-center", className)}>
-			{milestones.map((milestone, index) => {
-				const isAchieved = currentStreak >= milestone;
-				const isCurrent =
-					currentStreak < milestone &&
-					(index === 0 || currentStreak >= milestones[index - 1]);
+		<View className={cn("flex-row justify-between", className)}>
+			{milestones.map((milestone) => {
+				const isReached = currentStreak >= milestone;
+				const isNext = !isReached && milestone === milestones.find(m => m > currentStreak);
 
 				return (
 					<View key={milestone} className="items-center flex-1">
-						{/* Milestone marker */}
 						<View
 							className={cn(
-								"w-8 h-8 rounded-full items-center justify-center border-2",
-								isAchieved
-									? "bg-duo-gold border-yellow-600"
-									: isCurrent
-										? "bg-duo-primary border-duo-primary-600"
-										: "bg-duo-gray-200 border-duo-gray-300",
+								"w-8 h-8 rounded-full border-2 items-center justify-center mb-1",
+								isReached
+									? "bg-brand-yellow border-yellow-600"
+									: isNext
+									? "bg-brand-primary border-brand-primary-600"
+									: "bg-brand-gray-200 border-brand-gray-300",
 							)}
 						>
 							<Text
 								className={cn(
 									"text-xs font-bold",
-									isAchieved
+									isReached
 										? "text-white"
-										: isCurrent
-											? "text-white"
-											: "text-duo-gray-500",
+										: isNext
+										? "text-white"
+										: "text-brand-gray-500",
 								)}
 							>
-								{isAchieved ? "✓" : milestone}
+								{milestone}
 							</Text>
 						</View>
-
-						{/* Milestone label */}
 						<Text
 							className={cn(
-								"text-xs font-medium text-center mt-1",
-								isAchieved
-									? "text-duo-gray-900"
-									: isCurrent
-										? "text-duo-primary"
-										: "text-duo-gray-500",
+								"text-xs font-medium text-center",
+								isReached
+									? "text-brand-gray-900"
+									: isNext
+									? "text-brand-primary"
+									: "text-brand-gray-500",
 							)}
 						>
-							{milestone}
+							{isReached ? "✓" : milestone}
 						</Text>
-
-						{/* Progress line (except for last item) */}
-						{index < milestones.length - 1 && (
+						{isNext && (
 							<View
 								className={cn(
-									"absolute top-4 left-1/2 w-full h-0.5 -z-10",
-									isAchieved
-										? "bg-duo-gold"
-										: currentStreak >= milestone
-											? "bg-duo-primary"
-											: "bg-duo-gray-300",
+									"absolute -top-1 -right-1 w-2 h-2 rounded-full",
+									isReached
+										? "bg-brand-yellow"
+										: isNext
+										? "bg-brand-primary"
+										: "bg-brand-gray-300",
 								)}
 							/>
 						)}
@@ -241,44 +182,48 @@ const StreakMilestones = ({
 	);
 };
 
-// Streak freeze component (for when users purchase streak protection)
+// Streak Freeze Component
 interface StreakFreezeProps {
-	freezesRemaining: number;
-	onUseFreeze?: () => void;
+	hasFreeze?: boolean;
+	onPurchase?: () => void;
 	className?: string;
 }
 
 const StreakFreeze = ({
-	freezesRemaining,
-	onUseFreeze,
+	hasFreeze = false,
+	onPurchase,
 	className,
 }: StreakFreezeProps) => {
 	return (
 		<View
 			className={cn(
-				"bg-duo-secondary-50 border-2 border-duo-secondary-200 rounded-lg p-4 items-center",
+				"bg-brand-secondary-50 border-2 border-brand-secondary-200 rounded-lg p-4 items-center",
 				className,
 			)}
 		>
 			<Text className="text-2xl mb-2">🛡️</Text>
-			<Text className="text-sm font-semibold text-duo-gray-900 text-center">
+			<Text className="text-sm font-semibold text-brand-gray-900 text-center">
 				Streak Freeze
 			</Text>
-			<Text className="text-xs text-duo-gray-600 text-center mt-1">
-				{freezesRemaining} remaining
+			<Text className="text-xs text-brand-gray-600 text-center mt-1">
+				{hasFreeze ? "Your streak is protected!" : "Protect your streak"}
 			</Text>
-
-			{onUseFreeze && freezesRemaining > 0 && (
+			{!hasFreeze && onPurchase && (
 				<Pressable
-					onPress={onUseFreeze}
-					className="mt-3 bg-duo-secondary px-4 py-2 rounded-lg active:scale-95"
+					onPress={onPurchase}
+					className="mt-3 bg-brand-secondary px-4 py-2 rounded-lg active:scale-95"
 				>
-					<Text className="text-white font-semibold text-sm">Use Freeze</Text>
+					<Text className="text-white font-semibold text-sm">Get Freeze</Text>
 				</Pressable>
 			)}
 		</View>
 	);
 };
 
-export { StreakCounter, StreakMilestones, StreakFreeze, streakVariants };
-export type { StreakCounterProps, StreakMilestoneProps, StreakFreezeProps };
+export { StreakCounter, StreakStatus, StreakMilestones, StreakFreeze };
+export type {
+	StreakCounterProps,
+	StreakStatusProps,
+	StreakMilestonesProps,
+	StreakFreezeProps,
+};

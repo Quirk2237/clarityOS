@@ -6,80 +6,79 @@ import * as React from "react";
 // Linear Progress Bar Component
 const progressVariants = cva("w-full rounded-full overflow-hidden", {
 	variants: {
-		size: {
-			sm: "h-2",
-			md: "h-3",
-			lg: "h-4",
-			xl: "h-6",
-		},
 		variant: {
-			default: "bg-duo-gray-200",
-			success: "bg-duo-gray-200",
-			warning: "bg-yellow-200",
-			error: "bg-red-200",
+			default: "bg-brand-gray-200",
+			success: "bg-brand-gray-200",
+			warning: "bg-brand-gray-200",
+			error: "bg-brand-gray-200",
+		},
+		size: {
+			default: "h-2",
+			sm: "h-1",
+			lg: "h-3",
+			xl: "h-4",
 		},
 	},
 	defaultVariants: {
-		size: "md",
+		variant: "default",
+		size: "default",
+	},
+});
+
+const progressFillVariants = cva("h-full rounded-full transition-all", {
+	variants: {
+		variant: {
+			default: "bg-brand-primary",
+			success: "bg-brand-success",
+			warning: "bg-brand-warning",
+			error: "bg-brand-error",
+		},
+	},
+	defaultVariants: {
 		variant: "default",
 	},
 });
 
-const progressFillVariants = cva(
-	"h-full rounded-full transition-all duration-500 ease-out",
-	{
-		variants: {
-			variant: {
-				default: "bg-duo-primary",
-				success: "bg-duo-success",
-				warning: "bg-duo-warning",
-				error: "bg-duo-error",
-			},
-		},
-		defaultVariants: {
-			variant: "default",
-		},
-	},
-);
-
-interface ProgressProps extends VariantProps<typeof progressVariants> {
+interface ProgressProps
+	extends React.ComponentPropsWithoutRef<typeof View>,
+		VariantProps<typeof progressVariants> {
 	value: number;
-	max?: number;
-	className?: string;
+	max: number;
 	showLabel?: boolean;
 	label?: string;
 }
 
-const Progress = React.forwardRef<View, ProgressProps>(
-	(
-		{ value, max = 100, size, variant, className, showLabel, label, ...props },
-		ref,
-	) => {
-		const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+const Progress = React.forwardRef<
+	React.ElementRef<typeof View>,
+	ProgressProps
+>(({ className, variant, size, value, max, showLabel, label, ...props }, ref) => {
+	const percentage = Math.min(100, Math.max(0, (value / max) * 100));
 
-		return (
-			<View className={cn("w-full", className)} ref={ref} {...props}>
-				{showLabel && (
-					<View className="flex-row justify-between items-center mb-2">
-						<Text className="text-sm font-medium text-duo-gray-700">
-							{label || "Progress"}
-						</Text>
-						<Text className="text-sm font-semibold text-duo-gray-900">
-							{value} / {max}
-						</Text>
-					</View>
-				)}
-				<View className={progressVariants({ size, variant })}>
-					<View
-						className={progressFillVariants({ variant })}
-						style={{ width: `${percentage}%` }}
-					/>
+	return (
+		<View className="w-full">
+			{(showLabel || label) && (
+				<View className="flex-row justify-between items-center mb-1">
+					<Text className="text-sm font-medium text-brand-gray-700">
+						{label || "Progress"}
+					</Text>
+					<Text className="text-sm font-semibold text-brand-gray-900">
+						{Math.round(percentage)}%
+					</Text>
 				</View>
+			)}
+			<View
+				ref={ref}
+				className={cn(progressVariants({ variant, size }), className)}
+				{...props}
+			>
+				<View
+					className={cn(progressFillVariants({ variant }))}
+					style={{ width: `${percentage}%` }}
+				/>
 			</View>
-		);
-	},
-);
-
+		</View>
+	);
+});
 Progress.displayName = "Progress";
 
 // Circular Progress Component (for XP/Levels)
@@ -160,31 +159,62 @@ interface XPProgressProps {
 	xpToNext: number;
 	level: number;
 	size?: number;
-	className?: string;
+	showLabel?: boolean;
 }
 
-const XPProgress = ({
-	currentXP,
-	xpToNext,
-	level,
-	size = 100,
-	className,
-}: XPProgressProps) => {
+const XPProgress = React.forwardRef<
+	React.ElementRef<typeof View>,
+	XPProgressProps
+>(({ currentXP, xpToNext, level, size = 80, showLabel = true }, ref) => {
+	const percentage = (currentXP / xpToNext) * 100;
+	const radius = size / 2 - 4;
+	const circumference = 2 * Math.PI * radius;
+	const strokeDasharray = circumference;
+	const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
 	return (
-		<CircularProgress
-			value={currentXP}
-			max={xpToNext}
-			size={size}
-			color="#FFD900"
-			className={cn("relative", className)}
-		>
-			<View className="items-center justify-center">
-				<Text className="text-lg font-bold text-duo-gray-900">{level}</Text>
-				<Text className="text-xs font-medium text-duo-gray-600">Level</Text>
+		<View ref={ref} className="items-center">
+			<View
+				className="relative items-center justify-center"
+				style={{ width: size, height: size }}
+			>
+				{/* Background circle */}
+				<View
+					className="absolute border-4 border-brand-gray-200 rounded-full"
+					style={{ width: size, height: size }}
+				/>
+
+				{/* Progress circle - Note: This would need react-native-svg for actual implementation */}
+				<View
+					className="absolute border-4 border-brand-primary rounded-full"
+					style={{
+						width: size,
+						height: size,
+						transform: [{ rotate: "-90deg" }],
+					}}
+				/>
+
+				{/* Level display */}
+				<View className="absolute items-center justify-center">
+					<Text className="text-lg font-bold text-brand-gray-900">{level}</Text>
+					<Text className="text-xs font-medium text-brand-gray-600">Level</Text>
+				</View>
 			</View>
-		</CircularProgress>
+
+			{showLabel && (
+				<View className="mt-2 items-center">
+					<Text className="text-sm font-medium text-brand-gray-700">
+						{currentXP} / {xpToNext} XP
+					</Text>
+					<Text className="text-xs text-brand-gray-500">
+						{xpToNext - currentXP} XP to next level
+					</Text>
+				</View>
+			)}
+		</View>
 	);
-};
+});
+XPProgress.displayName = "XPProgress";
 
 // Progress Card Component for Dashboard
 interface ProgressCardProps {

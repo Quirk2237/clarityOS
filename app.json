@@ -1,12 +1,11 @@
 {
   "expo": {
-    "name": "canopyOS",
+    "name": "ClarityOS",
     "slug": "canopyOS",
     "scheme": "canopyOS",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -19,18 +18,9 @@
       "splash": {
         "image": "./assets/splash.png",
         "resizeMode": "cover",
-        "backgroundColor": "#ffffff",
-        "dark": {
-          "backgroundColor": "#000000",
-          "resizeMode": "cover",
-          "image": "./assets/splash-dark.png"
-        }
+        "backgroundColor": "#ffffff"
       },
-      "icon": {
-        "dark": "./assets/icon-dark.png",
-        "light": "./assets/icon.png"
-      },
-      "bundleIdentifier": "com.canopyos.radianthillsoftware"
+      "bundleIdentifier": "com.clarityos.radianthillsoftware"
     },
     "android": {
       "adaptiveIcon": {
@@ -39,12 +29,7 @@
       "splash": {
         "image": "./assets/splash.png",
         "resizeMode": "cover",
-        "backgroundColor": "#ffffff",
-        "dark": {
-          "backgroundColor": "#000000",
-          "resizeMode": "cover",
-          "image": "./assets/splash-dark.png"
-        }
+        "backgroundColor": "#ffffff"
       }
     },
     "experiments": {
@@ -55,10 +40,15 @@
       "expo-secure-store"
     ],
     "extra": {
-      "router": {},
+      "router": {
+        "origin": false
+      },
       "eas": {
         "projectId": "342ac03e-fa4d-4581-8bbd-f522dd7b5adc"
       }
+    },
+    "web": {
+      "bundler": "metro"
     },
     "owner": "untrue6165"
   }

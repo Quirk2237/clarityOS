@@ -1,50 +1,60 @@
-import React from "react";
+import React, { useState } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
 
-import { Image } from "@/components/image";
 import { SafeAreaView } from "@/components/safe-area-view";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { H1, Muted } from "@/components/ui/typography";
-import { useColorScheme } from "@/lib/useColorScheme";
+import WelcomeIllustration from "@/assets/welcome.svg";
 
 export default function WelcomeScreen() {
 	const router = useRouter();
-	const { colorScheme } = useColorScheme();
-	const appIcon =
-		colorScheme === "dark"
-			? require("@/assets/icon-dark.png")
-			: require("@/assets/icon.png");
+	const [isLoading, setIsLoading] = useState(false);
+
+	const handleGetStarted = async () => {
+		setIsLoading(true);
+		// Small delay for better UX
+		setTimeout(() => {
+			router.replace("/");
+			setIsLoading(false);
+		}, 500);
+	};
 
 	return (
-		<SafeAreaView className="flex flex-1 bg-background p-4">
-			<View className="flex flex-1 items-center justify-center gap-y-4 web:m-4">
-				<Image source={appIcon} className="w-16 h-16 rounded-xl" />
-				<H1 className="text-center">Welcome to ClarityOS</H1>
-				<Muted className="text-center">
-					Brand Strategy for the everyday business owner. Simple, accessible,
-					and scalable tools to help you gain brand clarity.
-				</Muted>
+		<SafeAreaView className="flex flex-1" style={{ backgroundColor: "#ACFF64" }}>
+			<View className="flex flex-1 items-center justify-center px-6 py-8">
+				{/* Welcome Illustration */}
+				<View className="flex-1 items-center justify-center">
+					<WelcomeIllustration width="240" height="220" />
+				</View>
+
+				{/* Content Section */}
+				<View className="items-center gap-y-4 mb-8">
+					<H1 className="text-center text-4xl font-bold" style={{ color: "#292929" }}>
+						ClarityOS
+					</H1>
+					<Muted 
+						className="text-center px-4 leading-relaxed text-base" 
+						style={{ color: "#292929" }}
+					>
+						Brand Strategy for the everyday{"\n"}business owner
+					</Muted>
+				</View>
 			</View>
-			<View className="flex flex-col gap-y-4 web:m-4">
+
+			{/* Button Section */}
+			<View className="px-6 pb-8">
 				<Button
-					size="default"
-					variant="default"
-					onPress={() => {
-						router.push("/sign-up");
-					}}
+					size="lg"
+					onPress={handleGetStarted}
+					className="w-full rounded-full py-4"
+					style={{ backgroundColor: "#292929" }}
+					disabled={isLoading}
 				>
-					<Text>Sign Up</Text>
-				</Button>
-				<Button
-					size="default"
-					variant="secondary"
-					onPress={() => {
-						router.push("/sign-in");
-					}}
-				>
-					<Text>Sign In</Text>
+					<Text className="text-sm font-semibold text-green-500">
+						{isLoading ? "Loading..." : "Get Started"}
+					</Text>
 				</Button>
 			</View>
 		</SafeAreaView>

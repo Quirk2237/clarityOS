@@ -1,117 +1,136 @@
+import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import * as React from "react";
 
-const heartsContainerVariants = cva("flex-row items-center", {
-	variants: {
-		size: {
-			sm: "gap-1",
-			md: "gap-2",
-			lg: "gap-3",
-		},
-		alignment: {
-			left: "justify-start",
-			center: "justify-center",
-			right: "justify-end",
-		},
-	},
-	defaultVariants: {
-		size: "md",
-		alignment: "center",
-	},
-});
-
-interface HeartsDisplayProps
-	extends VariantProps<typeof heartsContainerVariants> {
+interface HeartsDisplayProps {
 	current: number;
 	total: number;
-	showCount?: boolean;
-	onPress?: () => void;
+	size?: "sm" | "md" | "lg";
 	className?: string;
-	animated?: boolean;
+	onPress?: () => void;
 }
 
-const HeartsDisplay = React.forwardRef<View, HeartsDisplayProps>(
-	(
-		{
-			current,
-			total,
-			showCount = false,
-			onPress,
-			size,
-			alignment,
-			className,
-			animated = true,
-			...props
-		},
-		ref,
-	) => {
-		const hearts = Array.from({ length: total }, (_, index) => {
-			const isFilled = index < current;
+const HeartsDisplay = ({
+	current,
+	total,
+	size = "md",
+	className,
+	onPress,
+}: HeartsDisplayProps) => {
+	const sizeStyles = {
+		sm: "text-lg",
+		md: "text-2xl",
+		lg: "text-3xl",
+	};
 
-			return (
-				<View key={index}>
-					<Text
-						className={cn(
-							size === "sm" && "text-lg",
-							size === "md" && "text-2xl",
-							size === "lg" && "text-4xl",
-						)}
-					>
-						{isFilled ? "❤️" : "🤍"}
-					</Text>
-				</View>
-			);
-		});
-
-		const content = (
-			<View
-				className={cn(heartsContainerVariants({ size, alignment }), className)}
-				ref={ref}
-				{...props}
+	const hearts = Array.from({ length: total }, (_, i) => {
+		const isFilled = i < current;
+		return (
+			<Text
+				key={i}
+				className={cn(
+					sizeStyles[size],
+					isFilled ? "opacity-100" : "opacity-30",
+				)}
 			>
-				{hearts}
+				{isFilled ? "❤️" : "🤍"}
+			</Text>
+		);
+	});
 
-				{showCount && (
-					<Text
-						className={cn(
-							"ml-2 font-semibold",
-							size === "sm" && "text-sm",
-							size === "md" && "text-base",
-							size === "lg" && "text-lg",
-							current === 0
-								? "text-duo-error"
-								: current <= total * 0.3
-									? "text-duo-warning"
-									: "text-duo-gray-700",
-						)}
-					>
-						{current}/{total}
+	const content = (
+		<View className={cn("flex-row items-center gap-1", className)}>
+			{hearts}
+		</View>
+	);
+
+	if (onPress) {
+		return (
+			<Pressable onPress={onPress} className="active:scale-95">
+				{content}
+			</Pressable>
+		);
+	}
+
+	return content;
+};
+
+// Hearts Counter with Label
+interface HeartsCounterProps {
+	current: number;
+	total: number;
+	size?: "sm" | "md" | "lg";
+	showLabel?: boolean;
+	className?: string;
+	onPress?: () => void;
+}
+
+const HeartsCounter = ({
+	current,
+	total,
+	size = "md",
+	showLabel = true,
+	className,
+	onPress,
+}: HeartsCounterProps) => {
+	const textColorClass = cn(
+		current === 0
+			? "text-brand-error"
+			: current <= 2
+			? "text-brand-warning"
+			: "text-brand-gray-700",
+	);
+
+	return (
+		<View className={cn("items-center", className)}>
+			<View
+				className={cn(
+					"flex-row items-center justify-center p-3 rounded-xl border-2",
+					current === 0
+						? "border-brand-error"
+						: current <= 2
+						? "border-brand-warning"
+						: "border-brand-gray-200",
+				)}
+			>
+				<HeartsDisplay
+					current={current}
+					total={total}
+					size={size}
+					onPress={onPress}
+				/>
+				{showLabel && (
+					<Text className="text-sm font-medium text-brand-gray-600 mb-1">
+						Hearts
 					</Text>
 				)}
 			</View>
-		);
 
-		if (onPress) {
-			return (
-				<Pressable
-					onPress={onPress}
-					accessibilityRole="button"
-					accessibilityLabel={`${current} out of ${total} hearts remaining`}
+			{showLabel && (
+				<Text
+					className={cn(
+						"text-sm font-semibold mt-2",
+						current === 0
+							? "text-brand-error"
+							: current <= 2
+							? "text-brand-warning"
+							: "text-brand-gray-900",
+					)}
 				>
-					{content}
-				</Pressable>
-			);
-		}
+					{current} / {total}
+				</Text>
+			)}
 
-		return content;
-	},
-);
+			{current === 0 && (
+				<Text className="text-xs text-brand-gray-500 mt-1">
+					No hearts remaining
+				</Text>
+			)}
+		</View>
+	);
+};
 
-HeartsDisplay.displayName = "HeartsDisplay";
-
-// Hearts status component with refill timer
+// Hearts Status Component (shows refill time, etc.)
 interface HeartsStatusProps {
 	current: number;
 	total: number;
@@ -127,167 +146,87 @@ const HeartsStatus = ({
 	onGetMoreHearts,
 	className,
 }: HeartsStatusProps) => {
-	const isLow = current <= total * 0.3;
 	const isEmpty = current === 0;
+	const canRefill = current < total;
 
 	return (
-		<View
-			className={cn(
-				"bg-white rounded-xl p-4 shadow-md border-2",
-				isEmpty
-					? "border-duo-error"
-					: isLow
-						? "border-duo-warning"
-						: "border-duo-gray-200",
-				className,
-			)}
-		>
-			<View className="flex-row items-center justify-between">
-				<View className="flex-1">
-					<Text className="text-sm font-medium text-duo-gray-600 mb-1">
-						Hearts
-					</Text>
-					<HeartsDisplay
-						current={current}
-						total={total}
-						size="sm"
-						alignment="left"
-					/>
-				</View>
-
+		<View className={cn("bg-card rounded-xl p-4 border-2 border-border", className)}>
+			<View className="flex-row items-center justify-between mb-3">
+				<HeartsDisplay current={current} total={total} size="md" />
 				<View className="items-end">
-					<Text
-						className={cn(
-							"text-lg font-bold",
-							isEmpty
-								? "text-duo-error"
-								: isLow
-									? "text-duo-warning"
-									: "text-duo-gray-900",
-						)}
-					>
+					<Text className="text-lg font-bold text-card-foreground">
 						{current}/{total}
 					</Text>
-
-					{minutesUntilRefill && current < total && (
-						<Text className="text-xs text-duo-gray-500 mt-1">
-							{minutesUntilRefill < 60
-								? `+1 in ${minutesUntilRefill}m`
-								: `+1 in ${Math.floor(minutesUntilRefill / 60)}h ${minutesUntilRefill % 60}m`}
-						</Text>
-					)}
+					<Text className="text-sm text-muted-foreground">Hearts</Text>
 				</View>
 			</View>
 
-			{/* Get more hearts button */}
-			{current < total && onGetMoreHearts && (
+			{canRefill && minutesUntilRefill && (
+				<View className="mb-3">
+					<View
+						className={cn(
+							"h-1 rounded-full overflow-hidden",
+							isEmpty ? "bg-brand-error" : "bg-brand-primary",
+						)}
+					>
+						<View
+							className="h-full bg-brand-primary rounded-full"
+							style={{
+								width: `${100 - (minutesUntilRefill / 60) * 100}%`,
+							}}
+						/>
+					</View>
+					<Text className="text-xs text-muted-foreground mt-1 text-center">
+						+1 heart in {minutesUntilRefill}m
+					</Text>
+				</View>
+			)}
+
+			{onGetMoreHearts && (
 				<Pressable
 					onPress={onGetMoreHearts}
-					className={cn(
-						"mt-3 px-4 py-2 rounded-lg active:scale-95",
-						isEmpty ? "bg-duo-error" : "bg-duo-primary",
-					)}
+					className="bg-brand-primary rounded-lg p-3 items-center active:scale-95"
 				>
-					<Text className="text-white font-semibold text-center text-sm">
-						{isEmpty ? "Get Hearts" : "Refill Hearts"}
-					</Text>
+					<Text className="text-white font-semibold">Get More Hearts</Text>
 				</Pressable>
 			)}
 		</View>
 	);
 };
 
-// Heart animation component (for gaining/losing hearts)
-interface HeartAnimationProps {
+// Hearts Animation Component (for gaining/losing hearts)
+interface HeartsAnimationProps {
 	type: "gain" | "lose";
-	count?: number;
+	amount: number;
 	className?: string;
 }
 
-const HeartAnimation = ({
+const HeartsAnimation = ({
 	type,
-	count = 1,
+	amount,
 	className,
-}: HeartAnimationProps) => {
+}: HeartsAnimationProps) => {
 	return (
-		<View className={cn("items-center justify-center", className)}>
-			{Array.from({ length: count }, (_, index) => (
-				<View
-					key={index}
-					className={cn(
-						"absolute animate-bounce-gentle",
-						type === "gain" && "animate-pulse",
-						// Stagger animation for multiple hearts
-						index > 0 && "delay-100",
-					)}
-					style={{
-						animationDelay: `${index * 100}ms`,
-					}}
-				>
-					<Text className="text-4xl">{type === "gain" ? "💚" : "💔"}</Text>
-				</View>
-			))}
-
+		<View className={cn("items-center", className)}>
 			<Text
 				className={cn(
-					"text-sm font-bold mt-12",
-					type === "gain" ? "text-duo-success" : "text-duo-error",
+					"text-2xl font-bold",
+					type === "gain" ? "text-brand-success" : "text-brand-error",
 				)}
 			>
-				{type === "gain"
-					? `+${count} Heart${count > 1 ? "s" : ""}`
-					: "Heart Lost"}
+				{type === "gain" ? "+" : "-"}{amount}
+			</Text>
+			<Text className="text-lg">
+				{type === "gain" ? "💚" : "💔"}
 			</Text>
 		</View>
 	);
 };
 
-// Full hearts refill celebration
-interface HeartsRefillProps {
-	onContinue?: () => void;
-	className?: string;
-}
-
-const HeartsRefill = ({ onContinue, className }: HeartsRefillProps) => {
-	return (
-		<View
-			className={cn(
-				"bg-white rounded-xl p-6 items-center shadow-lg border-2 border-duo-success",
-				className,
-			)}
-		>
-			<Text className="text-6xl mb-4 animate-bounce-gentle">❤️</Text>
-
-			<Text className="text-h2 font-bold text-duo-gray-900 text-center">
-				Hearts Refilled!
-			</Text>
-
-			<Text className="text-body text-duo-gray-600 text-center mt-2">
-				Your hearts have been restored. Keep learning!
-			</Text>
-
-			{onContinue && (
-				<Pressable
-					onPress={onContinue}
-					className="mt-6 bg-duo-primary px-8 py-3 rounded-lg active:scale-95"
-				>
-					<Text className="text-white font-semibold">Continue</Text>
-				</Pressable>
-			)}
-		</View>
-	);
-};
-
-export {
-	HeartsDisplay,
-	HeartsStatus,
-	HeartAnimation,
-	HeartsRefill,
-	heartsContainerVariants,
-};
+export { HeartsDisplay, HeartsCounter, HeartsStatus, HeartsAnimation };
 export type {
 	HeartsDisplayProps,
+	HeartsCounterProps,
 	HeartsStatusProps,
-	HeartAnimationProps,
-	HeartsRefillProps,
+	HeartsAnimationProps,
 };

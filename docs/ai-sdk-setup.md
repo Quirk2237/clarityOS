@@ -20,12 +20,20 @@ ClarityOS uses the AI SDK to power intelligent brand strategy discovery across 7
 Create `.env.local` file in root directory:
 
 ```bash
-# OpenAI Configuration
+# ==========================================
+# OpenAI Configuration (Server-side only)
+# ==========================================
 OPENAI_API_KEY=sk-your-openai-api-key-here
 
-# Your existing Supabase vars
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# ==========================================
+# Supabase Configuration
+# ==========================================
+# Client-side variables (safe to expose - prefixed with EXPO_PUBLIC_)
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+
+# Server-side only (for admin operations if needed)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ```
 
 #### 2. OpenAI API Key Setup

@@ -10,7 +10,6 @@ import { SplashScreen, useRouter } from "expo-router";
 import { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/config/supabase";
-import { hasCompletedOnboarding } from "@/lib/database-helpers";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -118,15 +117,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 			if (initialized) {
 				SplashScreen.hideAsync();
 				if (session) {
-					// Check if user has completed onboarding
-					const completedOnboarding = await hasCompletedOnboarding(
-						session.user.id,
-					);
-					if (completedOnboarding) {
-						router.replace("/" as any);
-					} else {
-						router.replace("/onboarding" as any);
-					}
+					// Go directly to home screen - no onboarding
+					router.replace("/" as any);
 				} else {
 					router.replace("/welcome" as any);
 				}

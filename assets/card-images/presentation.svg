@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#EF4444" rx="12"/>
+  <circle cx="200" cy="150" r="60" fill="white"/>
+  <g transform="translate(175, 125)">
+    <rect x="0" y="0" width="40" height="25" fill="none" stroke="#EF4444" stroke-width="2"/>
+    <line x1="20" y1="25" x2="20" y2="35" stroke="#EF4444" stroke-width="2"/>
+    <line x1="10" y1="35" x2="30" y2="35" stroke="#EF4444" stroke-width="2"/>
+  </g>
+  <text x="200" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white">PRESENTATION</text>
+</svg> 

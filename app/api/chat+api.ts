@@ -11,16 +11,28 @@ export async function POST(req: Request) {
 		const { messages, userId } = await req.json();
 
 		// Input validation
-		if (!messages || !Array.isArray(messages) || messages.length > MAX_MESSAGES_COUNT) {
-			return new Response("Invalid messages format or too many messages", { status: 400 });
+		if (
+			!messages ||
+			!Array.isArray(messages) ||
+			messages.length > MAX_MESSAGES_COUNT
+		) {
+			return new Response("Invalid messages format or too many messages", {
+				status: 400,
+			});
 		}
 
 		// Sanitize inputs
-		const sanitizedMessages = messages.map(msg => ({
-			...msg,
-			content: typeof msg.content === 'string' ? msg.content.slice(0, MAX_MESSAGE_LENGTH).trim() : '',
-			role: msg.role === 'user' || msg.role === 'assistant' ? msg.role : 'user'
-		})).filter(msg => msg.content.length > 0);
+		const sanitizedMessages = messages
+			.map((msg) => ({
+				...msg,
+				content:
+					typeof msg.content === "string"
+						? msg.content.slice(0, MAX_MESSAGE_LENGTH).trim()
+						: "",
+				role:
+					msg.role === "user" || msg.role === "assistant" ? msg.role : "user",
+			}))
+			.filter((msg) => msg.content.length > 0);
 
 		if (sanitizedMessages.length === 0) {
 			return new Response("No valid messages provided", { status: 400 });

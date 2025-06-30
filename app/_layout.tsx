@@ -2,20 +2,58 @@ import "../polyfills";
 import "../global.css";
 
 import { Stack } from "expo-router";
+import {
+	useFonts,
+	Inter_400Regular,
+	Inter_500Medium,
+	Inter_600SemiBold,
+	Inter_700Bold,
+} from "@expo-google-fonts/inter";
+import Feather from '@expo/vector-icons/Feather';
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
 
 import { AuthProvider } from "@/context/supabase-provider";
-import { useColorScheme } from "@/lib/useColorScheme";
 import { colors } from "@/constants/colors";
 
+// Disable Reanimated strict mode warnings
+if (typeof global !== "undefined") {
+	// @ts-ignore
+	global._WORKLET = false;
+	// @ts-ignore
+	global.__reanimatedLoggerConfig = {
+		strict: false,
+		level: "warn",
+	};
+}
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
 export default function AppLayout() {
-	const { colorScheme } = useColorScheme();
+	const [fontsLoaded] = useFonts({
+		Inter_400Regular,
+		Inter_500Medium,
+		Inter_600SemiBold,
+		Inter_700Bold,
+		...Feather.font,
+	});
+
+	useEffect(() => {
+		if (fontsLoaded) {
+			SplashScreen.hideAsync();
+		}
+	}, [fontsLoaded]);
+
+	if (!fontsLoaded) {
+		return null;
+	}
 
 	return (
 		<AuthProvider>
 			<Stack screenOptions={{ headerShown: false, gestureEnabled: false }}>
 				<Stack.Screen name="(protected)" />
 				<Stack.Screen name="welcome" />
-				<Stack.Screen name="onboarding" />
 				<Stack.Screen
 					name="sign-up"
 					options={{
@@ -23,15 +61,9 @@ export default function AppLayout() {
 						headerShown: true,
 						headerTitle: "Sign Up",
 						headerStyle: {
-							backgroundColor:
-								colorScheme === "dark"
-									? colors.dark.background
-									: colors.light.background,
+							backgroundColor: colors.background,
 						},
-						headerTintColor:
-							colorScheme === "dark"
-								? colors.dark.foreground
-								: colors.light.foreground,
+						headerTintColor: colors.foreground,
 						gestureEnabled: true,
 					}}
 				/>
@@ -42,15 +74,9 @@ export default function AppLayout() {
 						headerShown: true,
 						headerTitle: "Sign In",
 						headerStyle: {
-							backgroundColor:
-								colorScheme === "dark"
-									? colors.dark.background
-									: colors.light.background,
+							backgroundColor: colors.background,
 						},
-						headerTintColor:
-							colorScheme === "dark"
-								? colors.dark.foreground
-								: colors.light.foreground,
+						headerTintColor: colors.foreground,
 						gestureEnabled: true,
 					}}
 				/>

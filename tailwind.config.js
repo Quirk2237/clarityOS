@@ -1,18 +1,25 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-	// NOTE: Update this to include the paths to all of your component files.
-	content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
-	darkMode: "class",
+	content: [
+		"./app/**/*.{js,jsx,ts,tsx}",
+		"./components/**/*.{js,jsx,ts,tsx}",
+		"./lib/**/*.{js,jsx,ts,tsx}",
+	],
 	presets: [require("nativewind/preset")],
 	theme: {
 		extend: {
 			colors: {
-				// Original shadcn colors (backwards compatibility)
-				border: "hsl(var(--border))",
-				input: "hsl(var(--input))",
-				ring: "hsl(var(--ring))",
+				// HSL color space for CSS variables
 				background: "hsl(var(--background))",
 				foreground: "hsl(var(--foreground))",
+				card: {
+					DEFAULT: "hsl(var(--card))",
+					foreground: "hsl(var(--card-foreground))",
+				},
+				popover: {
+					DEFAULT: "hsl(var(--popover))",
+					foreground: "hsl(var(--popover-foreground))",
+				},
 				primary: {
 					DEFAULT: "hsl(var(--primary))",
 					foreground: "hsl(var(--primary-foreground))",
@@ -20,10 +27,6 @@ module.exports = {
 				secondary: {
 					DEFAULT: "hsl(var(--secondary))",
 					foreground: "hsl(var(--secondary-foreground))",
-				},
-				destructive: {
-					DEFAULT: "hsl(var(--destructive))",
-					foreground: "hsl(var(--destructive-foreground))",
 				},
 				muted: {
 					DEFAULT: "hsl(var(--muted))",
@@ -33,32 +36,31 @@ module.exports = {
 					DEFAULT: "hsl(var(--accent))",
 					foreground: "hsl(var(--accent-foreground))",
 				},
-				popover: {
-					DEFAULT: "hsl(var(--popover))",
-					foreground: "hsl(var(--popover-foreground))",
+				destructive: {
+					DEFAULT: "hsl(var(--destructive))",
+					foreground: "hsl(var(--destructive-foreground))",
 				},
-				card: {
-					DEFAULT: "hsl(var(--card))",
-					foreground: "hsl(var(--card-foreground))",
-				},
+				border: "hsl(var(--border))",
+				input: "hsl(var(--input))",
+				ring: "hsl(var(--ring))",
 
-				// Duolingo-inspired colors
-				duo: {
-					// Primary Brand Colors
+				// Brand colors - Clean, modern palette
+				brand: {
+					// Primary Green
 					primary: {
-						DEFAULT: "#58CC02",
-						50: "#F0FCE8",
-						100: "#DDF9CC",
-						200: "#BEF264",
-						300: "#8DE639",
-						400: "#58CC02",
-						500: "#46A302",
-						600: "#378002",
-						700: "#2D6102",
-						800: "#1F4102",
-						900: "#132801",
+						DEFAULT: "#ACFF64",
+						50: "#F7FFF0",
+						100: "#EFFFDC",
+						200: "#DEFFB8",
+						300: "#CDFF94",
+						400: "#BBFF70",
+						500: "#ACFF64",
+						600: "#8AE642",
+						700: "#6FCE20",
+						800: "#55B600",
+						900: "#3A9E00",
 					},
-					// Secondary Colors
+					// Secondary Blue
 					secondary: {
 						DEFAULT: "#1CB0F6",
 						50: "#E8F8FF",
@@ -73,14 +75,13 @@ module.exports = {
 						900: "#000C1B",
 					},
 					// Accent Colors
-					gold: "#FFD900",
 					orange: "#FF9600",
 					red: "#FF4B4B",
 					purple: "#CE82FF",
-					pink: "#FF82B2",
+					yellow: "#FFD900",
 					// Semantic Colors
-					success: "#58CC02",
-					warning: "#FFD900",
+					success: "#ACFF64",
+					warning: "#FF9600",
 					error: "#FF4B4B",
 					info: "#1CB0F6",
 					// Neutral Colors
@@ -94,8 +95,10 @@ module.exports = {
 						600: "#80868B",
 						700: "#5F6368",
 						800: "#3C4043",
-						900: "#202124",
+						900: "#292929",
 					},
+					// Main dark background
+					dark: "#292929",
 				},
 			},
 			fontSize: {
@@ -111,6 +114,18 @@ module.exports = {
 				caption: ["12px", { lineHeight: "16px", letterSpacing: "0.2px" }],
 				overline: ["10px", { lineHeight: "12px", letterSpacing: "1px" }],
 			},
+			fontFamily: {
+				// Inter font family
+				sans: ["Inter_400Regular", "Inter", "system-ui", "sans-serif"],
+				"sans-medium": ["Inter_500Medium", "Inter", "system-ui", "sans-serif"],
+				"sans-semibold": [
+					"Inter_600SemiBold",
+					"Inter",
+					"system-ui",
+					"sans-serif",
+				],
+				"sans-bold": ["Inter_700Bold", "Inter", "system-ui", "sans-serif"],
+			},
 			spacing: {
 				// 8pt grid system
 				xs: "4px",
@@ -123,7 +138,7 @@ module.exports = {
 				"4xl": "96px",
 			},
 			borderRadius: {
-				// Duolingo border radius scale
+				// Modern border radius scale
 				sm: "8px",
 				md: "12px",
 				lg: "16px",

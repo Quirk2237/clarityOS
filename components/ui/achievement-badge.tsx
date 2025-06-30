@@ -1,270 +1,220 @@
+import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import * as React from "react";
 
-const badgeVariants = cva(
-	"items-center justify-center rounded-full border-4 border-white shadow-lg",
-	{
-		variants: {
-			size: {
-				sm: "w-12 h-12",
-				md: "w-16 h-16",
-				lg: "w-20 h-20",
-				xl: "w-24 h-24",
-			},
-			status: {
-				locked: "bg-duo-gray-300 shadow-duo-gray-400/40",
-				unlocked: "bg-duo-gold shadow-yellow-600/60",
-				progress: "bg-duo-secondary shadow-duo-secondary-600/60",
-				special: "bg-duo-purple shadow-purple-600/60",
-			},
-		},
-		defaultVariants: {
-			size: "md",
-			status: "locked",
-		},
-	},
-);
+const badgeVariants = {
+	locked: "bg-brand-gray-300 shadow-brand-gray-400/40",
+	unlocked: "bg-brand-yellow shadow-yellow-600/60",
+	progress: "bg-brand-secondary shadow-brand-secondary-600/60",
+	special: "bg-brand-purple shadow-purple-600/60",
+};
 
-interface AchievementBadgeProps extends VariantProps<typeof badgeVariants> {
+interface AchievementBadgeProps {
+	id: string;
 	icon: string;
 	title: string;
 	description?: string;
 	unlocked?: boolean;
 	progress?: number;
 	maxProgress?: number;
+	variant?: "default" | "special";
+	size?: "sm" | "md" | "lg";
 	className?: string;
-	onPress?: () => void;
-	animated?: boolean;
+	onPress?: (id: string) => void;
 }
 
-const AchievementBadge = React.forwardRef<View, AchievementBadgeProps>(
-	(
-		{
-			icon,
-			title,
-			description,
-			unlocked = false,
-			progress = 0,
-			maxProgress = 1,
-			size,
-			status,
-			className,
-			onPress,
-			animated = true,
-			...props
+const AchievementBadge = ({
+	id,
+	icon,
+	title,
+	description,
+	unlocked = false,
+	progress,
+	maxProgress,
+	variant = "default",
+	size = "md",
+	className,
+	onPress,
+}: AchievementBadgeProps) => {
+	const hasProgress = progress !== undefined && maxProgress !== undefined;
+	const isSpecial = variant === "special";
+
+	const sizeStyles = {
+		sm: {
+			container: "w-16 h-16",
+			icon: "text-2xl",
+			title: "text-xs",
 		},
-		ref,
-	) => {
-		// Determine status based on props
-		const badgeStatus =
-			status ||
-			(unlocked
-				? "unlocked"
-				: progress > 0 && progress < maxProgress
-					? "progress"
-					: "locked");
+		md: {
+			container: "w-20 h-20",
+			icon: "text-3xl",
+			title: "text-sm",
+		},
+		lg: {
+			container: "w-24 h-24",
+			icon: "text-4xl",
+			title: "text-base",
+		},
+	};
 
-		const badge = (
-			<View className={cn("items-center", className)} ref={ref} {...props}>
-				<View
-					className={cn(
-						badgeVariants({ size, status: badgeStatus }),
-						animated && unlocked && "animate-bounce-gentle",
-					)}
-				>
-					<Text
-						className={cn(
-							"text-center",
-							size === "sm" && "text-lg",
-							size === "md" && "text-2xl",
-							size === "lg" && "text-3xl",
-							size === "xl" && "text-4xl",
-						)}
-					>
-						{unlocked ? icon : "🔒"}
-					</Text>
-				</View>
+	const getBadgeVariant = () => {
+		if (isSpecial) return badgeVariants.special;
+		if (hasProgress && !unlocked) return badgeVariants.progress;
+		if (unlocked) return badgeVariants.unlocked;
+		return badgeVariants.locked;
+	};
 
-				<View className="items-center mt-2 max-w-20">
-					<Text
-						className={cn(
-							"text-center font-semibold",
-							size === "sm" && "text-xs",
-							size === "md" && "text-sm",
-							size === "lg" && "text-base",
-							size === "xl" && "text-lg",
-							unlocked ? "text-duo-gray-900" : "text-duo-gray-500",
-						)}
-					>
-						{title}
-					</Text>
-
-					{description && (
-						<Text
-							className={cn(
-								"text-center mt-1",
-								size === "sm" && "text-xs",
-								(size === "md" || size === "lg" || size === "xl") && "text-xs",
-								unlocked ? "text-duo-gray-600" : "text-duo-gray-400",
-							)}
-						>
-							{description}
-						</Text>
-					)}
-
-					{/* Progress indicator for partially completed achievements */}
-					{!unlocked && progress > 0 && maxProgress > 1 && (
-						<View className="w-full mt-2">
-							<View className="bg-duo-gray-200 h-1 rounded-full overflow-hidden">
-								<View
-									className="bg-duo-secondary h-full rounded-full"
-									style={{ width: `${(progress / maxProgress) * 100}%` }}
-								/>
-							</View>
-							<Text className="text-xs text-duo-gray-500 text-center mt-1">
-								{progress} / {maxProgress}
-							</Text>
-						</View>
-					)}
-				</View>
+	const content = (
+		<View className="items-center">
+			<View
+				className={cn(
+					"items-center justify-center rounded-full shadow-lg border-3 border-white mb-2",
+					getBadgeVariant(),
+					sizeStyles[size].container,
+					className,
+				)}
+			>
+				<Text className={sizeStyles[size].icon}>
+					{unlocked || hasProgress ? icon : "🔒"}
+				</Text>
 			</View>
-		);
 
-		if (onPress) {
-			return (
-				<Pressable
-					onPress={onPress}
-					className="active:scale-95 transition-transform"
-					accessibilityRole="button"
-					accessibilityLabel={`${title} achievement ${unlocked ? "unlocked" : "locked"}`}
-					accessibilityHint={description}
+			<Text
+				className={cn(
+					"font-semibold text-center leading-tight",
+					sizeStyles[size].title,
+					unlocked ? "text-brand-gray-900" : "text-brand-gray-500",
+				)}
+			>
+				{title}
+			</Text>
+
+			{description && (
+				<Text
+					className={cn(
+						"text-xs text-center mt-1 leading-tight",
+						unlocked ? "text-brand-gray-600" : "text-brand-gray-400",
+					)}
 				>
-					{badge}
-				</Pressable>
-			);
-		}
+					{description}
+				</Text>
+			)}
 
-		return badge;
-	},
-);
+			{hasProgress && !unlocked && (
+				<View className="w-full mt-2">
+					<View className="bg-brand-gray-200 h-1 rounded-full overflow-hidden">
+						<View
+							className="bg-brand-secondary h-full rounded-full"
+							style={{ width: `${(progress! / maxProgress!) * 100}%` }}
+						/>
+					</View>
+					<Text className="text-xs text-brand-gray-500 text-center mt-1">
+						{progress} / {maxProgress}
+					</Text>
+				</View>
+			)}
+		</View>
+	);
 
-AchievementBadge.displayName = "AchievementBadge";
+	if (onPress) {
+		return (
+			<Pressable
+				onPress={() => onPress(id)}
+				className="active:scale-95 transition-transform"
+			>
+				{content}
+			</Pressable>
+		);
+	}
+
+	return content;
+};
 
 // Achievement Grid Component
 interface AchievementGridProps {
-	achievements: {
-		id: string;
-		icon: string;
-		title: string;
-		description?: string;
-		unlocked: boolean;
-		progress?: number;
-		maxProgress?: number;
-	}[];
+	achievements: AchievementBadgeProps[];
 	columns?: number;
-	onAchievementPress?: (id: string) => void;
 	className?: string;
+	onAchievementPress?: (id: string) => void;
 }
 
 const AchievementGrid = ({
 	achievements,
 	columns = 3,
-	onAchievementPress,
 	className,
+	onAchievementPress,
 }: AchievementGridProps) => {
+	const rows = [];
+	for (let i = 0; i < achievements.length; i += columns) {
+		rows.push(achievements.slice(i, i + columns));
+	}
+
 	return (
-		<View className={cn("flex-row flex-wrap justify-between", className)}>
-			{achievements.map((achievement, index) => (
-				<View
-					key={achievement.id}
-					className={cn(
-						"mb-6",
-						columns === 2 && "w-[45%]",
-						columns === 3 && "w-[30%]",
-						columns === 4 && "w-[22%]",
-					)}
-				>
-					<AchievementBadge
-						icon={achievement.icon}
-						title={achievement.title}
-						description={achievement.description}
-						unlocked={achievement.unlocked}
-						progress={achievement.progress}
-						maxProgress={achievement.maxProgress}
-						onPress={
-							onAchievementPress
-								? () => onAchievementPress(achievement.id)
-								: undefined
-						}
-					/>
+		<View className={cn("gap-4", className)}>
+			{rows.map((row, rowIndex) => (
+				<View key={rowIndex} className="flex-row justify-between">
+					{row.map((achievement) => (
+						<View key={achievement.id} className="flex-1 items-center">
+							<AchievementBadge
+								{...achievement}
+								onPress={onAchievementPress}
+								size="sm"
+							/>
+						</View>
+					))}
+					{/* Fill empty spaces to maintain alignment */}
+					{row.length < columns &&
+						Array.from({ length: columns - row.length }).map((_, index) => (
+							<View key={`empty-${index}`} className="flex-1" />
+						))}
 				</View>
 			))}
 		</View>
 	);
 };
 
-// Special Achievement Showcase (for major milestones)
+// Achievement Showcase Component (for when an achievement is unlocked)
 interface AchievementShowcaseProps {
-	icon: string;
-	title: string;
-	description: string;
-	unlocked: boolean;
-	onClose?: () => void;
+	achievement: AchievementBadgeProps;
+	onDismiss: () => void;
 	className?: string;
 }
 
 const AchievementShowcase = ({
-	icon,
-	title,
-	description,
-	unlocked,
-	onClose,
+	achievement,
+	onDismiss,
 	className,
 }: AchievementShowcaseProps) => {
 	return (
 		<View
 			className={cn(
-				"bg-white rounded-xl p-6 items-center shadow-lg border-2 border-duo-gold",
+				"bg-white rounded-xl p-6 items-center shadow-lg border-2 border-brand-yellow",
 				className,
 			)}
 		>
-			<AchievementBadge
-				icon={icon}
-				title=""
-				unlocked={unlocked}
-				size="xl"
-				status="unlocked"
-				animated={true}
-			/>
+			<View className="bg-brand-yellow w-20 h-20 rounded-full items-center justify-center shadow-lg border-3 border-white mb-4">
+				<Text className="text-4xl">{achievement.icon}</Text>
+			</View>
 
-			<Text className="text-h2 font-bold text-duo-gray-900 text-center mt-4">
-				{title}
+			<Text className="text-h2 font-bold text-brand-gray-900 text-center mt-4">
+				{achievement.title}
 			</Text>
 
-			<Text className="text-body text-duo-gray-600 text-center mt-2">
-				{description}
+			<Text className="text-body text-brand-gray-600 text-center mt-2">
+				{achievement.description}
 			</Text>
 
-			{onClose && (
-				<Pressable
-					onPress={onClose}
-					className="mt-6 bg-duo-primary px-8 py-3 rounded-lg active:scale-95"
-				>
-					<Text className="text-white font-semibold">Continue</Text>
-				</Pressable>
-			)}
+			<Pressable
+				onPress={onDismiss}
+				className="mt-6 bg-brand-primary px-8 py-3 rounded-lg active:scale-95"
+			>
+				<Text className="text-white font-semibold">Continue</Text>
+			</Pressable>
 		</View>
 	);
 };
 
-export {
-	AchievementBadge,
-	AchievementGrid,
-	AchievementShowcase,
-	badgeVariants,
-};
+export { AchievementBadge, AchievementGrid, AchievementShowcase };
 export type {
 	AchievementBadgeProps,
 	AchievementGridProps,

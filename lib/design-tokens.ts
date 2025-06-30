@@ -1,121 +1,114 @@
-import { duolingoColors } from "@/constants/colors";
+// Brand colors - Primary brand identity
+export const brandColors = {
+	// Primary Brand Colors - New clean green
+	primary: {
+		DEFAULT: "#ACFF64", // Main brand color
+		50: "#F7FFF0",
+		100: "#EFFFDC",
+		200: "#DEFFB8",
+		300: "#CDFF94",
+		400: "#BBFF70",
+		500: "#ACFF64", // Main color
+		600: "#8AE642",
+		700: "#6FCE20",
+		800: "#55B600",
+		900: "#3A9E00",
+	},
 
-// Typography system
+	// Secondary Colors - Clean blue
+	secondary: {
+		DEFAULT: "#1CB0F6", // Sky Blue
+		50: "#E8F8FF",
+		100: "#CCF0FF",
+		200: "#8DE0FF",
+		300: "#4DD0FF",
+		400: "#1CB0F6",
+		500: "#0B7BC7",
+		600: "#064B98",
+		700: "#032F69",
+		800: "#01183A",
+		900: "#000C1B",
+	},
+
+	// Accent Colors
+	accent: {
+		orange: "#FF9600", // Energy/Warning
+		red: "#FF4B4B", // Error/Danger
+		purple: "#CE82FF", // Special/Premium
+		yellow: "#FFD900", // Attention/Success
+	},
+
+	// Semantic Colors
+	success: "#ACFF64", // Primary green
+	warning: "#FF9600", // Orange
+	error: "#FF4B4B", // Red
+	info: "#1CB0F6", // Secondary blue
+
+	// Neutral Colors - Clean grays
+	gray: {
+		50: "#F8F9FA",
+		100: "#F1F3F4",
+		200: "#E8EAED",
+		300: "#DADCE0",
+		400: "#BDC1C6",
+		500: "#9AA0A6",
+		600: "#80868B",
+		700: "#5F6368",
+		800: "#3C4043",
+		900: "#292929",
+	},
+
+	// Main dark background color
+	dark: "#292929",
+};
+
+// Typography scale - Modern, clean typeface hierarchy
 export const typography = {
-	// Display Text
-	display: {
-		fontSize: 32,
-		fontWeight: "700" as const,
-		lineHeight: 40,
-		letterSpacing: -0.5,
-	},
+	// Font sizes with line heights - designed for readability
+	display: { fontSize: 32, lineHeight: 40, letterSpacing: -0.5 },
+	h1: { fontSize: 28, lineHeight: 36, letterSpacing: -0.4 },
+	h2: { fontSize: 24, lineHeight: 32, letterSpacing: -0.3 },
+	h3: { fontSize: 20, lineHeight: 28, letterSpacing: -0.2 },
+	h4: { fontSize: 18, lineHeight: 26 },
+	body: { fontSize: 16, lineHeight: 24 },
+	bodySmall: { fontSize: 14, lineHeight: 20 },
+	button: { fontSize: 16, lineHeight: 20 },
+	caption: { fontSize: 12, lineHeight: 16, letterSpacing: 0.2 },
+	overline: { fontSize: 10, lineHeight: 12, letterSpacing: 1 },
 
-	// Headings
-	h1: {
-		fontSize: 28,
-		fontWeight: "700" as const,
-		lineHeight: 36,
-		letterSpacing: -0.4,
-	},
-	h2: {
-		fontSize: 24,
-		fontWeight: "600" as const,
-		lineHeight: 32,
-		letterSpacing: -0.3,
-	},
-	h3: {
-		fontSize: 20,
-		fontWeight: "600" as const,
-		lineHeight: 28,
-		letterSpacing: -0.2,
-	},
-	h4: {
-		fontSize: 18,
-		fontWeight: "600" as const,
-		lineHeight: 26,
-	},
-
-	// Body Text
-	body: {
-		fontSize: 16,
-		fontWeight: "400" as const,
-		lineHeight: 24,
-	},
-	bodyMedium: {
-		fontSize: 16,
-		fontWeight: "500" as const,
-		lineHeight: 24,
-	},
-	bodySmall: {
-		fontSize: 14,
-		fontWeight: "400" as const,
-		lineHeight: 20,
-	},
-
-	// UI Text
-	button: {
-		fontSize: 16,
-		fontWeight: "700" as const,
-		lineHeight: 20,
-	},
-	caption: {
-		fontSize: 12,
-		fontWeight: "400" as const,
-		lineHeight: 16,
-		letterSpacing: 0.2,
-	},
-	overline: {
-		fontSize: 10,
-		fontWeight: "600" as const,
-		lineHeight: 12,
-		letterSpacing: 1,
+	// Font weights
+	weights: {
+		regular: "400",
+		medium: "500",
+		semibold: "600",
+		bold: "700",
 	},
 };
 
-// Spacing scale (8pt grid system)
+// Spacing system - Consistent spacing scale
 export const spacing = {
-	xs: 4, // 0.25rem
-	sm: 8, // 0.5rem
-	md: 16, // 1rem
-	lg: 24, // 1.5rem
-	xl: 32, // 2rem
-	"2xl": 48, // 3rem
-	"3xl": 64, // 4rem
-	"4xl": 96, // 6rem
-};
-
-// Animation system with enhanced Duolingo-style animations
-export const animations = {
-	// Standard durations (in milliseconds)
-	fast: 150,
-	normal: 250,
-	slow: 400,
-
-	// Easing curves
-	easeOut: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-	easeIn: "cubic-bezier(0.55, 0.055, 0.675, 0.19)",
-	easeInOut: "cubic-bezier(0.645, 0.045, 0.355, 1)",
-	bounce: "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
-
-	// Duolingo-specific animations
-	buttonPress: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-	popIn: "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
-};
-
-// Border radius scale with Duolingo styling
-export const radius = {
+	xs: 4,
 	sm: 8,
-	md: 12,
-	lg: 16,
-	xl: 24,
-	full: 9999,
-
-	// Duolingo-specific radius
-	button: 12,
-	card: 16,
+	md: 16,
+	lg: 24,
+	xl: 32,
+	"2xl": 48,
+	"3xl": 64,
+	"4xl": 96,
 };
 
-// Enhanced shadow system with Duolingo-style hard shadows
+// Border radius scale - Modern, friendly rounded corners
+export const borderRadius = {
+	none: 0,
+	sm: 4,
+	md: 8,
+	lg: 12,
+	xl: 16,
+	"2xl": 24,
+	full: 9999,
+};
+
+// Enhanced shadow system with clean, modern shadows
 export const shadows = {
 	// Standard shadows
 	sm: {
@@ -140,152 +133,106 @@ export const shadows = {
 		elevation: 8,
 	},
 
-	// Duolingo-style hard shadows
-	duolingoHard: {
-		shadowColor: duolingoColors.primary[600],
+	// Brand-specific shadows
+	primary: {
+		shadowColor: brandColors.primary[600],
 		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 1,
-		shadowRadius: 0,
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
 		elevation: 6,
 	},
-	duolingoSecondary: {
-		shadowColor: duolingoColors.secondary[600],
+	secondary: {
+		shadowColor: brandColors.secondary[600],
 		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 1,
-		shadowRadius: 0,
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
 		elevation: 6,
 	},
-	duolingoWarning: {
-		shadowColor: "#D97706", // Yellow-600
+	warning: {
+		shadowColor: brandColors.accent.orange,
 		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 1,
-		shadowRadius: 0,
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
 		elevation: 6,
 	},
-	duolingoError: {
-		shadowColor: "#DC2626", // Red-600
+	error: {
+		shadowColor: brandColors.accent.red,
 		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 1,
-		shadowRadius: 0,
+		shadowOpacity: 0.3,
+		shadowRadius: 8,
 		elevation: 6,
 	},
 
-	// Card shadows with theme support
-	cardLight: {
+	// Card shadows
+	card: {
 		shadowColor: "#000",
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.1,
 		shadowRadius: 8,
 		elevation: 3,
 	},
-	cardDark: {
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.3,
-		shadowRadius: 12,
-		elevation: 6,
+};
+
+// Layout constants - Grid system and breakpoints
+export const layout = {
+	// Container max widths
+	container: {
+		sm: 640,
+		md: 768,
+		lg: 1024,
+		xl: 1280,
+	},
+
+	// Breakpoints for responsive design
+	breakpoints: {
+		sm: 640,
+		md: 768,
+		lg: 1024,
+		xl: 1280,
 	},
 };
 
-// Z-index scale
-export const zIndex = {
-	base: 0,
-	dropdown: 1000,
-	sticky: 1020,
-	fixed: 1030,
-	modalBackdrop: 1040,
-	modal: 1050,
-	popover: 1060,
-	tooltip: 1070,
-};
-
-// Container widths
-export const containers = {
-	sm: 375, // Mobile
-	md: 768, // Tablet
-	lg: 1024, // Desktop
-	xl: 1280, // Large Desktop
-};
-
-// Enhanced color system with dark mode variants
+// Enhanced color system
 export const colorSystem = {
-	light: {
-		background: duolingoColors.gray[50],
-		foreground: duolingoColors.gray[900],
-		card: "#FFFFFF",
-		cardForeground: duolingoColors.gray[900],
-		border: duolingoColors.gray[200],
-		input: duolingoColors.gray[100],
-		muted: duolingoColors.gray[100],
-		mutedForeground: duolingoColors.gray[600],
-		accent: duolingoColors.primary[50],
-		accentForeground: duolingoColors.primary[900],
+	background: brandColors.gray[50],
+	foreground: brandColors.gray[900],
+	card: "#FFFFFF",
+	cardForeground: brandColors.gray[900],
+	border: brandColors.gray[200],
+	input: brandColors.gray[100],
+	muted: brandColors.gray[100],
+	mutedForeground: brandColors.gray[600],
+	accent: brandColors.primary[50],
+	accentForeground: brandColors.primary[900],
+};
+
+// Animation and timing constants
+export const animation = {
+	// Duration presets
+	duration: {
+		fast: 150,
+		normal: 200,
+		slow: 300,
+		slower: 500,
 	},
-	dark: {
-		background: duolingoColors.gray[900],
-		foreground: duolingoColors.gray[50],
-		card: duolingoColors.gray[800],
-		cardForeground: duolingoColors.gray[50],
-		border: duolingoColors.gray[700],
-		input: duolingoColors.gray[800],
-		muted: duolingoColors.gray[800],
-		mutedForeground: duolingoColors.gray[400],
-		accent: duolingoColors.primary[900],
-		accentForeground: duolingoColors.primary[50],
+
+	// Easing functions
+	easing: {
+		linear: "linear",
+		ease: "ease",
+		easeIn: "ease-in",
+		easeOut: "ease-out",
+		easeInOut: "ease-in-out",
 	},
 };
 
-// Consolidated design tokens
-export const designTokens = {
-	colors: duolingoColors,
-	colorSystem,
-	typography,
-	spacing,
-	animations,
-	radius,
-	shadows,
-	zIndex,
-	containers,
-};
-
-// Utility functions for responsive design
-export const breakpoints = {
-	sm: `(min-width: ${containers.sm}px)`,
-	md: `(min-width: ${containers.md}px)`,
-	lg: `(min-width: ${containers.lg}px)`,
-	xl: `(min-width: ${containers.xl}px)`,
-};
-
-// Animation helpers with accessibility consideration
-export const getAnimationDuration = (prefersReducedMotion: boolean) => ({
-	fast: prefersReducedMotion ? 0 : animations.fast,
-	normal: prefersReducedMotion ? 0 : animations.normal,
-	slow: prefersReducedMotion ? 0 : animations.slow,
-});
-
-export const getScaleValue = (prefersReducedMotion: boolean, scale = 1.05) =>
-	prefersReducedMotion ? 1 : scale;
-
-// Theme-aware shadow helper
-export const getThemeShadow = (
-	isDark: boolean,
-	shadowType: "card" | "button" = "card",
-) => {
-	if (shadowType === "button") {
-		return isDark ? shadows.duolingoHard : shadows.duolingoHard;
-	}
-	return isDark ? shadows.cardDark : shadows.cardLight;
-};
-
-// Color contrast helper for better accessibility
-export const getContrastColor = (isDark: boolean) => ({
-	primary: isDark ? duolingoColors.primary[400] : duolingoColors.primary[600],
-	secondary: isDark
-		? duolingoColors.secondary[400]
-		: duolingoColors.secondary[600],
-	text: isDark ? duolingoColors.gray[100] : duolingoColors.gray[900],
-	textMuted: isDark ? duolingoColors.gray[400] : duolingoColors.gray[600],
-	background: isDark ? duolingoColors.gray[900] : duolingoColors.gray[50],
-	surface: isDark ? duolingoColors.gray[800] : "#FFFFFF",
-	border: isDark ? duolingoColors.gray[700] : duolingoColors.gray[200],
+// Color contrast helper for accessibility
+export const getContrastColor = () => ({
+	primary: brandColors.primary[600],
+	secondary: brandColors.secondary[600],
+	text: brandColors.gray[900],
+	textMuted: brandColors.gray[600],
+	background: brandColors.gray[50],
+	surface: "#FFFFFF",
+	border: brandColors.gray[200],
 });

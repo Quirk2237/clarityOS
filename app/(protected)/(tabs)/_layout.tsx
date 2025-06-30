@@ -1,76 +1,61 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Text } from "react-native";
-import { useColorScheme } from "@/lib/useColorScheme";
-import { duolingoColors } from "@/constants/colors";
+import { Platform } from "react-native";
 
-// Simple icon components using emoji for now
-const HomeIcon = ({ focused }: { focused: boolean }) => (
-	<Text style={{ fontSize: 24, opacity: focused ? 1 : 0.6 }}>🏠</Text>
-);
+import { brandColors } from "@/constants/colors";
+import { HapticTab } from "@/components/haptic-tab";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 
-const DashboardIcon = ({ focused }: { focused: boolean }) => (
-	<Text style={{ fontSize: 24, opacity: focused ? 1 : 0.6 }}>📊</Text>
-);
-
-const SettingsIcon = ({ focused }: { focused: boolean }) => (
-	<Text style={{ fontSize: 24, opacity: focused ? 1 : 0.6 }}>⚙️</Text>
-);
-
-export default function TabsLayout() {
-	const { colorScheme } = useColorScheme();
-
+export default function TabLayout() {
 	return (
 		<Tabs
 			screenOptions={{
+				tabBarActiveTintColor: brandColors.primary.DEFAULT,
 				headerShown: false,
-				tabBarStyle: {
-					backgroundColor: "#FFFFFF",
-					borderTopWidth: 2,
-					borderTopColor: duolingoColors.gray[200],
-					height: 90,
-					paddingBottom: 20,
-					paddingTop: 8,
-					shadowColor: "#000",
-					shadowOffset: { width: 0, height: -2 },
-					shadowOpacity: 0.1,
-					shadowRadius: 8,
-					elevation: 8,
-				},
-				tabBarActiveTintColor: duolingoColors.primary.DEFAULT,
-				tabBarInactiveTintColor: duolingoColors.gray[500],
-				tabBarLabelStyle: {
-					fontSize: 12,
-					fontWeight: "600",
-					marginTop: 4,
-				},
-				tabBarIconStyle: {
-					marginBottom: -4,
-				},
+				tabBarButton: HapticTab,
+				tabBarStyle: Platform.select({
+					ios: {
+						backgroundColor: "#292929", // Dark background
+						borderTopColor: brandColors.gray[700], // Subtle border
+						borderTopWidth: 1,
+						height: 84, // Increase height to accommodate spacing
+						paddingBottom: 8, // Add bottom padding
+					},
+					default: {
+						backgroundColor: "#292929", // Dark background
+						borderTopColor: brandColors.gray[700], // Subtle border
+						borderTopWidth: 1,
+						height: 70, // Increase height to accommodate spacing
+						paddingBottom: 8, // Add bottom padding
+					},
+				}),
 			}}
 		>
 			<Tabs.Screen
 				name="index"
 				options={{
 					title: "Home",
-					tabBarLabel: "Home",
-					tabBarIcon: HomeIcon,
+					tabBarIcon: ({ color }) => (
+						<IconSymbol size={28} name="house.fill" color={color} />
+					),
 				}}
 			/>
 			<Tabs.Screen
 				name="dashboard"
 				options={{
 					title: "Dashboard",
-					tabBarLabel: "Dashboard",
-					tabBarIcon: DashboardIcon,
+					tabBarIcon: ({ color }) => (
+						<IconSymbol size={28} name="chart.bar.fill" color={color} />
+					),
 				}}
 			/>
 			<Tabs.Screen
 				name="settings"
 				options={{
 					title: "Settings",
-					tabBarLabel: "Settings",
-					tabBarIcon: SettingsIcon,
+					tabBarIcon: ({ color }) => (
+						<IconSymbol size={28} name="gear" color={color} />
+					),
 				}}
 			/>
 		</Tabs>
