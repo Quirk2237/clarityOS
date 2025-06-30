@@ -16,6 +16,7 @@ interface CardWithProgress {
 	slug: string;
 	description: string | null;
 	order_index: number;
+	image_url: string | null;
 	progress: number;
 	total: number;
 	status: string;
@@ -56,9 +57,9 @@ const FeaturedCard = ({
 
 				{/* Image/Illustration area */}
 				<View className="flex-1 items-center justify-center mb-6">
-					{getCardImage(card.slug) && !imageError ? (
+					{getCardImage(card.image_url, card.slug) && !imageError ? (
 						<Image
-							source={getCardImage(card.slug)}
+							source={getCardImage(card.image_url, card.slug)}
 							className="w-full h-48 rounded-2xl"
 							contentFit="cover"
 							onError={() => {
@@ -188,9 +189,9 @@ const PreviewCard = ({
 					</View>
 					
 					{/* Card image or fallback icon */}
-					{getCardImage(card.slug) && !imageError ? (
+					{getCardImage(card.image_url, card.slug) && !imageError ? (
 						<Image
-							source={getCardImage(card.slug)}
+							source={getCardImage(card.image_url, card.slug)}
 							className="w-12 h-12 rounded-full"
 							contentFit="cover"
 							onError={() => {
@@ -239,6 +240,7 @@ export default function Home() {
 						slug: card.slug,
 						description: card.description,
 						order_index: card.order_index,
+						image_url: card.image_url,
 						progress: 0,
 						total: card.card_sections?.length || 0,
 						status: "not_started" as const,
