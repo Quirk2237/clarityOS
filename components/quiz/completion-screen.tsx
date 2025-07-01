@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AchievementBadge } from "@/components/ui/achievement-badge";
 import { Progress } from "@/components/ui/progress";
 import { Database } from "../../lib/database.types";
+import { colors } from "@/constants/colors";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Achievement = Database["public"]["Tables"]["achievements"]["Row"];
@@ -25,14 +26,14 @@ export function CompletionScreen({
 }: CompletionScreenProps) {
 	const getScoreMessage = (score: number) => {
 		if (score >= 95)
-			return { emoji: "🏆", message: "Perfect!", color: "#FFD700" };
+			return { emoji: "🏆", message: "Perfect!", color: colors.primary };
 		if (score >= 85)
-			return { emoji: "🌟", message: "Excellent!", color: "#ACFF64" };
+			return { emoji: "🌟", message: "Excellent!", color: colors.primary };
 		if (score >= 75)
-			return { emoji: "🎯", message: "Great job!", color: "#1CB0F6" };
+			return { emoji: "🎯", message: "Great job!", color: colors.primary };
 		if (score >= 65)
-			return { emoji: "👍", message: "Well done!", color: "#FFD900" };
-		return { emoji: "💪", message: "Keep learning!", color: "#FF9500" };
+			return { emoji: "👍", message: "Well done!", color: colors.primary };
+		return { emoji: "💪", message: "Keep learning!", color: colors.primary };
 	};
 
 	const getNextCardMessage = (cardName: string) => {

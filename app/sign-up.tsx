@@ -9,6 +9,7 @@ import { Form, FormField, FormInput } from "@/components/ui/form";
 import { Text } from "../components/ui/text";
 import { Title } from "../components/ui/typography";
 import { useAuth } from "../context/supabase-provider";
+import { colors } from "@/constants/colors";
 
 const formSchema = z
 	.object({
@@ -60,7 +61,7 @@ export default function SignUp() {
 	}
 
 	return (
-		<SafeAreaView className="flex-1 p-4" style={{ backgroundColor: "#292929" }} edges={["bottom"]}>
+		<SafeAreaView className="flex-1 p-4" style={{ backgroundColor: colors.surface }} edges={["bottom"]}>
 			<View className="flex-1 gap-4 web:m-4">
 				<Title className="self-start text-white">Sign Up</Title>
 				<Form {...form}>

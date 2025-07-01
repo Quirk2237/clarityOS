@@ -14,6 +14,7 @@ import {
 	awardAchievement,
 } from "../../lib/database-helpers";
 import { Database } from "../../lib/database.types";
+import { colors } from "@/constants/colors";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"] & {
 	card_sections: (Database["public"]["Tables"]["card_sections"]["Row"] & {
@@ -238,7 +239,7 @@ export function EducationalQuiz({
 	return (
 		<SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center">
 			{/* Centered Card Container */}
-			<View className="w-[92%] max-w-xl rounded-3xl p-4 pt-6 pb-0 shadow-lg items-stretch justify-between min-h-[80%]" style={{ minHeight: 520, backgroundColor: "#ACFF64" }}>
+			<View className="w-[92%] max-w-xl rounded-3xl p-4 pt-6 pb-0 shadow-lg items-stretch justify-between min-h-[80%]" style={{ minHeight: 520, backgroundColor: colors.primary }}>
 				{/* Close Button */}
 				<View className="absolute left-4 top-4 z-10">
 					<Button

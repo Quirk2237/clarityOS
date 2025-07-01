@@ -2,6 +2,7 @@ import { View, Text } from "react-native";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import * as React from "react";
+import { colors } from "@/constants/colors";
 
 // Linear Progress Bar Component
 const progressVariants = cva("w-full rounded-full overflow-hidden", {
@@ -226,7 +227,7 @@ const ProgressCard = ({
 	title,
 	progress,
 	total,
-	color = "#ACFF64",
+	color = colors.primary,
 	className,
 }: ProgressCardProps) => {
 	const percentage = Math.min(100, Math.max(0, (progress / total) * 100));

@@ -10,6 +10,7 @@ import { Image } from "@/components/image";
 import { useAuth } from "../../../context/supabase-provider";
 import { getAllCardsWithProgress, getActiveCards } from "../../../lib/database-helpers";
 import { getCardImage } from "@/lib/card-images";
+import { colors } from "@/constants/colors";
 
 interface CardWithProgress {
 	id: string;
@@ -37,7 +38,7 @@ const Card = ({
 	const isCompleted = card.status === "completed";
 	const isStarted = card.status === "in_progress";
 	const isComingSoon = card.card_status === "coming_soon";
-	const backgroundColor = card.color || "#ACFF64";
+	const backgroundColor = card.color || colors.primary;
 
 	return (
 		<View className="mx-4 mb-6">

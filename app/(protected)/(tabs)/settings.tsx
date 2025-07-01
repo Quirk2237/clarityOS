@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Text } from "../../../components/ui/text";
 import { Title } from "../../../components/ui/typography";
 import { useAuth } from "../../../context/supabase-provider";
+import { colors } from "@/constants/colors";
 
 export default function Settings() {
 	const { signOut } = useAuth();
 
 	return (
-		<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
+		<SafeAreaView className="flex-1" style={{ backgroundColor: colors.surface }}>
 			<View className="flex-1 p-4">
 				{/* Header */}
 				<View className="items-center mb-6">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Text } from "../components/ui/text";
 import { Title, Caption } from "@/components/ui/typography";
 import WelcomeIllustration from "@/assets/welcome.svg";
+import { colors } from "@/constants/colors";
 
 export default function WelcomeScreen() {
 	const router = useRouter();
@@ -22,7 +23,7 @@ export default function WelcomeScreen() {
 	};
 
 	return (
-		<SafeAreaView className="flex flex-1" style={{ backgroundColor: "#ACFF64" }}>
+		<SafeAreaView className="flex flex-1" style={{ backgroundColor: colors.primary }}>
 			<View className="flex flex-1 items-center justify-center px-6 py-8">
 				{/* Welcome Illustration */}
 				<View className="flex-1 items-center justify-center">
@@ -31,12 +32,12 @@ export default function WelcomeScreen() {
 
 				{/* Content Section */}
 				<View className="items-center gap-y-4 mb-8">
-					<Title className="text-center text-4xl font-bold" style={{ color: "#000000" }}>
+					<Title className="text-center text-4xl font-bold" style={{ color: colors.text }}>
 						ClarityOS
 					</Title>
 					<Caption 
 						className="text-center px-4 leading-relaxed text-base" 
-						style={{ color: "#000000" }}
+						style={{ color: colors.text }}
 					>
 						Brand Strategy for the everyday{"\n"}business owner
 					</Caption>
