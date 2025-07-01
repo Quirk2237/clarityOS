@@ -2,16 +2,16 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { View, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView } from "../../../../../../components/safe-area-view";
-import { Text } from "../../../../../../components/ui/text";
-import { useAuth } from "../../../../../../context/supabase-provider";
-import { getCard, getUserProgress } from "../../../../../../lib/database-helpers";
+import { SafeAreaView } from "../../../../components/safe-area-view";
+import { Text } from "../../../../components/ui/text";
+import { useAuth } from "../../../../context/supabase-provider";
+import { getCard, getUserProgress } from "../../../../lib/database-helpers";
 import {
 	EducationalQuiz,
 	GuidedDiscovery,
 	CompletionScreen,
-} from "../../../../../../components/quiz";
-import { Database } from "../../../../../../lib/database.types";
+} from "../../../../components/quiz";
+import { Database } from "../../../../lib/database.types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"] & {
 	card_sections: (Database["public"]["Tables"]["card_sections"]["Row"] & {
@@ -31,7 +31,6 @@ export default function CardScreen() {
 	const [currentSection, setCurrentSection] = useState<Section>("educational");
 	const [educationalScore, setEducationalScore] = useState<number>(0);
 	const [loading, setLoading] = useState(true);
-	const [achievements, setAchievements] = useState<any[]>([]);
 
 	useEffect(() => {
 		console.log("useEffect triggered:", { slug, hasSession: !!session });
@@ -130,12 +129,8 @@ export default function CardScreen() {
 		}
 	};
 
-	const handleEducationalComplete = (
-		score: number,
-		earnedAchievements: any[],
-	) => {
+	const handleEducationalComplete = (score: number) => {
 		setEducationalScore(score);
-		setAchievements(earnedAchievements);
 		setCurrentSection("guided");
 	};
 
@@ -202,10 +197,9 @@ export default function CardScreen() {
 				<CompletionScreen
 					card={card}
 					finalScore={educationalScore}
-					achievements={achievements}
 					onContinue={handleCardComplete}
 				/>
 			)}
 		</SafeAreaView>
 	);
-}
+} 

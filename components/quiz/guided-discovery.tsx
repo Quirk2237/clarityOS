@@ -452,7 +452,7 @@ export function GuidedDiscovery({
 				{/* Header */}
 				<View className="p-4 border-b border-border">
 					<View className="flex-row justify-between items-center mb-3">
-						<Button variant="ghost" size="sm" onPress={onExit}>
+						<Button variant="white" size="sm" onPress={onExit}>
 							<Text className="text-lg">✕</Text>
 						</Button>
 
@@ -579,7 +579,7 @@ export function GuidedDiscovery({
 								/>
 
 								<Button
-									variant="default"
+									variant="white"
 									size="lg"
 									onPress={handleEnhancedSubmit}
 									disabled={!input.trim() || isLoading}

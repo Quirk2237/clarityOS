@@ -341,34 +341,9 @@ export async function endUserSession(
 	return { data, error };
 }
 
-// Achievements Operations
-export async function awardAchievement(
-	userId: string,
-	achievementType: Tables["achievements"]["Insert"]["achievement_type"],
-	achievementData: any = {},
-) {
-	const { data, error } = await supabase
-		.from("achievements")
-		.insert({
-			user_id: userId,
-			achievement_type: achievementType,
-			achievement_data: achievementData,
-		})
-		.select()
-		.single();
 
-	return { data, error };
-}
 
-export async function getUserAchievements(userId: string) {
-	const { data, error } = await supabase
-		.from("achievements")
-		.select("*")
-		.eq("user_id", userId)
-		.order("earned_at", { ascending: false });
 
-	return { data, error };
-}
 
 // Calculate card progress based on completed sections
 export async function getCardProgress(userId: string, cardSlug: string) {

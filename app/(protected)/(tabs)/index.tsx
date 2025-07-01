@@ -26,6 +26,87 @@ interface CardWithProgress {
 	card_status?: "open" | "coming_soon";
 }
 
+// Card Cover Component
+const CardCover = ({ 
+	imageUrl, 
+	slug, 
+	cardName 
+}: { 
+	imageUrl: string | null; 
+	slug: string; 
+	cardName: string;
+}) => {
+	const [imageError, setImageError] = useState(false);
+	const imageSource = getCardImage(imageUrl, slug);
+
+	// Reset error state when image source changes
+	useEffect(() => {
+		setImageError(false);
+	}, [imageSource]);
+
+	// Debug logging to see what we're getting
+	useEffect(() => {
+		console.log(`Card: ${cardName}, imageUrl: ${imageUrl}, slug: ${slug}`);
+		console.log(`imageSource:`, imageSource);
+		console.log(`imageSource type:`, typeof imageSource);
+		if (imageSource && typeof imageSource === 'object') {
+			console.log(`imageSource keys:`, Object.keys(imageSource));
+		}
+	}, [imageSource, cardName, imageUrl, slug]);
+
+	// Only render if we have a valid image source and no error
+	if (!imageSource || imageError) {
+		console.log(`Not rendering image for ${cardName}: imageSource=${!!imageSource}, imageError=${imageError}`);
+		return null;
+	}
+
+	// Check if imageSource is a string (URL) or an object (SVG component)
+	const isUrl = typeof imageSource === 'string';
+	const isSvgComponent = imageSource && typeof imageSource === 'object' && 
+		(imageSource.default || typeof imageSource === 'function');
+
+	console.log(`Card ${cardName}: isUrl=${isUrl}, isSvgComponent=${isSvgComponent}`);
+
+	if (!isUrl && !isSvgComponent) {
+		console.log(`No valid image format for ${cardName}`);
+		return null;
+	}
+
+	return (
+		<View className="items-center mb-6">
+			{isUrl ? (
+				<Image
+					source={{ uri: imageSource }}
+					className="w-full h-48"
+					contentFit="contain"
+					onError={(error) => {
+						setImageError(true);
+						console.log(`Failed to load image for card: ${cardName}`, error);
+					}}
+					onLoad={() => {
+						console.log(`Successfully loaded image for card: ${cardName}`);
+					}}
+				/>
+			) : isSvgComponent ? (
+				<View className="w-full h-48 items-center justify-center">
+					{imageSource.default ? 
+						React.createElement(imageSource.default, {
+							width: '100%',
+							height: '100%',
+							style: { maxWidth: 300, maxHeight: 192 }
+						}) :
+						React.createElement(imageSource, {
+							width: '100%',
+							height: '100%',
+							style: { maxWidth: 300, maxHeight: 192 }
+						})
+					}
+				</View>
+			) : null}
+		</View>
+	);
+};
+
 // Unified Card Component for all cards
 const Card = ({ 
 	card, 
@@ -34,7 +115,6 @@ const Card = ({
 	card: CardWithProgress; 
 	onPress: () => void;
 }) => {
-	const [imageError, setImageError] = useState(false);
 	const isCompleted = card.status === "completed";
 	const isStarted = card.status === "in_progress";
 	const isComingSoon = card.card_status === "coming_soon";
@@ -52,7 +132,6 @@ const Card = ({
 					shadowOpacity: 0.15,
 					shadowRadius: 12,
 					elevation: 8,
-					minHeight: 420,
 				}}
 			>
 				{/* Menu dots */}
@@ -62,55 +141,12 @@ const Card = ({
 					</View>
 				</View>
 
-				{/* Image/Illustration area */}
-				<View className="flex-1 items-center justify-center mb-6">
-					{getCardImage(card.image_url, card.slug) && !imageError ? (
-						<Image
-							source={getCardImage(card.image_url, card.slug)}
-							className="w-full h-48 rounded-large"
-							contentFit="cover"
-							onError={() => {
-								setImageError(true);
-								console.log(`Failed to load image for card: ${card.name}`);
-							}}
-						/>
-					) : (
-						<View className="relative w-full h-48 items-center justify-center">
-							{/* Fallback illustration for cards without images */}
-							<View className="absolute top-4 left-8 w-16 h-16 bg-white/30 rounded-full" />
-							<View className="absolute top-8 right-12 w-8 h-8 bg-brand-accent-yellow rounded-medium transform rotate-45" />
-							
-							{/* Main illustration elements */}
-							<View className="absolute top-12 left-1/2 transform -translate-x-1/2">
-								<View className="w-20 h-20 bg-white rounded-full items-center justify-center border-4 border-brand-neutrals-textPrimary">
-									<View className="w-12 h-12 bg-brand-accent-yellow rounded-full items-center justify-center">
-										<Text className="text-xl">🎯</Text>
-									</View>
-								</View>
-							</View>
-
-							{/* Character figure */}
-							<View className="absolute top-20 right-8">
-								<View className="w-16 h-20 bg-brand-accent-yellow rounded-t-full items-center justify-end pb-2">
-									<Text className="text-2xl">👤</Text>
-								</View>
-							</View>
-
-							{/* Additional elements */}
-							<View className="absolute bottom-8 left-4 w-6 h-6 bg-brand-neutrals-textPrimary rounded-small" />
-							<View className="absolute bottom-4 right-4">
-								<View className="w-10 h-8 bg-brand-primary-neonGreen rounded-small flex-row">
-									<View className="w-3 h-8 bg-brand-primary-vibrantGreen" />
-								</View>
-							</View>
-
-							{/* Geometric shapes */}
-							<View className="absolute bottom-12 left-1/2 transform -translate-x-1/2">
-								<View className="w-8 h-8 bg-brand-accent-yellow transform rotate-45" />
-							</View>
-						</View>
-					)}
-				</View>
+				{/* Card Cover - only shows when image is available */}
+				<CardCover 
+					imageUrl={card.image_url} 
+					slug={card.slug} 
+					cardName={card.name}
+				/>
 
 				{/* Card content */}
 				<View className="mb-6">
@@ -140,11 +176,11 @@ const Card = ({
 				<Button
 					onPress={isComingSoon ? undefined : onPress}
 					size="lg"
-					variant={isComingSoon ? "secondary" : "action"}
-					className="rounded-full py-4 shadow-md"
+					variant="white"
+					className="rounded-full py-4"
 					disabled={isComingSoon}
 				>
-					<Text className="text-brand-neutrals-textPrimary text-lg font-semibold">
+					<Text className="text-lg font-semibold">
 						{isComingSoon ? "Coming Soon" : (isStarted || isCompleted ? "Continue" : "Start Now")}
 					</Text>
 				</Button>
@@ -256,7 +292,7 @@ export default function Home() {
 						card={activeCard}
 						onPress={() => {
 							if (activeCard.card_status !== "coming_soon") {
-								router.push(`./cards/${activeCard.slug}`);
+								router.push(`../cards/${activeCard.slug}`);
 							}
 						}}
 					/>
@@ -277,7 +313,7 @@ export default function Home() {
 							card={card}
 							onPress={() => {
 								if (card.card_status !== "coming_soon") {
-									router.push(`./cards/${card.slug}`);
+									router.push(`../cards/${card.slug}`);
 								}
 							}}
 						/>

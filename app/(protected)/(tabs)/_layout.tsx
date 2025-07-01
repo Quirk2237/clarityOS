@@ -58,12 +58,6 @@ export default function TabLayout() {
 					),
 				}}
 			/>
-			<Tabs.Screen
-				name="index/cards/[slug]/index"
-				options={{
-					tabBarButton: () => null, // Hide from tab bar, but keep bar visible
-				}}
-			/>
 		</Tabs>
 	);
 }

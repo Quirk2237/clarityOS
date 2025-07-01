@@ -1,17 +1,16 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, Pressable } from "react-native";
 import { SafeAreaView } from "../safe-area-view";
 import { Text } from "../ui/text";
 import { Subtitle, Title } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
+import { Image } from "../image";
 import { Progress } from "@/components/ui/progress";
-import { HeartsDisplay } from "@/components/ui/hearts-display";
 import { useAuth } from "../../context/supabase-provider";
 import {
 	updateUserProgress,
 	recordQuestionAttempt,
-	awardAchievement,
 } from "../../lib/database-helpers";
 import { Database } from "../../lib/database.types";
 import { colors } from "@/constants/colors";
@@ -35,7 +34,7 @@ type Section = Database["public"]["Tables"]["card_sections"]["Row"] & {
 interface EducationalQuizProps {
 	card: Card;
 	section: Section;
-	onComplete: (score: number, achievements: any[]) => void;
+	onComplete: (score: number) => void;
 	onExit: () => void;
 }
 
@@ -43,7 +42,6 @@ interface QuestionAttempt {
 	questionId: string;
 	selectedAnswerId: string;
 	isCorrect: boolean;
-	timeSpent: number;
 }
 
 export function EducationalQuiz({
@@ -56,10 +54,7 @@ export function EducationalQuiz({
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 	const [showResult, setShowResult] = useState(false);
-	const [hearts, setHearts] = useState(5);
 	const [attempts, setAttempts] = useState<QuestionAttempt[]>([]);
-	const [startTime] = useState(Date.now());
-	const [questionStartTime, setQuestionStartTime] = useState(Date.now());
 
 	const questions = section.questions.sort(
 		(a, b) => a.order_index - b.order_index,
@@ -70,24 +65,18 @@ export function EducationalQuiz({
 			(a, b) => a.order_index - b.order_index,
 		) || [];
 
-	useEffect(() => {
-		setQuestionStartTime(Date.now());
-	}, [currentQuestionIndex]);
-
 	const handleAnswerSelect = async (answerId: string) => {
 		if (showResult || !session) return;
 
 		setSelectedAnswer(answerId);
 		const isCorrect =
 			answerChoices.find((a) => a.id === answerId)?.is_correct || false;
-		const timeSpent = Date.now() - questionStartTime;
 
 		// Record the attempt
 		const attempt: QuestionAttempt = {
 			questionId: currentQuestion.id,
 			selectedAnswerId: answerId,
 			isCorrect,
-			timeSpent,
 		};
 
 		setAttempts((prev) => [...prev, attempt]);
@@ -117,10 +106,6 @@ export function EducationalQuiz({
 			console.error("Error saving progress:", error);
 		}
 
-		if (!isCorrect) {
-			setHearts((prev) => Math.max(0, prev - 1));
-		}
-
 		setShowResult(true);
 	};
 
@@ -142,26 +127,11 @@ export function EducationalQuiz({
 		// Base score (0-100 based on accuracy)
 		const baseScore = Math.round(accuracy * 100);
 
-		// Time bonus (faster answers get bonus points)
-		const avgTimePerQuestion =
-			attempts.reduce((sum, a) => sum + a.timeSpent, 0) / totalQuestions;
-		const timeBonus = Math.max(
-			0,
-			Math.min(20, 20 - avgTimePerQuestion / 1000 / 10),
-		); // Bonus for answering under 10 seconds average
-
-		// Heart bonus (keeping hearts gives bonus)
-		const heartBonus = hearts * 2; // 2 points per remaining heart
-
-		const finalScore = Math.min(100, baseScore + timeBonus + heartBonus);
-
 		return {
-			finalScore: Math.round(finalScore),
+			finalScore: baseScore,
 			correctAnswers,
 			totalQuestions,
 			accuracy: Math.round(accuracy * 100),
-			timeBonus: Math.round(timeBonus),
-			heartBonus,
 		};
 	};
 
@@ -169,7 +139,6 @@ export function EducationalQuiz({
 		if (!session) return;
 
 		const scoreData = calculateScore();
-		const achievements: any[] = [];
 
 		try {
 			// Update final progress
@@ -185,65 +154,24 @@ export function EducationalQuiz({
 				},
 				section.id,
 			);
-
-			// Award achievements
-			if (scoreData.accuracy === 100) {
-				const perfectScore = await awardAchievement(
-					session.user.id,
-					"perfect_score",
-					{
-						cardSlug: card.slug,
-						sectionName: section.name,
-						score: scoreData.finalScore,
-					},
-				);
-				if (perfectScore.data) achievements.push(perfectScore.data);
-			}
-
-			if (scoreData.finalScore >= 90) {
-				const fastLearner = await awardAchievement(
-					session.user.id,
-					"fast_learner",
-					{
-						cardSlug: card.slug,
-						sectionName: section.name,
-						score: scoreData.finalScore,
-					},
-				);
-				if (fastLearner.data) achievements.push(fastLearner.data);
-			}
 		} catch (error) {
 			console.error("Error completing quiz:", error);
 		}
 
-		onComplete(scoreData.finalScore, achievements);
+		onComplete(scoreData.finalScore);
 	};
 
-	if (hearts === 0) {
-		return (
-			<SafeAreaView className="flex-1 bg-neutral-900">
-				<View className="flex-1 items-center justify-center p-4">
-					<Text className="text-6xl mb-4">💔</Text>
-					<Title className="text-center mb-4">No hearts left!</Title>
-					<Text className="text-center text-muted-foreground mb-6">
-						Don&apos;t worry, you can try again. Learning takes practice!
-					</Text>
-					<Button variant="default" size="lg" onPress={onExit}>
-						<Text>Try Again Later</Text>
-					</Button>
-				</View>
-			</SafeAreaView>
-		);
-	}
-
 	return (
-		<SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center">
+		<SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center px-4">
 			{/* Centered Card Container */}
-			<View className="w-[92%] max-w-xl rounded-3xl p-4 pt-6 pb-0 shadow-lg items-stretch justify-between min-h-[80%]" style={{ minHeight: 520, backgroundColor: colors.primary }}>
+			<View 
+				className="w-full max-w-xl rounded-3xl p-3 shadow-lg" 
+				style={{ backgroundColor: colors.primary }}
+			>
 				{/* Close Button */}
-				<View className="absolute left-4 top-4 z-10">
+				<View style={{ position: 'absolute', left: 16, top: 16, zIndex: 10 }}>
 					<Button
-						variant="ghost"
+						variant="white"
 						size="icon"
 						onPress={onExit}
 						className="w-12 h-12 rounded-full items-center justify-center"
@@ -253,80 +181,186 @@ export function EducationalQuiz({
 					</Button>
 				</View>
 
-				{/* Quiz Content */}
-				<View className="flex-1 justify-between">
-					{/* Question */}
-					<Text className="text-2xl font-bold text-black mb-6 mt-2 text-left leading-tight">
+				{/* Question */}
+				<View style={{ paddingTop: 56, marginBottom: 20 }}>
+					<Text className="text-2xl font-bold text-black text-left leading-tight">
 						{currentQuestion?.question_text}
 					</Text>
-
-					{/* Answer Choices Grid */}
-					<View className="flex-row flex-wrap justify-between gap-y-4 mb-8">
-						{answerChoices.map((choice, idx) => {
-							const isSelected = selectedAnswer === choice.id;
-							const isCorrect = showResult && choice.is_correct;
-							const isWrong = showResult && isSelected && !choice.is_correct;
-							let borderColor = 'border-transparent';
-							if (isCorrect) borderColor = 'border-green-500';
-							else if (isWrong) borderColor = 'border-red-400';
-							else if (isSelected) borderColor = 'border-black';
-							const bgColor = isSelected ? 'bg-white/80' : 'bg-white';
-							return (
-								<Button
-									key={choice.id}
-									variant="ghost"
-									onPress={() => setSelectedAnswer(choice.id)}
-									disabled={showResult}
-									className={`w-[48%] min-h-28 rounded-2xl p-4 items-center justify-center border-2 ${bgColor} ${borderColor}`}
-									style={{ flexBasis: '48%' }}
-								>
-									{choice.icon && (
-										<Text className="text-3xl mb-2">{choice.icon}</Text>
-									)}
-									<Text className="text-center text-base font-medium text-black">
-										{choice.choice_text}
-									</Text>
-								</Button>
-							);
-						})}
-					</View>
-
-					{/* Feedback (optional, after check) */}
-					{showResult && (
-						<View className="mt-2 mb-4 p-4 rounded-xl bg-white/80 border border-black/20 items-center">
-							{selectedAnswer && answerChoices.find((a) => a.id === selectedAnswer)?.is_correct ? (
-								<Text className="text-xl font-semibold text-green-700">Correct! Great job! 🎉</Text>
-							) : (
-								<>
-									<Text className="text-xl font-semibold text-red-600 mb-1">Not quite right</Text>
-									<Text className="text-center text-base text-neutral-700">The correct answer is highlighted above. Keep learning!</Text>
-								</>
-							)}
-						</View>
-					)}
 				</View>
 
-				{/* Spacer for bottom controls */}
-				<View className="h-2" />
+				{/* Answer Choices Grid */}
+				<View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 }}>
+					{answerChoices.map((choice, idx) => {
+						const isSelected = selectedAnswer === choice.id;
+						const isCorrect = showResult && isSelected && choice.is_correct;
+						const isWrong = showResult && isSelected && !choice.is_correct;
+						const shouldShowCorrectAnswer = showResult && !isSelected && choice.is_correct && selectedAnswer && !answerChoices.find(a => a.id === selectedAnswer)?.is_correct;
+						
+						// Determine card styling based on state
+						let cardStyle = 'bg-white';
 
-				{/* Check Button */}
-				<View className="w-full mb-2">
+						return (
+							<View 
+								key={choice.id} 
+								style={{ 
+									width: '48%',
+									marginBottom: 16,
+									position: 'relative'
+								}}
+							>
+								<Pressable
+									onPress={() => !showResult && handleAnswerSelect(choice.id)}
+									disabled={showResult}
+									className={`w-full rounded-3xl p-4 ${cardStyle}`}
+									style={{
+										minHeight: 120,
+										alignItems: 'flex-start',
+										justifyContent: 'flex-start',
+										...(isSelected && {
+											shadowColor: '#000',
+											shadowOffset: { width: 0, height: 2 },
+											shadowOpacity: 0.1,
+											shadowRadius: 8,
+											elevation: 3,
+										})
+									}}
+								>
+									{/* Icon/Image */}
+									<View className="mb-6">
+										{choice.icon && (
+											<Image
+												source={{ uri: choice.icon }}
+												contentFit="contain"
+												style={{
+													width: 40,
+													height: 40,
+												}}
+											/>
+										)}
+									</View>
+									
+									{/* Text */}
+									<Text 
+										className="text-black leading-tight"
+										style={{ 
+											fontSize: 14,
+											lineHeight: 18,
+											textAlign: 'left'
+										}}
+									>
+										{choice.choice_text}
+									</Text>
+								</Pressable>
+
+								{/* Correct Answer Indicator - Green Circle with Checkmark */}
+								{isCorrect && (
+									<View 
+										className="absolute bg-green-500 rounded-full items-center justify-center"
+										style={{
+											width: 32,
+											height: 32,
+											top: 12,
+											right: 12,
+											shadowColor: '#000',
+											shadowOffset: { width: 0, height: 2 },
+											shadowOpacity: 0.2,
+											shadowRadius: 4,
+											elevation: 4,
+										}}
+									>
+										<Text className="text-white text-lg font-bold">✓</Text>
+									</View>
+								)}
+
+								{/* Wrong Answer Indicator */}
+								{isWrong && (
+									<View 
+										className="absolute bg-red-500 rounded-full items-center justify-center"
+										style={{
+											width: 32,
+											height: 32,
+											top: 12,
+											right: 12,
+											shadowColor: '#000',
+											shadowOffset: { width: 0, height: 2 },
+											shadowOpacity: 0.2,
+											shadowRadius: 4,
+											elevation: 4,
+										}}
+									>
+										<Text className="text-white text-lg font-bold">✕</Text>
+									</View>
+								)}
+
+								{/* Show Correct Answer when user was wrong */}
+								{shouldShowCorrectAnswer && (
+									<View 
+										className="absolute bg-green-500 rounded-full items-center justify-center"
+										style={{
+											width: 32,
+											height: 32,
+											top: 12,
+											right: 12,
+											shadowColor: '#000',
+											shadowOffset: { width: 0, height: 2 },
+											shadowOpacity: 0.2,
+											shadowRadius: 4,
+											elevation: 4,
+										}}
+									>
+										<Text className="text-white text-lg font-bold">✓</Text>
+									</View>
+								)}
+
+								{/* Selected Indicator (when not showing results) */}
+								{isSelected && !showResult && (
+									<View 
+										className="absolute bg-blue-500 rounded-full items-center justify-center"
+										style={{
+											width: 24,
+											height: 24,
+											top: 16,
+											right: 16,
+										}}
+									>
+										<View className="w-3 h-3 bg-white rounded-full" />
+									</View>
+								)}
+							</View>
+						);
+					})}
+				</View>
+
+				{/* Feedback (optional, after check) */}
+				{showResult && (
+					<View className="p-4 rounded-xl bg-white/80 border border-black/20 items-center" style={{ marginBottom: 20 }}>
+						{selectedAnswer && answerChoices.find((a) => a.id === selectedAnswer)?.is_correct ? (
+							<Text className="text-lg font-semibold text-green-700">Correct! Great job! 🎉</Text>
+						) : (
+							<>
+								<Text className="text-lg font-semibold text-red-600 mb-1">Not quite right</Text>
+								<Text className="text-center text-sm text-neutral-700">The correct answer is highlighted above. Keep learning!</Text>
+							</>
+						)}
+					</View>
+				)}
+
+				{/* Continue Button */}
+				<View style={{ marginBottom: 20, marginTop: 8 }}>
 					<Button
-						variant="default"
+						variant="white"
 						size="lg"
-						disabled={!selectedAnswer || showResult}
-						onPress={() => {
-							if (selectedAnswer) handleAnswerSelect(selectedAnswer);
-						}}
-						className="w-full rounded-2xl"
+						disabled={!showResult}
+						onPress={handleNext}
+						className="w-full rounded-2xl py-4"
 						style={{ backgroundColor: "rgba(255, 255, 255, 0.8)" }}
 					>
-						<Text className="font-semibold text-lg text-black">Check</Text>
+						<Text className="font-semibold text-lg text-black">Continue</Text>
 					</Button>
 				</View>
 
 				{/* Progress Bar */}
-				<View className="w-full mt-1 mb-2">
+				<View>
 					<Progress
 						value={currentQuestionIndex + (showResult ? 1 : 0)}
 						max={questions.length}
