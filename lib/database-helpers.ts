@@ -500,3 +500,59 @@ export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
 		return false;
 	}
 }
+
+// Reset/Delete Operations
+export async function deleteUserProgress(userId: string, cardId: string) {
+	const { data, error } = await supabase
+		.from("user_progress")
+		.delete()
+		.eq("user_id", userId)
+		.eq("card_id", cardId);
+
+	return { data, error };
+}
+
+export async function deleteQuestionAttemptsForCard(userId: string, cardId: string) {
+	// Get all questions for this card first
+	const { data: cardData, error: cardError } = await supabase
+		.from("cards")
+		.select(`
+			card_sections (
+				questions (id)
+			)
+		`)
+		.eq("id", cardId)
+		.single();
+
+	if (cardError || !cardData) {
+		return { data: null, error: cardError };
+	}
+
+	// Extract question IDs
+	const questionIds = cardData.card_sections
+		.flatMap((section: any) => section.questions)
+		.map((question: any) => question.id);
+
+	if (questionIds.length === 0) {
+		return { data: null, error: null };
+	}
+
+	// Delete question attempts for these questions
+	const { data, error } = await supabase
+		.from("question_attempts")
+		.delete()
+		.eq("user_id", userId)
+		.in("question_id", questionIds);
+
+	return { data, error };
+}
+
+export async function deleteAIConversation(userId: string, cardId: string) {
+	const { data, error } = await supabase
+		.from("ai_conversations")
+		.delete()
+		.eq("user_id", userId)
+		.eq("card_id", cardId);
+
+	return { data, error };
+}

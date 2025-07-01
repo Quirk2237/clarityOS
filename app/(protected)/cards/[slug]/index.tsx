@@ -9,7 +9,7 @@ import { getCard, getUserProgress } from "../../../../lib/database-helpers";
 import {
 	EducationalQuiz,
 	GuidedDiscovery,
-	CompletionScreen,
+	QuizCompletionModal,
 } from "../../../../components/quiz";
 import { Database } from "../../../../lib/database.types";
 
@@ -194,10 +194,12 @@ export default function CardScreen() {
 			)}
 
 			{currentSection === "completed" && (
-				<CompletionScreen
+				<QuizCompletionModal
 					card={card}
-					finalScore={educationalScore}
-					onContinue={handleCardComplete}
+					score={educationalScore}
+					onProceedToDiscovery={handleCardComplete}
+					onBackToHome={handleExit}
+					onClose={handleExit}
 				/>
 			)}
 		</SafeAreaView>

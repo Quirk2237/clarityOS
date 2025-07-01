@@ -8,9 +8,28 @@ import { Title, Subtitle } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/image";
 import { useAuth } from "../../../context/supabase-provider";
-import { getAllCardsWithProgress, getActiveCards } from "../../../lib/database-helpers";
+import { getActiveCards, getCard } from "../../../lib/database-helpers";
+import { ProgressManager } from "../../../lib/progress-manager";
 import { getCardImage } from "@/lib/card-images";
 import { colors } from "@/constants/colors";
+import {
+	EducationalQuiz,
+	GuidedDiscovery,
+	QuizCompletionModal,
+} from "../../../components/quiz";
+import { showNativeCardMenu } from "../../../components/ui/native-card-menu";
+import { Database } from "../../../lib/database.types";
+
+// Types
+type Card = Database["public"]["Tables"]["cards"]["Row"] & {
+	card_sections: (Database["public"]["Tables"]["card_sections"]["Row"] & {
+		questions: (Database["public"]["Tables"]["questions"]["Row"] & {
+			answer_choices: (Database["public"]["Tables"]["answer_choices"]["Row"] & {
+				icon: string | null;
+			})[];
+		})[];
+	})[];
+};
 
 interface CardWithProgress {
 	id: string;
@@ -24,6 +43,16 @@ interface CardWithProgress {
 	total: number;
 	status: string;
 	card_status?: "open" | "coming_soon";
+}
+
+// View states
+type ViewState = "home" | "educational" | "guided" | "completed";
+
+interface QuizState {
+	currentCard: Card | null;
+	currentSection: string;
+	educationalScore: number;
+	viewState: ViewState;
 }
 
 // Card Cover Component
@@ -110,15 +139,24 @@ const CardCover = ({
 // Unified Card Component for all cards
 const Card = ({ 
 	card, 
-	onPress
+	onPress,
+	onStartOver
 }: { 
 	card: CardWithProgress; 
 	onPress: () => void;
+	onStartOver: (cardId: string) => void;
 }) => {
 	const isCompleted = card.status === "completed";
 	const isStarted = card.status === "in_progress";
 	const isComingSoon = card.card_status === "coming_soon";
 	const backgroundColor = card.color || colors.primary;
+
+	const handleMenuPress = () => {
+		showNativeCardMenu({
+			cardName: card.name,
+			onStartOver: () => onStartOver(card.id)
+		});
+	};
 
 	return (
 		<View className="mx-4 mb-6">
@@ -136,9 +174,12 @@ const Card = ({
 			>
 				{/* Menu dots */}
 				<View className="flex-row justify-end mb-4">
-					<View className="bg-white/20 rounded-full p-2">
+					<Pressable 
+						className="bg-white/20 rounded-full p-2 active:bg-white/30"
+						onPress={handleMenuPress}
+					>
 						<Text className="text-white text-lg font-bold">⋯</Text>
-					</View>
+					</Pressable>
 				</View>
 
 				{/* Card Cover - only shows when image is available */}
@@ -194,48 +235,164 @@ export default function Home() {
 	const { session } = useAuth();
 	const [cards, setCards] = useState<CardWithProgress[]>([]);
 	const [loading, setLoading] = useState(true);
+	
+	// Quiz state
+	const [quizState, setQuizState] = useState<QuizState>({
+		currentCard: null,
+		currentSection: "educational",
+		educationalScore: 0,
+		viewState: "home",
+	});
 
 	const loadCardsWithProgress = async () => {
 		setLoading(true);
 		try {
+			const progressManager = new ProgressManager(session);
+
 			if (session?.user?.id) {
 				// Authenticated user - load cards with progress
-				const { data, error } = await getAllCardsWithProgress(session.user.id);
-				if (error) {
-					console.error("Error loading cards with progress:", error);
-				} else {
-					console.log("Loaded cards with progress:", data?.length, "cards");
-					setCards(data);
-				}
+				const cardsWithProgress = await progressManager.getAllCardsWithProgress();
+				console.log("Loaded cards with progress:", cardsWithProgress.length, "cards");
+				setCards(cardsWithProgress);
 			} else {
-				// Non-authenticated user - load cards without progress
+				// Non-authenticated user - load cards and merge with local progress
 				const { data, error } = await getActiveCards();
 				if (error) {
 					console.error("Error loading cards:", error);
 				} else if (data) {
 					console.log("Loaded active cards:", data.length, "cards");
-					// Transform data to match expected structure with default progress
-					const cardsWithDefaultProgress = data.map((card) => ({
-						id: card.id,
-						name: card.name,
-						slug: card.slug,
-						description: card.description,
-						order_index: card.order_index,
-						image_url: card.image_url,
-						color: card.color,
-						progress: 0,
-						total: card.card_sections?.length || 0,
-						status: "not_started" as const,
-						card_status: card.status,
-					}));
-					console.log("Transformed cards:", cardsWithDefaultProgress.length, "cards");
-					setCards(cardsWithDefaultProgress);
+					
+					// Get local progress for each card
+					const cardsWithProgress = await Promise.all(
+						data.map(async (card) => {
+							const localProgress = await progressManager.getCardProgress(card.id);
+							return {
+								id: card.id,
+								name: card.name,
+								slug: card.slug,
+								description: card.description,
+								order_index: card.order_index,
+								image_url: card.image_url,
+								color: card.color,
+								progress: localProgress.progress,
+								total: localProgress.total,
+								status: localProgress.status,
+								card_status: card.status,
+								card_sections: card.card_sections || [],
+							};
+						})
+					);
+					
+					console.log("Cards with local progress:", cardsWithProgress.length, "cards");
+					setCards(cardsWithProgress);
 				}
 			}
 		} catch (error) {
 			console.error("Error loading cards:", error);
 		} finally {
 			setLoading(false);
+		}
+	};
+
+	// Load full card data when starting quiz
+	const loadFullCard = async (slug: string): Promise<Card | null> => {
+		try {
+			const { data: card, error } = await getCard(slug);
+			if (error) {
+				console.error("Error loading card:", error);
+				return null;
+			}
+			return card as Card;
+		} catch (error) {
+			console.error("Error loading card:", error);
+			return null;
+		}
+	};
+
+	// Handle card press - start quiz flow
+	const handleCardPress = async (card: CardWithProgress) => {
+		if (card.card_status === "coming_soon") return;
+
+		// Load full card data with sections and questions
+		const fullCard = await loadFullCard(card.slug);
+		if (!fullCard) {
+			console.error("Failed to load full card data");
+			return;
+		}
+
+		// Determine starting section based on progress
+		const progressManager = new ProgressManager(session);
+		const progress = await progressManager.getCardProgress(card.id);
+		
+		let startingSection = "educational";
+		let educationalScore = 0;
+		
+		if (progress.status === "completed") {
+			startingSection = "completed";
+		} else if (progress.progress > 0) {
+			// If there's any progress, check if educational is completed
+			// For now, we'll assume progress > 0 means educational is done
+			if (progress.progress >= 1) {
+				startingSection = "guided";
+			}
+		}
+
+		// Try to get educational score from local/database storage
+		// For now, we'll start with 0 and let the quiz flow handle it
+		
+		setQuizState({
+			currentCard: fullCard,
+			currentSection: startingSection,
+			educationalScore,
+			viewState: startingSection as ViewState,
+		});
+	};
+
+	// Quiz event handlers
+	const handleEducationalComplete = (score: number) => {
+		setQuizState(prev => ({
+			...prev,
+			educationalScore: score,
+			currentSection: "guided",
+			viewState: "guided",
+		}));
+	};
+
+	const handleGuidedComplete = () => {
+		setQuizState(prev => ({
+			...prev,
+			currentSection: "completed",
+			viewState: "completed",
+		}));
+	};
+
+	const handleQuizExit = () => {
+		setQuizState({
+			currentCard: null,
+			currentSection: "educational",
+			educationalScore: 0,
+			viewState: "home",
+		});
+		// Refresh cards to update progress
+		loadCardsWithProgress();
+	};
+
+	const handleCardComplete = () => {
+		// Return to home and refresh
+		handleQuizExit();
+	};
+
+	// Handle start over functionality
+	const handleStartOver = async (cardId: string) => {
+		try {
+			const progressManager = new ProgressManager(session);
+			await progressManager.resetCardProgress(cardId);
+			
+			// Refresh cards to update progress
+			await loadCardsWithProgress();
+		} catch (error) {
+			console.error("Error resetting card progress:", error);
+			// You might want to show an error message to the user here
 		}
 	};
 
@@ -247,9 +404,53 @@ export default function Home() {
 	// Refresh data when screen comes into focus (user returns from card)
 	useFocusEffect(
 		useCallback(() => {
-			loadCardsWithProgress();
-		}, [session]),
+			if (quizState.viewState === "home") {
+				loadCardsWithProgress();
+			}
+		}, [session, quizState.viewState]),
 	);
+
+	// Render quiz views
+	if (quizState.viewState !== "home" && quizState.currentCard) {
+		const educationalSection = quizState.currentCard.card_sections.find(
+			(s) => s.type === "educational",
+		);
+		const guidedSection = quizState.currentCard.card_sections.find(
+			(s) => s.type === "guided"
+		);
+
+		return (
+			<>
+				{quizState.viewState === "educational" && educationalSection && (
+					<EducationalQuiz
+						card={quizState.currentCard}
+						section={educationalSection}
+						onComplete={handleEducationalComplete}
+						onExit={handleQuizExit}
+					/>
+				)}
+
+				{quizState.viewState === "guided" && guidedSection && (
+					<GuidedDiscovery
+						card={quizState.currentCard}
+						section={guidedSection}
+						onComplete={handleGuidedComplete}
+						onExit={handleQuizExit}
+						educationalScore={quizState.educationalScore}
+					/>
+				)}
+
+				{quizState.viewState === "completed" && (
+					<View className="flex-1 items-center justify-center bg-neutral-900">
+						<Text className="text-white text-xl">Card completed!</Text>
+						<Button onPress={handleCardComplete} className="mt-4">
+							<Text>Back to Home</Text>
+						</Button>
+					</View>
+				)}
+			</>
+		);
+	}
 
 	// Show all cards in order, with the first uncompleted card highlighted
 	const sortedCards = cards.sort((a, b) => a.order_index - b.order_index);
@@ -290,11 +491,8 @@ export default function Home() {
 				{activeCard && (
 					<Card
 						card={activeCard}
-						onPress={() => {
-							if (activeCard.card_status !== "coming_soon") {
-								router.push(`../cards/${activeCard.slug}`);
-							}
-						}}
+						onPress={() => handleCardPress(activeCard)}
+						onStartOver={handleStartOver}
 					/>
 				)}
 
@@ -311,11 +509,8 @@ export default function Home() {
 						<Card
 							key={card.id}
 							card={card}
-							onPress={() => {
-								if (card.card_status !== "coming_soon") {
-									router.push(`../cards/${card.slug}`);
-								}
-							}}
+							onPress={() => handleCardPress(card)}
+							onStartOver={handleStartOver}
 						/>
 					);
 				})}

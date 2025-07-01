@@ -7,11 +7,9 @@ import { Subtitle, Title } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Image } from "../image";
 import { Progress } from "@/components/ui/progress";
+import { QuizCompletionModal } from "./quiz-completion-modal";
 import { useAuth } from "../../context/supabase-provider";
-import {
-	updateUserProgress,
-	recordQuestionAttempt,
-} from "../../lib/database-helpers";
+import { ProgressManager } from "../../lib/progress-manager";
 import { Database } from "../../lib/database.types";
 import { colors } from "@/constants/colors";
 
@@ -55,6 +53,8 @@ export function EducationalQuiz({
 	const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 	const [showResult, setShowResult] = useState(false);
 	const [attempts, setAttempts] = useState<QuestionAttempt[]>([]);
+	const [showCompletionModal, setShowCompletionModal] = useState(false);
+	const [finalScore, setFinalScore] = useState(0);
 
 	const questions = section.questions.sort(
 		(a, b) => a.order_index - b.order_index,
@@ -66,7 +66,7 @@ export function EducationalQuiz({
 		) || [];
 
 	const handleAnswerSelect = async (answerId: string) => {
-		if (showResult || !session) return;
+		if (showResult) return;
 
 		setSelectedAnswer(answerId);
 		const isCorrect =
@@ -81,10 +81,11 @@ export function EducationalQuiz({
 
 		setAttempts((prev) => [...prev, attempt]);
 
-		// Save to database
+		// Save progress using ProgressManager
 		try {
-			await recordQuestionAttempt(
-				session.user.id,
+			const progressManager = new ProgressManager(session);
+			
+			await progressManager.recordQuestionAttempt(
 				currentQuestion.id,
 				answerId,
 				undefined,
@@ -92,12 +93,11 @@ export function EducationalQuiz({
 				isCorrect ? 10 : 0,
 			);
 
-			await updateUserProgress(
-				session.user.id,
+			await progressManager.updateProgress(
 				card.id,
 				{
 					status: "in_progress",
-					question_id: currentQuestion.id,
+					questionId: currentQuestion.id,
 				},
 				section.id,
 				currentQuestion.id,
@@ -136,21 +136,20 @@ export function EducationalQuiz({
 	};
 
 	const completeQuiz = async () => {
-		if (!session) return;
-
 		const scoreData = calculateScore();
 
 		try {
-			// Update final progress
-			await updateUserProgress(
-				session.user.id,
+			// Update final progress using ProgressManager
+			const progressManager = new ProgressManager(session);
+			
+			await progressManager.updateProgress(
 				card.id,
 				{
 					status: "completed",
 					score: scoreData.finalScore,
-					total_questions: scoreData.totalQuestions,
-					correct_answers: scoreData.correctAnswers,
-					completed_at: new Date().toISOString(),
+					totalQuestions: scoreData.totalQuestions,
+					correctAnswers: scoreData.correctAnswers,
+					completedAt: new Date().toISOString(),
 				},
 				section.id,
 			);
@@ -158,8 +157,38 @@ export function EducationalQuiz({
 			console.error("Error completing quiz:", error);
 		}
 
-		onComplete(scoreData.finalScore);
+		// Show completion modal instead of immediately calling onComplete
+		setFinalScore(scoreData.finalScore);
+		setShowCompletionModal(true);
 	};
+
+	const handleProceedToDiscovery = () => {
+		setShowCompletionModal(false);
+		onComplete(finalScore); // This will trigger navigation to guided discovery
+	};
+
+	const handleBackToHome = () => {
+		setShowCompletionModal(false);
+		onExit(); // This will go back to home/card selection
+	};
+
+	const handleCloseModal = () => {
+		setShowCompletionModal(false);
+		// Stay on current screen - user can continue or exit manually
+	};
+
+	// Show completion modal if quiz is completed
+	if (showCompletionModal) {
+		return (
+			<QuizCompletionModal
+				card={card}
+				score={finalScore}
+				onProceedToDiscovery={handleProceedToDiscovery}
+				onBackToHome={handleBackToHome}
+				onClose={handleCloseModal}
+			/>
+		);
+	}
 
 	return (
 		<SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center px-4">
@@ -347,16 +376,26 @@ export function EducationalQuiz({
 
 				{/* Continue Button */}
 				<View style={{ marginBottom: 20, marginTop: 8 }}>
-					<Button
-						variant="white"
-						size="lg"
-						disabled={!showResult}
-						onPress={handleNext}
-						className="w-full rounded-2xl py-4"
-						style={{ backgroundColor: "rgba(255, 255, 255, 0.8)" }}
+					<Pressable
+						onPress={showResult ? handleNext : undefined}
+						className="w-full rounded-2xl py-4 items-center justify-center"
+						style={{ 
+							backgroundColor: showResult ? "rgba(255, 255, 255, 1)" : "rgba(255, 255, 255, 0.3)",
+							opacity: showResult ? 1 : 0.5,
+							minHeight: 56,
+						}}
 					>
-						<Text className="font-semibold text-lg text-black">Continue</Text>
-					</Button>
+						<Text 
+							className="font-semibold text-lg"
+							style={{ 
+								color: showResult ? "#000" : "#666",
+							}}
+						>
+							{showResult ? (
+								currentQuestionIndex < questions.length - 1 ? "Next Question" : "Complete Quiz"
+							) : "Select an Answer"}
+						</Text>
+					</Pressable>
 				</View>
 
 				{/* Progress Bar */}

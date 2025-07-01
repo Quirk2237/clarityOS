@@ -1,3 +1,3 @@
 export { EducationalQuiz } from "./educational-quiz";
 export { GuidedDiscovery } from "./guided-discovery";
-export { CompletionScreen } from "./completion-screen";
+export { QuizCompletionModal } from "./quiz-completion-modal";
