@@ -1,11 +1,11 @@
 import { View, ScrollView } from "react-native";
-import { SafeAreaView } from "@/components/safe-area-view";
-import { Text } from "@/components/ui/text";
-import { H1, H2, H3 } from "@/components/ui/typography";
+import { SafeAreaView } from "../safe-area-view";
+import { Text } from "../ui/text";
+import { Title, Subtitle, Caption } from "../ui/typography";
 import { Button } from "@/components/ui/button";
 import { AchievementBadge } from "@/components/ui/achievement-badge";
 import { Progress } from "@/components/ui/progress";
-import { Database } from "@/lib/database.types";
+import { Database } from "../../lib/database.types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Achievement = Database["public"]["Tables"]["achievements"]["Row"];
@@ -65,18 +65,18 @@ export function CompletionScreen({
 					{/* Header Animation */}
 					<View className="items-center mb-8 pt-8">
 						<Text className="text-8xl mb-4">{scoreData.emoji}</Text>
-						<H1 className="text-center mb-2" style={{ color: scoreData.color }}>
+						<Title className="text-center mb-2" style={{ color: scoreData.color }}>
 							{scoreData.message}
-						</H1>
-						<H2 className="text-center text-muted-foreground">
+						</Title>
+						<Subtitle className="text-center text-muted-foreground">
 							You unlocked {card.name} Mastery!
-						</H2>
+						</Subtitle>
 					</View>
 
 					{/* Score Display */}
 					<View className="bg-card rounded-2xl p-6 mb-6 shadow-lg border-2 border-border">
 						<View className="items-center mb-4">
-							<H3 className="text-center mb-2">Your Score</H3>
+							<Caption className="text-center mb-2">Your Score</Caption>
 							<View className="items-center">
 								<Text
 									className="text-6xl font-bold mb-2"
@@ -123,7 +123,7 @@ export function CompletionScreen({
 					{/* Achievements */}
 					{achievements.length > 0 && (
 						<View className="bg-card rounded-2xl p-6 mb-6 shadow-lg border-2 border-border">
-							<H3 className="text-center mb-4">🏆 New Achievements</H3>
+							<Caption className="text-center mb-4">🏆 New Achievements</Caption>
 							<View className="flex-row justify-center gap-4 flex-wrap">
 								{achievements.map((achievement, index) => (
 									<AchievementBadge
@@ -144,7 +144,7 @@ export function CompletionScreen({
 
 					{/* Card Progress Summary */}
 					<View className="bg-primary/10 rounded-2xl p-6 mb-6 border-2 border-primary/20">
-						<H3 className="text-center mb-4">{card.name} Card Complete!</H3>
+						<Caption className="text-center mb-4">{card.name} Card Complete!</Caption>
 						<View className="gap-3">
 							<View className="flex-row items-center justify-between">
 								<Text>Educational Quiz</Text>
@@ -215,7 +215,7 @@ export function CompletionScreen({
 
 					{/* Fun Facts */}
 					<View className="bg-muted/50 rounded-2xl p-6 border border-border">
-						<H3 className="text-center mb-4">💡 Did You Know?</H3>
+						<Caption className="text-center mb-4">💡 Did You Know?</Caption>
 						<Text className="text-center text-muted-foreground">
 							Brands with a clear purpose grow 2.5x faster than those without.
 							You&apos;re now ahead of 85% of businesses that struggle with

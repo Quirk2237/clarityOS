@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
 
-import { SafeAreaView } from "@/components/safe-area-view";
+import { SafeAreaView } from "../components/safe-area-view";
 import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
-import { H1, Muted } from "@/components/ui/typography";
+import { Text } from "../components/ui/text";
+import { Title, Caption } from "@/components/ui/typography";
 import WelcomeIllustration from "@/assets/welcome.svg";
 
 export default function WelcomeScreen() {
@@ -22,7 +22,7 @@ export default function WelcomeScreen() {
 	};
 
 	return (
-		<SafeAreaView className="flex flex-1" style={{ backgroundColor: "#ACFF64" }}>
+		<SafeAreaView className="flex flex-1" style={{ backgroundColor: "#9AFF9A" }}>
 			<View className="flex flex-1 items-center justify-center px-6 py-8">
 				{/* Welcome Illustration */}
 				<View className="flex-1 items-center justify-center">
@@ -31,15 +31,15 @@ export default function WelcomeScreen() {
 
 				{/* Content Section */}
 				<View className="items-center gap-y-4 mb-8">
-					<H1 className="text-center text-4xl font-bold" style={{ color: "#292929" }}>
+					<Title className="text-center text-4xl font-bold" style={{ color: "#000000" }}>
 						ClarityOS
-					</H1>
-					<Muted 
+					</Title>
+					<Caption 
 						className="text-center px-4 leading-relaxed text-base" 
-						style={{ color: "#292929" }}
+						style={{ color: "#000000" }}
 					>
 						Brand Strategy for the everyday{"\n"}business owner
-					</Muted>
+					</Caption>
 				</View>
 			</View>
 
@@ -48,11 +48,10 @@ export default function WelcomeScreen() {
 				<Button
 					size="lg"
 					onPress={handleGetStarted}
-					className="w-full rounded-full py-4"
-					style={{ backgroundColor: "#292929" }}
+					className="w-full rounded-full py-4 bg-black"
 					disabled={isLoading}
 				>
-					<Text className="text-sm font-semibold text-green-500">
+					<Text className="text-subtitle font-semibold text-white">
 						{isLoading ? "Loading..." : "Get Started"}
 					</Text>
 				</Button>

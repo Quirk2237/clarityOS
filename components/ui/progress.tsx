@@ -7,10 +7,10 @@ import * as React from "react";
 const progressVariants = cva("w-full rounded-full overflow-hidden", {
 	variants: {
 		variant: {
-			default: "bg-brand-gray-200",
-			success: "bg-brand-gray-200",
-			warning: "bg-brand-gray-200",
-			error: "bg-brand-gray-200",
+			default: "bg-brand-neutrals-textSecondary/20",
+			success: "bg-brand-neutrals-textSecondary/20",
+			warning: "bg-brand-neutrals-textSecondary/20",
+			error: "bg-brand-neutrals-textSecondary/20",
 		},
 		size: {
 			default: "h-2",
@@ -28,7 +28,7 @@ const progressVariants = cva("w-full rounded-full overflow-hidden", {
 const progressFillVariants = cva("h-full rounded-full transition-all", {
 	variants: {
 		variant: {
-			default: "bg-brand-primary",
+			default: "bg-brand-primary-vibrantGreen",
 			success: "bg-brand-success",
 			warning: "bg-brand-warning",
 			error: "bg-brand-error",
@@ -58,10 +58,10 @@ const Progress = React.forwardRef<
 		<View className="w-full">
 			{(showLabel || label) && (
 				<View className="flex-row justify-between items-center mb-1">
-					<Text className="text-sm font-medium text-brand-gray-700">
+					<Text className="text-caption font-medium text-brand-neutrals-textSecondary">
 						{label || "Progress"}
 					</Text>
-					<Text className="text-sm font-semibold text-brand-gray-900">
+					<Text className="text-caption font-semibold text-brand-neutrals-textPrimary">
 						{Math.round(percentage)}%
 					</Text>
 				</View>
@@ -102,8 +102,8 @@ const CircularProgress = React.forwardRef<View, CircularProgressProps>(
 			strokeWidth = 8,
 			className,
 			children,
-			color = "#FFD900", // Default to gold
-			backgroundColor = "#E8EAED",
+			color = "#FFD700", // Default to gold
+			backgroundColor = "#666666",
 			...props
 		},
 		ref,
@@ -180,13 +180,13 @@ const XPProgress = React.forwardRef<
 			>
 				{/* Background circle */}
 				<View
-					className="absolute border-4 border-brand-gray-200 rounded-full"
+					className="absolute border-4 border-brand-neutrals-textSecondary/20 rounded-full"
 					style={{ width: size, height: size }}
 				/>
 
 				{/* Progress circle - Note: This would need react-native-svg for actual implementation */}
 				<View
-					className="absolute border-4 border-brand-primary rounded-full"
+					className="absolute border-4 border-brand-primary-vibrantGreen rounded-full"
 					style={{
 						width: size,
 						height: size,
@@ -196,27 +196,24 @@ const XPProgress = React.forwardRef<
 
 				{/* Level display */}
 				<View className="absolute items-center justify-center">
-					<Text className="text-lg font-bold text-brand-gray-900">{level}</Text>
-					<Text className="text-xs font-medium text-brand-gray-600">Level</Text>
+					<Text className="text-subtitle font-bold text-brand-neutrals-textPrimary">{level}</Text>
+					<Text className="text-caption font-medium text-brand-neutrals-textSecondary">Level</Text>
 				</View>
 			</View>
-
 			{showLabel && (
 				<View className="mt-2 items-center">
-					<Text className="text-sm font-medium text-brand-gray-700">
+					<Text className="text-caption text-brand-neutrals-textSecondary">
 						{currentXP} / {xpToNext} XP
-					</Text>
-					<Text className="text-xs text-brand-gray-500">
-						{xpToNext - currentXP} XP to next level
 					</Text>
 				</View>
 			)}
 		</View>
 	);
 });
+
 XPProgress.displayName = "XPProgress";
 
-// Progress Card Component for Dashboard
+// Progress Card Component
 interface ProgressCardProps {
 	title: string;
 	progress: number;
@@ -229,43 +226,27 @@ const ProgressCard = ({
 	title,
 	progress,
 	total,
-	color = "#58CC02",
+	color = "#9AFF9A",
 	className,
 }: ProgressCardProps) => {
-	const percentage = Math.min(Math.max((progress / total) * 100, 0), 100);
+	const percentage = Math.min(100, Math.max(0, (progress / total) * 100));
 
 	return (
-		<View className={cn("", className)}>
+		<View className={cn("bg-brand-neutrals-cardBackground rounded-large p-4", className)}>
 			<View className="flex-row justify-between items-center mb-2">
-				<Text className="text-sm font-medium text-gray-700">{title}</Text>
-				<Text className="text-sm font-semibold text-gray-900">
-					{progress} / {total}
+				<Text className="text-body font-medium text-brand-neutrals-textPrimary">
+					{title}
+				</Text>
+				<Text className="text-caption font-semibold text-brand-neutrals-textSecondary">
+					{progress}/{total}
 				</Text>
 			</View>
-			<View className="bg-gray-200 h-2 rounded-full overflow-hidden">
-				<View
-					className="h-full rounded-full"
-					style={{
-						width: `${percentage}%`,
-						backgroundColor: color,
-					}}
-				/>
-			</View>
+			<Progress value={progress} max={total} size="sm" />
 		</View>
 	);
 };
 
-export {
-	Progress,
-	CircularProgress,
-	XPProgress,
-	ProgressCard,
-	progressVariants,
-	progressFillVariants,
-};
-export type {
-	ProgressProps,
-	CircularProgressProps,
-	XPProgressProps,
-	ProgressCardProps,
-};
+ProgressCard.displayName = "ProgressCard";
+
+export { Progress, CircularProgress, XPProgress, ProgressCard };
+export type { ProgressProps, CircularProgressProps, XPProgressProps, ProgressCardProps };

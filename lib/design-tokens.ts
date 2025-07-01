@@ -1,80 +1,42 @@
-// Brand colors - Primary brand identity
+// Brand colors - ClarityOS vibrant palette
 export const brandColors = {
-	// Primary Brand Colors - New clean green
+	// Primary Brand Colors - Vibrant ClarityOS palette
 	primary: {
-		DEFAULT: "#ACFF64", // Main brand color
-		50: "#F7FFF0",
-		100: "#EFFFDC",
-		200: "#DEFFB8",
-		300: "#CDFF94",
-		400: "#BBFF70",
-		500: "#ACFF64", // Main color
-		600: "#8AE642",
-		700: "#6FCE20",
-		800: "#55B600",
-		900: "#3A9E00",
+		vibrantGreen: "#9AFF9A",
+		neonGreen: "#7EFF7E",
+		vibrantPink: "#FF69B4",
+		hotPink: "#FF1493",
 	},
 
-	// Secondary Colors - Clean blue
-	secondary: {
-		DEFAULT: "#1CB0F6", // Sky Blue
-		50: "#E8F8FF",
-		100: "#CCF0FF",
-		200: "#8DE0FF",
-		300: "#4DD0FF",
-		400: "#1CB0F6",
-		500: "#0B7BC7",
-		600: "#064B98",
-		700: "#032F69",
-		800: "#01183A",
-		900: "#000C1B",
+	// Neutral Colors - Clean grays with dark background
+	neutrals: {
+		darkBackground: "#1A1A1A",
+		cardBackground: "#FFFFFF",
+		textPrimary: "#000000",
+		textSecondary: "#666666",
+		iconGray: "#999999",
 	},
 
 	// Accent Colors
 	accent: {
-		orange: "#FF9600", // Energy/Warning
-		red: "#FF4B4B", // Error/Danger
-		purple: "#CE82FF", // Special/Premium
-		yellow: "#FFD900", // Attention/Success
+		yellow: "#FFD700",
+		orange: "#FFA500",
 	},
 
 	// Semantic Colors
-	success: "#ACFF64", // Primary green
-	warning: "#FF9600", // Orange
-	error: "#FF4B4B", // Red
-	info: "#1CB0F6", // Secondary blue
-
-	// Neutral Colors - Clean grays
-	gray: {
-		50: "#F8F9FA",
-		100: "#F1F3F4",
-		200: "#E8EAED",
-		300: "#DADCE0",
-		400: "#BDC1C6",
-		500: "#9AA0A6",
-		600: "#80868B",
-		700: "#5F6368",
-		800: "#3C4043",
-		900: "#292929",
-	},
-
-	// Main dark background color
-	dark: "#292929",
+	success: "#9AFF9A", // Vibrant green
+	warning: "#FFA500", // Orange
+	error: "#FF1493", // Hot pink
+	info: "#7EFF7E", // Neon green
 };
 
-// Typography scale - Modern, clean typeface hierarchy
+// Typography scale - SF Pro Display based
 export const typography = {
 	// Font sizes with line heights - designed for readability
-	display: { fontSize: 32, lineHeight: 40, letterSpacing: -0.5 },
-	h1: { fontSize: 28, lineHeight: 36, letterSpacing: -0.4 },
-	h2: { fontSize: 24, lineHeight: 32, letterSpacing: -0.3 },
-	h3: { fontSize: 20, lineHeight: 28, letterSpacing: -0.2 },
-	h4: { fontSize: 18, lineHeight: 26 },
-	body: { fontSize: 16, lineHeight: 24 },
-	bodySmall: { fontSize: 14, lineHeight: 20 },
-	button: { fontSize: 16, lineHeight: 20 },
+	title: { fontSize: 24, lineHeight: 32, letterSpacing: -0.3 },
+	subtitle: { fontSize: 16, lineHeight: 24, letterSpacing: -0.2 },
+	body: { fontSize: 14, lineHeight: 20 },
 	caption: { fontSize: 12, lineHeight: 16, letterSpacing: 0.2 },
-	overline: { fontSize: 10, lineHeight: 12, letterSpacing: 1 },
 
 	// Font weights
 	weights: {
@@ -82,6 +44,13 @@ export const typography = {
 		medium: "500",
 		semibold: "600",
 		bold: "700",
+	},
+
+	// Line heights
+	lineHeights: {
+		tight: 1.2,
+		normal: 1.4,
+		relaxed: 1.6,
 	},
 };
 
@@ -92,147 +61,275 @@ export const spacing = {
 	md: 16,
 	lg: 24,
 	xl: 32,
-	"2xl": 48,
-	"3xl": 64,
-	"4xl": 96,
+	xxl: 48,
 };
 
 // Border radius scale - Modern, friendly rounded corners
 export const borderRadius = {
-	none: 0,
-	sm: 4,
-	md: 8,
-	lg: 12,
-	xl: 16,
-	"2xl": 24,
+	small: 8,
+	medium: 16,
+	large: 24,
 	full: 9999,
 };
 
 // Enhanced shadow system with clean, modern shadows
 export const shadows = {
 	// Standard shadows
-	sm: {
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 1 },
-		shadowOpacity: 0.1,
-		shadowRadius: 2,
-		elevation: 2,
-	},
-	md: {
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.15,
-		shadowRadius: 4,
-		elevation: 4,
-	},
-	lg: {
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.2,
-		shadowRadius: 8,
-		elevation: 8,
-	},
-
-	// Brand-specific shadows
-	primary: {
-		shadowColor: brandColors.primary[600],
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.3,
-		shadowRadius: 8,
-		elevation: 6,
-	},
-	secondary: {
-		shadowColor: brandColors.secondary[600],
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.3,
-		shadowRadius: 8,
-		elevation: 6,
-	},
-	warning: {
-		shadowColor: brandColors.accent.orange,
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.3,
-		shadowRadius: 8,
-		elevation: 6,
-	},
-	error: {
-		shadowColor: brandColors.accent.red,
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.3,
-		shadowRadius: 8,
-		elevation: 6,
-	},
-
-	// Card shadows
 	card: {
 		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 2 },
+		shadowOffset: { width: 0, height: 4 },
 		shadowOpacity: 0.1,
-		shadowRadius: 8,
+		shadowRadius: 12,
 		elevation: 3,
+	},
+	elevated: {
+		shadowColor: "#000",
+		shadowOffset: { width: 0, height: 8 },
+		shadowOpacity: 0.15,
+		shadowRadius: 24,
+		elevation: 8,
 	},
 };
 
-// Layout constants - Grid system and breakpoints
+// Layout constants - Mobile optimized
 export const layout = {
-	// Container max widths
-	container: {
-		sm: 640,
-		md: 768,
-		lg: 1024,
-		xl: 1280,
+	// Mobile viewport
+	mobileViewport: {
+		width: 375,
+		height: 812,
 	},
 
-	// Breakpoints for responsive design
-	breakpoints: {
-		sm: 640,
-		md: 768,
-		lg: 1024,
-		xl: 1280,
+	// Safe area
+	safeArea: {
+		top: 44,
+		bottom: 34,
+	},
+
+	// Status bar
+	statusBar: {
+		height: 44,
+		backgroundColor: "transparent",
+		textColor: "white",
+	},
+
+	// Tab bar
+	tabBar: {
+		height: 83,
+		backgroundColor: "#1A1A1A",
+		iconSize: 24,
 	},
 };
 
 // Enhanced color system
 export const colorSystem = {
-	background: brandColors.gray[50],
-	foreground: brandColors.gray[900],
-	card: "#FFFFFF",
-	cardForeground: brandColors.gray[900],
-	border: brandColors.gray[200],
-	input: brandColors.gray[100],
-	muted: brandColors.gray[100],
-	mutedForeground: brandColors.gray[600],
-	accent: brandColors.primary[50],
-	accentForeground: brandColors.primary[900],
+	background: brandColors.neutrals.darkBackground,
+	foreground: brandColors.neutrals.textPrimary,
+	card: brandColors.neutrals.cardBackground,
+	cardForeground: brandColors.neutrals.textPrimary,
+	popover: brandColors.neutrals.cardBackground,
+	popoverForeground: brandColors.neutrals.textPrimary,
+	primary: brandColors.primary.vibrantGreen,
+	primaryForeground: brandColors.neutrals.textPrimary,
+	secondary: brandColors.primary.neonGreen,
+	secondaryForeground: brandColors.neutrals.textPrimary,
+	muted: brandColors.neutrals.textSecondary,
+	mutedForeground: brandColors.neutrals.iconGray,
+	accent: brandColors.primary.vibrantPink,
+	accentForeground: "#FFFFFF",
+	destructive: brandColors.primary.hotPink,
+	destructiveForeground: "#FFFFFF",
+	border: brandColors.neutrals.textSecondary,
+	input: brandColors.neutrals.textSecondary,
+	ring: brandColors.primary.vibrantGreen,
 };
 
-// Animation and timing constants
-export const animation = {
-	// Duration presets
-	duration: {
-		fast: 150,
-		normal: 200,
-		slow: 300,
-		slower: 500,
+// Component-specific tokens
+export const componentTokens = {
+	appHeader: {
+		structure: "Centered app name with status bar overlay",
+		typography: "Medium weight, white text",
+		positioning: "Fixed at top with safe area padding",
 	},
 
-	// Easing functions
-	easing: {
-		linear: "linear",
-		ease: "ease",
-		easeIn: "ease-in",
-		easeOut: "ease-out",
-		easeInOut: "ease-in-out",
+	cardContainer: {
+		structure: "Full-width rounded container with vibrant background",
+		backgroundColor: "Primary vibrant colors (green/pink)",
+		borderRadius: "large (24px)",
+		padding: "lg (24px)",
+		margin: "md (16px) horizontal",
+	},
+
+	questionCard: {
+		structure: "Title + grid of answer options + action button",
+		title: {
+			fontSize: 24,
+			fontWeight: "bold",
+			color: "black",
+			marginBottom: 24,
+		},
+		optionsGrid: {
+			layout: "2x2 grid",
+			gap: 12,
+			marginBottom: 24,
+		},
+	},
+
+	optionCard: {
+		structure: "Icon + description text in white rounded container",
+		backgroundColor: "white",
+		borderRadius: "medium (16px)",
+		padding: "md (16px)",
+		minHeight: 80,
+		layout: "Vertical stack with icon at top, text below",
+		icon: {
+			size: 32,
+			marginBottom: 8,
+			colors: ["yellow", "orange", "blue", "green"],
+		},
+		text: {
+			fontSize: 14,
+			fontWeight: "regular",
+			color: "black",
+			lineHeight: 1.4,
+		},
+	},
+
+	actionButton: {
+		structure: "Full-width rounded button with centered text",
+		backgroundColor: "Semi-transparent white (rgba(255,255,255,0.3))",
+		borderRadius: "full",
+		padding: "md (16px) vertical",
+		text: {
+			fontSize: 16,
+			fontWeight: "semibold",
+			color: "black",
+		},
+		states: {
+			default: "Semi-transparent white background",
+			hover: "Slightly more opaque",
+			pressed: "Reduced opacity",
+		},
+	},
+
+	informationCard: {
+		structure: "Illustration + title + subtitle + CTA button",
+		illustration: {
+			style: "Flat, geometric, colorful vector graphics",
+			position: "Top center",
+			colors: ["yellow", "green", "white", "black"],
+			style_notes: "Simple shapes, bold colors, minimal details",
+		},
+		content: {
+			title: {
+				fontSize: 24,
+				fontWeight: "bold",
+				marginBottom: 8,
+			},
+			subtitle: {
+				fontSize: 16,
+				fontWeight: "regular",
+				lineHeight: 1.4,
+				marginBottom: 32,
+			},
+		},
+	},
+
+	navigationTabs: {
+		structure: "Bottom fixed navigation with 3 tabs",
+		backgroundColor: "#1A1A1A",
+		items: [
+			{
+				label: "Settings",
+				icon: "gear/cog",
+				position: "left",
+			},
+			{
+				label: "Cards",
+				icon: "rectangle/card",
+				position: "center",
+				active: true,
+			},
+			{
+				label: "Dashboard",
+				icon: "grid/squares",
+				position: "right",
+			},
+		],
+		activeState: {
+			iconColor: "#9AFF9A",
+			textColor: "#9AFF9A",
+		},
+		inactiveState: {
+			iconColor: "#666666",
+			textColor: "#666666",
+		},
+	},
+
+	moreButton: {
+		structure: "Three dots in circle, positioned top-right",
+		backgroundColor: "Semi-transparent white",
+		size: 32,
+		borderRadius: "full",
+		position: "absolute top-right with 16px margin",
 	},
 };
 
-// Color contrast helper for accessibility
+// Illustration style guide
+export const illustrationStyle = {
+	style: "Flat vector graphics with geometric shapes",
+	characteristics: [
+		"Bold, saturated colors",
+		"Simple geometric forms",
+		"Minimal detail and complexity",
+		"High contrast color combinations",
+		"Abstract representations rather than realistic depictions",
+	],
+	commonElements: [
+		"Circles and rounded rectangles",
+		"Simplified human figures",
+		"Basic geometric shapes (triangles, squares)",
+		"Magnifying glasses, briefcases, megaphones as icons",
+		"Layered composition with overlapping elements",
+	],
+	colorUsage: [
+		"Yellow for highlights and important elements",
+		"Green for positive/success states",
+		"Black for contrast and definition",
+		"White for backgrounds and negative space",
+	],
+};
+
+// Design principles
+export const designPrinciples = {
+	visualHierarchy: "Use vibrant background colors to create primary focus areas, white cards for secondary content",
+	contrast: "High contrast between background and foreground elements for accessibility",
+	consistency: "Consistent spacing, border radius, and color usage across all components",
+	simplicity: "Clean, minimal interface with clear visual separation",
+	accessibility: "Strong color contrast, readable font sizes, clear interactive elements",
+};
+
+// Interaction patterns
+export const interactionPatterns = {
+	cardSelection: "Visual feedback on tap with slight opacity change",
+	buttonStates: "Hover and pressed states with opacity variations",
+	navigation: "Bottom tab navigation with active state highlighting",
+	scrolling: "Vertical scroll with card-based layout",
+};
+
+// Responsive guidelines
+export const responsiveGuidelines = {
+	mobile: "Design optimized for single-hand use with thumb-friendly interaction zones",
+	spacing: "Maintain consistent margins and padding across different screen sizes",
+	typography: "Ensure minimum touch target size of 44px for interactive elements",
+};
+
+// Utility function for contrast color
 export const getContrastColor = () => ({
-	primary: brandColors.primary[600],
-	secondary: brandColors.secondary[600],
-	text: brandColors.gray[900],
-	textMuted: brandColors.gray[600],
-	background: brandColors.gray[50],
-	surface: "#FFFFFF",
-	border: brandColors.gray[200],
+	primary: brandColors.primary.vibrantGreen,
+	secondary: brandColors.primary.neonGreen,
+	text: brandColors.neutrals.textPrimary,
+	textMuted: brandColors.neutrals.textSecondary,
+	background: brandColors.neutrals.darkBackground,
+	surface: brandColors.neutrals.cardBackground,
+	border: brandColors.neutrals.textSecondary,
 });

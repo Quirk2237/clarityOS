@@ -3,10 +3,10 @@ import { View, Text, Pressable } from "react-native";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = {
-	locked: "bg-brand-gray-300 shadow-brand-gray-400/40",
-	unlocked: "bg-brand-yellow shadow-yellow-600/60",
-	progress: "bg-brand-secondary shadow-brand-secondary-600/60",
-	special: "bg-brand-purple shadow-purple-600/60",
+	locked: "bg-brand-neutrals-textSecondary/30 shadow-brand-neutrals-textSecondary/40",
+	unlocked: "bg-brand-accent-yellow shadow-brand-accent-yellow/60",
+	progress: "bg-brand-primary-neonGreen shadow-brand-primary-neonGreen/60",
+	special: "bg-brand-primary-vibrantPink shadow-brand-primary-vibrantPink/60",
 };
 
 interface AchievementBadgeProps {
@@ -43,17 +43,17 @@ const AchievementBadge = ({
 		sm: {
 			container: "w-16 h-16",
 			icon: "text-2xl",
-			title: "text-xs",
+			title: "text-caption",
 		},
 		md: {
 			container: "w-20 h-20",
 			icon: "text-3xl",
-			title: "text-sm",
+			title: "text-body",
 		},
 		lg: {
 			container: "w-24 h-24",
 			icon: "text-4xl",
-			title: "text-base",
+			title: "text-subtitle",
 		},
 	};
 
@@ -83,7 +83,7 @@ const AchievementBadge = ({
 				className={cn(
 					"font-semibold text-center leading-tight",
 					sizeStyles[size].title,
-					unlocked ? "text-brand-gray-900" : "text-brand-gray-500",
+					unlocked ? "text-brand-neutrals-textPrimary" : "text-brand-neutrals-textSecondary",
 				)}
 			>
 				{title}
@@ -92,8 +92,8 @@ const AchievementBadge = ({
 			{description && (
 				<Text
 					className={cn(
-						"text-xs text-center mt-1 leading-tight",
-						unlocked ? "text-brand-gray-600" : "text-brand-gray-400",
+						"text-caption text-center mt-1 leading-tight",
+						unlocked ? "text-brand-neutrals-textSecondary" : "text-brand-neutrals-iconGray",
 					)}
 				>
 					{description}
@@ -102,13 +102,13 @@ const AchievementBadge = ({
 
 			{hasProgress && !unlocked && (
 				<View className="w-full mt-2">
-					<View className="bg-brand-gray-200 h-1 rounded-full overflow-hidden">
+					<View className="bg-brand-neutrals-textSecondary/20 h-1 rounded-full overflow-hidden">
 						<View
-							className="bg-brand-secondary h-full rounded-full"
+							className="bg-brand-primary-neonGreen h-full rounded-full"
 							style={{ width: `${(progress! / maxProgress!) * 100}%` }}
 						/>
 					</View>
-					<Text className="text-xs text-brand-gray-500 text-center mt-1">
+					<Text className="text-caption text-brand-neutrals-textSecondary text-center mt-1">
 						{progress} / {maxProgress}
 					</Text>
 				</View>
@@ -188,35 +188,35 @@ const AchievementShowcase = ({
 	return (
 		<View
 			className={cn(
-				"bg-white rounded-xl p-6 items-center shadow-lg border-2 border-brand-yellow",
+				"bg-brand-neutrals-cardBackground rounded-large p-6 items-center shadow-lg border-2 border-brand-accent-yellow",
 				className,
 			)}
 		>
-			<View className="bg-brand-yellow w-20 h-20 rounded-full items-center justify-center shadow-lg border-3 border-white mb-4">
+			<View className="bg-brand-accent-yellow w-20 h-20 rounded-full items-center justify-center shadow-lg border-3 border-white mb-4">
 				<Text className="text-4xl">{achievement.icon}</Text>
 			</View>
 
-			<Text className="text-h2 font-bold text-brand-gray-900 text-center mt-4">
+			<Text className="text-title font-bold text-brand-neutrals-textPrimary text-center mt-4">
 				{achievement.title}
 			</Text>
 
-			<Text className="text-body text-brand-gray-600 text-center mt-2">
-				{achievement.description}
-			</Text>
+			{achievement.description && (
+				<Text className="text-body text-brand-neutrals-textSecondary text-center mt-2">
+					{achievement.description}
+				</Text>
+			)}
 
 			<Pressable
 				onPress={onDismiss}
-				className="mt-6 bg-brand-primary px-8 py-3 rounded-lg active:scale-95"
+				className="mt-6 bg-brand-primary-vibrantGreen px-6 py-3 rounded-full"
 			>
-				<Text className="text-white font-semibold">Continue</Text>
+				<Text className="text-subtitle font-semibold text-brand-neutrals-textPrimary">
+					Awesome!
+				</Text>
 			</Pressable>
 		</View>
 	);
 };
 
 export { AchievementBadge, AchievementGrid, AchievementShowcase };
-export type {
-	AchievementBadgeProps,
-	AchievementGridProps,
-	AchievementShowcaseProps,
-};
+export type { AchievementBadgeProps, AchievementGridProps, AchievementShowcaseProps };

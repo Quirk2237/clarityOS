@@ -1,0 +1,265 @@
+{
+  "designSystem": {
+    "name": "ClarityOS Mobile Design System",
+    "version": "1.0.0",
+    "description": "A vibrant, card-based mobile design system with high contrast colors and modern illustrations",
+    
+    "colorPalette": {
+      "primary": {
+        "vibrantGreen": "#9AFF9A",
+        "neonGreen": "#7EFF7E",
+        "vibrantPink": "#FF69B4",
+        "hotPink": "#FF1493"
+      },
+      "neutrals": {
+        "darkBackground": "#1A1A1A",
+        "cardBackground": "#FFFFFF",
+        "textPrimary": "#000000",
+        "textSecondary": "#666666",
+        "iconGray": "#999999"
+      },
+      "accent": {
+        "yellow": "#FFD700",
+        "orange": "#FFA500"
+      }
+    },
+
+    "typography": {
+      "fontFamily": "SF Pro Display, -apple-system, BlinkMacSystemFont, system-ui",
+      "fontSizes": {
+        "title": "24px",
+        "subtitle": "16px", 
+        "body": "14px",
+        "caption": "12px"
+      },
+      "fontWeights": {
+        "regular": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700
+      },
+      "lineHeights": {
+        "tight": 1.2,
+        "normal": 1.4,
+        "relaxed": 1.6
+      }
+    },
+
+    "spacing": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "16px",
+      "lg": "24px",
+      "xl": "32px",
+      "xxl": "48px"
+    },
+
+    "borderRadius": {
+      "small": "8px",
+      "medium": "16px",
+      "large": "24px",
+      "full": "9999px"
+    },
+
+    "shadows": {
+      "card": "0 4px 12px rgba(0, 0, 0, 0.1)",
+      "elevated": "0 8px 24px rgba(0, 0, 0, 0.15)"
+    },
+
+    "layout": {
+      "mobileViewport": {
+        "width": "375px",
+        "height": "812px"
+      },
+      "safeArea": {
+        "top": "44px",
+        "bottom": "34px"
+      },
+      "statusBar": {
+        "height": "44px",
+        "backgroundColor": "transparent",
+        "textColor": "white"
+      },
+      "tabBar": {
+        "height": "83px",
+        "backgroundColor": "#1A1A1A",
+        "iconSize": "24px"
+      }
+    },
+
+    "components": {
+      "appHeader": {
+        "structure": "Centered app name with status bar overlay",
+        "typography": "Medium weight, white text",
+        "positioning": "Fixed at top with safe area padding"
+      },
+
+      "cardContainer": {
+        "structure": "Full-width rounded container with vibrant background",
+        "backgroundColor": "Primary vibrant colors (green/pink)",
+        "borderRadius": "large (24px)",
+        "padding": "lg (24px)",
+        "margin": "md (16px) horizontal"
+      },
+
+      "questionCard": {
+        "structure": "Title + grid of answer options + action button",
+        "title": {
+          "fontSize": "24px",
+          "fontWeight": "bold",
+          "color": "black",
+          "marginBottom": "24px"
+        },
+        "optionsGrid": {
+          "layout": "2x2 grid",
+          "gap": "12px",
+          "marginBottom": "24px"
+        }
+      },
+
+      "optionCard": {
+        "structure": "Icon + description text in white rounded container",
+        "backgroundColor": "white",
+        "borderRadius": "medium (16px)",
+        "padding": "md (16px)",
+        "minHeight": "80px",
+        "layout": "Vertical stack with icon at top, text below",
+        "icon": {
+          "size": "32px",
+          "marginBottom": "8px",
+          "colors": ["yellow", "orange", "blue", "green"]
+        },
+        "text": {
+          "fontSize": "14px",
+          "fontWeight": "regular",
+          "color": "black",
+          "lineHeight": "1.4"
+        }
+      },
+
+      "actionButton": {
+        "structure": "Full-width rounded button with centered text",
+        "backgroundColor": "Semi-transparent white (rgba(255,255,255,0.3))",
+        "borderRadius": "full",
+        "padding": "md (16px) vertical",
+        "text": {
+          "fontSize": "16px",
+          "fontWeight": "semibold",
+          "color": "black"
+        },
+        "states": {
+          "default": "Semi-transparent white background",
+          "hover": "Slightly more opaque",
+          "pressed": "Reduced opacity"
+        }
+      },
+
+      "informationCard": {
+        "structure": "Illustration + title + subtitle + CTA button",
+        "illustration": {
+          "style": "Flat, geometric, colorful vector graphics",
+          "position": "Top center",
+          "colors": ["yellow", "green", "white", "black"],
+          "style_notes": "Simple shapes, bold colors, minimal details"
+        },
+        "content": {
+          "title": {
+            "fontSize": "24px",
+            "fontWeight": "bold",
+            "marginBottom": "8px"
+          },
+          "subtitle": {
+            "fontSize": "16px",
+            "fontWeight": "regular",
+            "lineHeight": "1.4",
+            "marginBottom": "32px"
+          }
+        }
+      },
+
+      "navigationTabs": {
+        "structure": "Bottom fixed navigation with 3 tabs",
+        "backgroundColor": "#1A1A1A",
+        "items": [
+          {
+            "label": "Settings",
+            "icon": "gear/cog",
+            "position": "left"
+          },
+          {
+            "label": "Cards", 
+            "icon": "rectangle/card",
+            "position": "center",
+            "active": true
+          },
+          {
+            "label": "Dashboard",
+            "icon": "grid/squares",
+            "position": "right"
+          }
+        ],
+        "activeState": {
+          "iconColor": "#9AFF9A",
+          "textColor": "#9AFF9A"
+        },
+        "inactiveState": {
+          "iconColor": "#666666",
+          "textColor": "#666666"
+        }
+      },
+
+      "moreButton": {
+        "structure": "Three dots in circle, positioned top-right",
+        "backgroundColor": "Semi-transparent white",
+        "size": "32px",
+        "borderRadius": "full",
+        "position": "absolute top-right with 16px margin"
+      }
+    },
+
+    "illustrations": {
+      "style": "Flat vector graphics with geometric shapes",
+      "characteristics": [
+        "Bold, saturated colors",
+        "Simple geometric forms",
+        "Minimal detail and complexity",
+        "High contrast color combinations",
+        "Abstract representations rather than realistic depictions"
+      ],
+      "commonElements": [
+        "Circles and rounded rectangles",
+        "Simplified human figures",
+        "Basic geometric shapes (triangles, squares)",
+        "Magnifying glasses, briefcases, megaphones as icons",
+        "Layered composition with overlapping elements"
+      ],
+      "colorUsage": [
+        "Yellow for highlights and important elements",
+        "Green for positive/success states", 
+        "Black for contrast and definition",
+        "White for backgrounds and negative space"
+      ]
+    },
+
+    "designPrinciples": {
+      "visualHierarchy": "Use vibrant background colors to create primary focus areas, white cards for secondary content",
+      "contrast": "High contrast between background and foreground elements for accessibility",
+      "consistency": "Consistent spacing, border radius, and color usage across all components",
+      "simplicity": "Clean, minimal interface with clear visual separation",
+      "accessibility": "Strong color contrast, readable font sizes, clear interactive elements"
+    },
+
+    "interactionPatterns": {
+      "cardSelection": "Visual feedback on tap with slight opacity change",
+      "buttonStates": "Hover and pressed states with opacity variations",
+      "navigation": "Bottom tab navigation with active state highlighting",
+      "scrolling": "Vertical scroll with card-based layout"
+    },
+
+    "responsiveGuidelines": {
+      "mobile": "Design optimized for single-hand use with thumb-friendly interaction zones",
+      "spacing": "Maintain consistent margins and padding across different screen sizes",
+      "typography": "Ensure minimum touch target size of 44px for interactive elements"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ScrollView, View, Text } from "react-native";
-import { SafeAreaView } from "@/components/safe-area-view";
+import { SafeAreaView } from "../../components/safe-area-view";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {

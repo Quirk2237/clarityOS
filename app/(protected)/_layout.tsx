@@ -1,6 +1,6 @@
 import { Redirect, Stack } from "expo-router";
 
-import { useAuth } from "@/context/supabase-provider";
+import { useAuth } from "../../context/supabase-provider";
 
 export const unstable_settings = {
 	initialRouteName: "(tabs)",
@@ -20,7 +20,6 @@ export default function ProtectedLayout() {
 			}}
 		>
 			<Stack.Screen name="(tabs)" />
-			<Stack.Screen name="cards/[slug]/index" />
 			<Stack.Screen name="modal" options={{ presentation: "modal" }} />
 		</Stack>
 	);

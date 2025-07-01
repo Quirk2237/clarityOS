@@ -4,7 +4,7 @@ import * as React from "react";
 import { Platform, Text as RNText } from "react-native";
 import { cn } from "@/lib/utils";
 
-const H1 = React.forwardRef<TextRef, SlottableTextProps>(
+const Title = React.forwardRef<TextRef, SlottableTextProps>(
 	({ className, asChild = false, ...props }, ref) => {
 		const Component = asChild ? Slot.Text : RNText;
 		return (
@@ -12,7 +12,7 @@ const H1 = React.forwardRef<TextRef, SlottableTextProps>(
 				role="heading"
 				aria-level="1"
 				className={cn(
-					"web:scroll-m-20 text-4xl text-foreground font-extrabold tracking-tight lg:text-5xl web:select-text",
+					"text-title text-brand-neutrals-textPrimary font-bold tracking-tight web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -22,9 +22,9 @@ const H1 = React.forwardRef<TextRef, SlottableTextProps>(
 	},
 );
 
-H1.displayName = "H1";
+Title.displayName = "Title";
 
-const H2 = React.forwardRef<TextRef, SlottableTextProps>(
+const Subtitle = React.forwardRef<TextRef, SlottableTextProps>(
 	({ className, asChild = false, ...props }, ref) => {
 		const Component = asChild ? Slot.Text : RNText;
 		return (
@@ -32,7 +32,7 @@ const H2 = React.forwardRef<TextRef, SlottableTextProps>(
 				role="heading"
 				aria-level="2"
 				className={cn(
-					"web:scroll-m-20 border-b border-border pb-2 text-3xl text-foreground font-semibold tracking-tight first:mt-0 web:select-text",
+					"text-subtitle text-brand-neutrals-textPrimary font-medium tracking-tight web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -42,19 +42,14 @@ const H2 = React.forwardRef<TextRef, SlottableTextProps>(
 	},
 );
 
-H2.displayName = "H2";
+Subtitle.displayName = "Subtitle";
 
-const H3 = React.forwardRef<TextRef, SlottableTextProps>(
+const Body = React.forwardRef<TextRef, SlottableTextProps>(
 	({ className, asChild = false, ...props }, ref) => {
 		const Component = asChild ? Slot.Text : RNText;
 		return (
 			<Component
-				role="heading"
-				aria-level="3"
-				className={cn(
-					"web:scroll-m-20 text-2xl text-foreground font-semibold tracking-tight web:select-text",
-					className,
-				)}
+				className={cn("text-body text-brand-neutrals-textPrimary web:select-text", className)}
 				ref={ref}
 				{...props}
 			/>
@@ -62,19 +57,14 @@ const H3 = React.forwardRef<TextRef, SlottableTextProps>(
 	},
 );
 
-H3.displayName = "H3";
+Body.displayName = "Body";
 
-const H4 = React.forwardRef<TextRef, SlottableTextProps>(
+const Caption = React.forwardRef<TextRef, SlottableTextProps>(
 	({ className, asChild = false, ...props }, ref) => {
 		const Component = asChild ? Slot.Text : RNText;
 		return (
 			<Component
-				role="heading"
-				aria-level="4"
-				className={cn(
-					"web:scroll-m-20 text-xl text-foreground font-semibold tracking-tight web:select-text",
-					className,
-				)}
+				className={cn("text-caption text-brand-neutrals-textSecondary web:select-text", className)}
 				ref={ref}
 				{...props}
 			/>
@@ -82,22 +72,7 @@ const H4 = React.forwardRef<TextRef, SlottableTextProps>(
 	},
 );
 
-H4.displayName = "H4";
-
-const P = React.forwardRef<TextRef, SlottableTextProps>(
-	({ className, asChild = false, ...props }, ref) => {
-		const Component = asChild ? Slot.Text : RNText;
-		return (
-			<Component
-				className={cn("text-base text-foreground web:select-text", className)}
-				ref={ref}
-				{...props}
-			/>
-		);
-	},
-);
-
-P.displayName = "P";
+Caption.displayName = "Caption";
 
 const BlockQuote = React.forwardRef<TextRef, SlottableTextProps>(
 	({ className, asChild = false, ...props }, ref) => {
@@ -107,7 +82,7 @@ const BlockQuote = React.forwardRef<TextRef, SlottableTextProps>(
 				// @ts-ignore - role of blockquote renders blockquote element on the web
 				role={Platform.OS === "web" ? "blockquote" : undefined}
 				className={cn(
-					"mt-6 native:mt-4 border-l-2 border-border pl-6 native:pl-3 text-base text-foreground italic web:select-text",
+					"mt-6 native:mt-4 border-l-2 border-brand-neutrals-textSecondary pl-6 native:pl-3 text-body text-brand-neutrals-textPrimary italic web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -127,7 +102,7 @@ const Code = React.forwardRef<TextRef, SlottableTextProps>(
 				// @ts-ignore - role of code renders code element on the web
 				role={Platform.OS === "web" ? "code" : undefined}
 				className={cn(
-					"relative rounded-md bg-muted px-[0.3rem] py-[0.2rem] text-sm text-foreground font-semibold web:select-text",
+					"relative rounded-small bg-brand-neutrals-textSecondary/10 px-[0.3rem] py-[0.2rem] text-caption text-brand-neutrals-textPrimary font-semibold web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -145,7 +120,7 @@ const Lead = React.forwardRef<TextRef, SlottableTextProps>(
 		return (
 			<Component
 				className={cn(
-					"text-xl text-muted-foreground web:select-text",
+					"text-subtitle text-brand-neutrals-textSecondary web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -163,7 +138,7 @@ const Large = React.forwardRef<TextRef, SlottableTextProps>(
 		return (
 			<Component
 				className={cn(
-					"text-xl text-foreground font-semibold web:select-text",
+					"text-subtitle text-brand-neutrals-textPrimary font-semibold web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -181,7 +156,7 @@ const Small = React.forwardRef<TextRef, SlottableTextProps>(
 		return (
 			<Component
 				className={cn(
-					"text-sm text-foreground font-medium leading-none web:select-text",
+					"text-caption text-brand-neutrals-textPrimary font-medium leading-none web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -199,7 +174,7 @@ const Muted = React.forwardRef<TextRef, SlottableTextProps>(
 		return (
 			<Component
 				className={cn(
-					"text-sm text-muted-foreground web:select-text",
+					"text-caption text-brand-neutrals-textSecondary web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -211,4 +186,4 @@ const Muted = React.forwardRef<TextRef, SlottableTextProps>(
 
 Muted.displayName = "Muted";
 
-export { BlockQuote, Code, H1, H2, H3, H4, Large, Lead, Muted, P, Small };
+export { BlockQuote, Code, Title, Subtitle, Body, Caption, Large, Lead, Muted, Small };

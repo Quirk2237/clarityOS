@@ -10,20 +10,20 @@ export default function TabLayout() {
 	return (
 		<Tabs
 			screenOptions={{
-				tabBarActiveTintColor: brandColors.primary.DEFAULT,
+				tabBarActiveTintColor: brandColors.primary.vibrantGreen,
 				headerShown: false,
 				tabBarButton: HapticTab,
 				tabBarStyle: Platform.select({
 					ios: {
-						backgroundColor: "#292929", // Dark background
-						borderTopColor: brandColors.gray[700], // Subtle border
+						backgroundColor: brandColors.neutrals.darkBackground,
+						borderTopColor: brandColors.neutrals.textSecondary,
 						borderTopWidth: 1,
 						height: 84, // Increase height to accommodate spacing
 						paddingBottom: 8, // Add bottom padding
 					},
 					default: {
-						backgroundColor: "#292929", // Dark background
-						borderTopColor: brandColors.gray[700], // Subtle border
+						backgroundColor: brandColors.neutrals.darkBackground,
+						borderTopColor: brandColors.neutrals.textSecondary,
 						borderTopWidth: 1,
 						height: 70, // Increase height to accommodate spacing
 						paddingBottom: 8, // Add bottom padding
@@ -32,11 +32,20 @@ export default function TabLayout() {
 			}}
 		>
 			<Tabs.Screen
+				name="settings"
+				options={{
+					title: "Settings",
+					tabBarIcon: ({ color }) => (
+						<IconSymbol size={28} name="gear" color={color} />
+					),
+				}}
+			/>
+			<Tabs.Screen
 				name="index"
 				options={{
-					title: "Home",
+					title: "Cards",
 					tabBarIcon: ({ color }) => (
-						<IconSymbol size={28} name="house.fill" color={color} />
+						<IconSymbol size={28} name="square" color={color} />
 					),
 				}}
 			/>
@@ -50,12 +59,9 @@ export default function TabLayout() {
 				}}
 			/>
 			<Tabs.Screen
-				name="settings"
+				name="index/cards/[slug]/index"
 				options={{
-					title: "Settings",
-					tabBarIcon: ({ color }) => (
-						<IconSymbol size={28} name="gear" color={color} />
-					),
+					tabBarButton: () => null, // Hide from tab bar, but keep bar visible
 				}}
 			/>
 		</Tabs>

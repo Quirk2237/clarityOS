@@ -13,7 +13,7 @@ import Feather from '@expo/vector-icons/Feather';
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 
-import { AuthProvider } from "@/context/supabase-provider";
+import { AuthProvider } from "../context/supabase-provider";
 import { colors } from "@/constants/colors";
 
 // Disable Reanimated strict mode warnings

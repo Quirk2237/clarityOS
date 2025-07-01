@@ -1,13 +1,14 @@
+import * as React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { View, ScrollView, Pressable } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
-import { SafeAreaView } from "@/components/safe-area-view";
-import { Text } from "@/components/ui/text";
-import { H1, H2 } from "@/components/ui/typography";
+import { SafeAreaView } from "../../../components/safe-area-view";
+import { Text } from "../../../components/ui/text";
+import { Title, Subtitle } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/image";
-import { useAuth } from "@/context/supabase-provider";
-import { getAllCardsWithProgress, getActiveCards } from "@/lib/database-helpers";
+import { useAuth } from "../../../context/supabase-provider";
+import { getAllCardsWithProgress, getActiveCards } from "../../../lib/database-helpers";
 import { getCardImage } from "@/lib/card-images";
 
 interface CardWithProgress {
@@ -17,29 +18,32 @@ interface CardWithProgress {
 	description: string | null;
 	order_index: number;
 	image_url: string | null;
+	color: string | null;
 	progress: number;
 	total: number;
 	status: string;
 }
 
-// Featured Card Component for the main card display
-const FeaturedCard = ({ 
+// Unified Card Component for all cards
+const Card = ({ 
 	card, 
-	onPress 
+	onPress
 }: { 
 	card: CardWithProgress; 
-	onPress: () => void 
+	onPress: () => void;
 }) => {
 	const [imageError, setImageError] = useState(false);
 	const isCompleted = card.status === "completed";
 	const isStarted = card.status === "in_progress";
+	const backgroundColor = card.color || "#ACFF64";
 
 	return (
 		<View className="mx-4 mb-6">
 			<Pressable
 				onPress={onPress}
-				className="bg-[#ACFF64] rounded-3xl p-6 shadow-lg active:scale-98"
+				className="rounded-large p-6 shadow-lg active:scale-98"
 				style={{
+					backgroundColor,
 					shadowColor: "#000",
 					shadowOffset: { width: 0, height: 4 },
 					shadowOpacity: 0.15,
@@ -60,7 +64,7 @@ const FeaturedCard = ({
 					{getCardImage(card.image_url, card.slug) && !imageError ? (
 						<Image
 							source={getCardImage(card.image_url, card.slug)}
-							className="w-full h-48 rounded-2xl"
+							className="w-full h-48 rounded-large"
 							contentFit="cover"
 							onError={() => {
 								setImageError(true);
@@ -71,12 +75,12 @@ const FeaturedCard = ({
 						<View className="relative w-full h-48 items-center justify-center">
 							{/* Fallback illustration for cards without images */}
 							<View className="absolute top-4 left-8 w-16 h-16 bg-white/30 rounded-full" />
-							<View className="absolute top-8 right-12 w-8 h-8 bg-yellow-400 rounded-lg transform rotate-45" />
+							<View className="absolute top-8 right-12 w-8 h-8 bg-brand-accent-yellow rounded-medium transform rotate-45" />
 							
 							{/* Main illustration elements */}
 							<View className="absolute top-12 left-1/2 transform -translate-x-1/2">
-								<View className="w-20 h-20 bg-white rounded-full items-center justify-center border-4 border-gray-800">
-									<View className="w-12 h-12 bg-yellow-400 rounded-full items-center justify-center">
+								<View className="w-20 h-20 bg-white rounded-full items-center justify-center border-4 border-brand-neutrals-textPrimary">
+									<View className="w-12 h-12 bg-brand-accent-yellow rounded-full items-center justify-center">
 										<Text className="text-xl">🎯</Text>
 									</View>
 								</View>
@@ -84,22 +88,22 @@ const FeaturedCard = ({
 
 							{/* Character figure */}
 							<View className="absolute top-20 right-8">
-								<View className="w-16 h-20 bg-yellow-400 rounded-t-full items-center justify-end pb-2">
+								<View className="w-16 h-20 bg-brand-accent-yellow rounded-t-full items-center justify-end pb-2">
 									<Text className="text-2xl">👤</Text>
 								</View>
 							</View>
 
 							{/* Additional elements */}
-							<View className="absolute bottom-8 left-4 w-6 h-6 bg-gray-800 rounded-sm" />
+							<View className="absolute bottom-8 left-4 w-6 h-6 bg-brand-neutrals-textPrimary rounded-small" />
 							<View className="absolute bottom-4 right-4">
-								<View className="w-10 h-8 bg-green-600 rounded-sm flex-row">
-									<View className="w-3 h-8 bg-green-700" />
+								<View className="w-10 h-8 bg-brand-primary-neonGreen rounded-small flex-row">
+									<View className="w-3 h-8 bg-brand-primary-vibrantGreen" />
 								</View>
 							</View>
 
 							{/* Geometric shapes */}
 							<View className="absolute bottom-12 left-1/2 transform -translate-x-1/2">
-								<View className="w-8 h-8 bg-yellow-400 transform rotate-45" />
+								<View className="w-8 h-8 bg-brand-accent-yellow transform rotate-45" />
 							</View>
 						</View>
 					)}
@@ -107,10 +111,10 @@ const FeaturedCard = ({
 
 				{/* Card content */}
 				<View className="mb-6">
-					<H1 className="text-gray-800 text-3xl font-bold mb-3">
+					<Title className="text-brand-neutrals-textPrimary text-3xl font-bold mb-3">
 						{card.name}
-					</H1>
-					<Text className="text-gray-700 text-lg leading-relaxed">
+					</Title>
+					<Text className="text-brand-neutrals-textPrimary text-lg leading-relaxed">
 						{card.description || "Discover why your brand exists and what makes it special."}
 					</Text>
 				</View>
@@ -133,78 +137,13 @@ const FeaturedCard = ({
 				<Button
 					onPress={onPress}
 					size="lg"
-					className="bg-white rounded-2xl py-4 shadow-md"
+					variant="action"
+					className="rounded-full py-4 shadow-md"
 				>
-					<Text className="text-gray-800 text-lg font-semibold">
+					<Text className="text-brand-neutrals-textPrimary text-lg font-semibold">
 						{isStarted || isCompleted ? "Continue" : "Start Now"}
 					</Text>
 				</Button>
-			</Pressable>
-		</View>
-	);
-};
-
-// Preview Card Component for secondary cards
-const PreviewCard = ({ 
-	card, 
-	onPress,
-	backgroundColor = "#E879F9"
-}: { 
-	card: CardWithProgress; 
-	onPress: () => void;
-	backgroundColor?: string;
-}) => {
-	const [imageError, setImageError] = useState(false);
-	return (
-		<View className="mx-4 mb-4">
-			<Pressable
-				onPress={onPress}
-				className="rounded-3xl p-6 shadow-lg active:scale-98"
-				style={{
-					backgroundColor,
-					shadowColor: "#000",
-					shadowOffset: { width: 0, height: 4 },
-					shadowOpacity: 0.15,
-					shadowRadius: 12,
-					elevation: 8,
-					height: 120,
-				}}
-			>
-				{/* Menu dots */}
-				<View className="flex-row justify-end mb-2">
-					<View className="bg-white/20 rounded-full p-1">
-						<Text className="text-white text-sm font-bold">⋯</Text>
-					</View>
-				</View>
-
-				{/* Preview content */}
-				<View className="flex-row items-center">
-					<View className="flex-1">
-						<Text className="text-white text-lg font-bold mb-1">
-							{card.name}
-						</Text>
-						<Text className="text-white/80 text-sm">
-							{card.progress}/{card.total} complete
-						</Text>
-					</View>
-					
-					{/* Card image or fallback icon */}
-					{getCardImage(card.image_url, card.slug) && !imageError ? (
-						<Image
-							source={getCardImage(card.image_url, card.slug)}
-							className="w-12 h-12 rounded-full"
-							contentFit="cover"
-							onError={() => {
-								setImageError(true);
-								console.log(`Failed to load preview image for card: ${card.name}`);
-							}}
-						/>
-					) : (
-						<View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
-							<Text className="text-xl">💡</Text>
-						</View>
-					)}
-				</View>
 			</Pressable>
 		</View>
 	);
@@ -225,6 +164,7 @@ export default function Home() {
 				if (error) {
 					console.error("Error loading cards with progress:", error);
 				} else {
+					console.log("Loaded cards with progress:", data?.length, "cards");
 					setCards(data);
 				}
 			} else {
@@ -233,6 +173,7 @@ export default function Home() {
 				if (error) {
 					console.error("Error loading cards:", error);
 				} else if (data) {
+					console.log("Loaded active cards:", data.length, "cards");
 					// Transform data to match expected structure with default progress
 					const cardsWithDefaultProgress = data.map((card) => ({
 						id: card.id,
@@ -241,10 +182,12 @@ export default function Home() {
 						description: card.description,
 						order_index: card.order_index,
 						image_url: card.image_url,
+						color: card.color,
 						progress: 0,
 						total: card.card_sections?.length || 0,
 						status: "not_started" as const,
 					}));
+					console.log("Transformed cards:", cardsWithDefaultProgress.length, "cards");
 					setCards(cardsWithDefaultProgress);
 				}
 			}
@@ -267,13 +210,19 @@ export default function Home() {
 		}, [session]),
 	);
 
-	// Find the current active card (first uncompleted card)
-	const activeCard = cards.find(card => card.status !== "completed") || cards[0];
-	const otherCards = cards.filter(card => card.id !== activeCard?.id);
+	// Show all cards in order, with the first uncompleted card highlighted
+	const sortedCards = cards.sort((a, b) => a.order_index - b.order_index);
+	const activeCard = sortedCards.find(card => card.status !== "completed") || sortedCards[0];
+	const otherCards = sortedCards.filter(card => card.id !== activeCard?.id);
+	
+	console.log("Total cards:", cards.length);
+	console.log("Sorted cards:", sortedCards.length);
+	console.log("Active card:", activeCard?.name);
+	console.log("Other cards:", otherCards.length, otherCards.map(c => c.name));
 
 	if (loading) {
 		return (
-			<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
+			<SafeAreaView className="flex-1" style={{ backgroundColor: "#1A1A1A" }}>
 				<View className="flex-1 items-center justify-center">
 					<Text className="text-lg text-white">
 						Loading your progress...
@@ -284,18 +233,18 @@ export default function Home() {
 	}
 
 	return (
-		<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
+		<SafeAreaView className="flex-1" style={{ backgroundColor: "#1A1A1A" }}>
 			<ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
 				{/* Header */}
 				<View className="items-center pt-4 pb-6">
-					<H1 className="text-[#ACFF64] text-2xl font-bold">ClarityOS</H1>
+					<Title className="text-brand-primary-vibrantGreen text-2xl font-bold">ClarityOS</Title>
 				</View>
 
 				{/* Featured Card */}
 				{activeCard && (
-					<FeaturedCard
+					<Card
 						card={activeCard}
-						onPress={() => router.push(`/cards/${activeCard.slug}`)}
+						onPress={() => router.push(`./cards/${activeCard.slug}`)}
 					/>
 				)}
 
@@ -306,15 +255,13 @@ export default function Home() {
 					</View>
 				)}
 
-				{/* Preview Cards */}
-				{otherCards.slice(0, 2).map((card, index) => {
-					const colors = ["#E879F9", "#3B82F6", "#EF4444", "#10B981"];
+				{/* All Other Cards */}
+				{otherCards.map((card, index) => {
 					return (
-						<PreviewCard
+						<Card
 							key={card.id}
 							card={card}
-							backgroundColor={colors[index % colors.length]}
-							onPress={() => router.push(`/cards/${card.slug}`)}
+							onPress={() => router.push(`./cards/${card.slug}`)}
 						/>
 					);
 				})}

@@ -3,8 +3,8 @@ import { View, Text, Pressable } from "react-native";
 import { cn } from "@/lib/utils";
 
 const streakVariants = {
-	active: "bg-brand-orange border-orange-600 shadow-orange-600/40",
-	inactive: "bg-brand-gray-100 border-brand-gray-300 shadow-brand-gray-300/40",
+	active: "bg-brand-accent-orange border-brand-accent-orange shadow-brand-accent-orange/40",
+	inactive: "bg-brand-neutrals-textSecondary/20 border-brand-neutrals-textSecondary/30 shadow-brand-neutrals-textSecondary/40",
 };
 
 interface StreakCounterProps {
@@ -29,15 +29,15 @@ const StreakCounter = ({
 	};
 
 	const textStyles = {
-		sm: "text-sm",
-		md: "text-lg",
-		lg: "text-xl",
+		sm: "text-body",
+		md: "text-subtitle",
+		lg: "text-title",
 	};
 
 	const labelStyles = {
-		sm: "text-xs",
-		md: "text-sm",
-		lg: "text-base",
+		sm: "text-caption",
+		md: "text-body",
+		lg: "text-subtitle",
 	};
 
 	return (
@@ -55,7 +55,7 @@ const StreakCounter = ({
 					className={cn(
 						"font-bold",
 						textStyles[size],
-						isActive ? "text-white" : "text-brand-gray-700",
+						isActive ? "text-white" : "text-brand-neutrals-textSecondary",
 					)}
 				>
 					{count}
@@ -65,7 +65,7 @@ const StreakCounter = ({
 						className={cn(
 							"font-medium mt-0.5",
 							labelStyles[size],
-							isActive ? "text-white/90" : "text-brand-gray-600",
+							isActive ? "text-white/90" : "text-brand-neutrals-textSecondary",
 						)}
 					>
 						🔥
@@ -91,14 +91,14 @@ const StreakStatus = ({
 	return (
 		<View className={cn("items-center py-4", className)}>
 			<StreakCounter count={currentStreak} isActive={currentStreak > 0} />
-			<Text className="text-base font-semibold text-foreground mt-2">
+			<Text className="text-subtitle font-semibold text-brand-neutrals-textPrimary mt-2">
 				{currentStreak} Day Streak
 			</Text>
 			{hoursUntilReset && (
 				<Text
 					className={cn(
-						"text-sm mt-1",
-						hoursUntilReset < 6 ? "text-red-600" : "text-brand-gray-500",
+						"text-body mt-1",
+						hoursUntilReset < 6 ? "text-brand-error" : "text-brand-neutrals-textSecondary",
 					)}
 				>
 					{hoursUntilReset}h until reset
@@ -132,20 +132,20 @@ const StreakMilestones = ({
 							className={cn(
 								"w-8 h-8 rounded-full border-2 items-center justify-center mb-1",
 								isReached
-									? "bg-brand-yellow border-yellow-600"
+									? "bg-brand-accent-yellow border-brand-accent-yellow"
 									: isNext
-									? "bg-brand-primary border-brand-primary-600"
-									: "bg-brand-gray-200 border-brand-gray-300",
+									? "bg-brand-primary-vibrantGreen border-brand-primary-vibrantGreen"
+									: "bg-brand-neutrals-textSecondary/20 border-brand-neutrals-textSecondary/30",
 							)}
 						>
 							<Text
 								className={cn(
-									"text-xs font-bold",
+									"text-caption font-bold",
 									isReached
 										? "text-white"
 										: isNext
 										? "text-white"
-										: "text-brand-gray-500",
+										: "text-brand-neutrals-textSecondary",
 								)}
 							>
 								{milestone}
@@ -153,12 +153,12 @@ const StreakMilestones = ({
 						</View>
 						<Text
 							className={cn(
-								"text-xs font-medium text-center",
+								"text-caption font-medium text-center",
 								isReached
-									? "text-brand-gray-900"
+									? "text-brand-neutrals-textPrimary"
 									: isNext
-									? "text-brand-primary"
-									: "text-brand-gray-500",
+									? "text-brand-primary-vibrantGreen"
+									: "text-brand-neutrals-textSecondary",
 							)}
 						>
 							{isReached ? "✓" : milestone}
@@ -168,10 +168,10 @@ const StreakMilestones = ({
 								className={cn(
 									"absolute -top-1 -right-1 w-2 h-2 rounded-full",
 									isReached
-										? "bg-brand-yellow"
+										? "bg-brand-accent-yellow"
 										: isNext
-										? "bg-brand-primary"
-										: "bg-brand-gray-300",
+										? "bg-brand-primary-vibrantGreen"
+										: "bg-brand-neutrals-textSecondary/30",
 								)}
 							/>
 						)}
@@ -197,23 +197,27 @@ const StreakFreeze = ({
 	return (
 		<View
 			className={cn(
-				"bg-brand-secondary-50 border-2 border-brand-secondary-200 rounded-lg p-4 items-center",
+				"bg-brand-primary-neonGreen/10 border-2 border-brand-primary-neonGreen/30 rounded-large p-4 items-center",
 				className,
 			)}
 		>
-			<Text className="text-2xl mb-2">🛡️</Text>
-			<Text className="text-sm font-semibold text-brand-gray-900 text-center">
+			<Text className="text-2xl mb-2">❄️</Text>
+			<Text className="text-body font-semibold text-brand-neutrals-textPrimary text-center mb-2">
 				Streak Freeze
 			</Text>
-			<Text className="text-xs text-brand-gray-600 text-center mt-1">
-				{hasFreeze ? "Your streak is protected!" : "Protect your streak"}
+			<Text className="text-caption text-brand-neutrals-textSecondary text-center mb-3">
+				{hasFreeze
+					? "Your streak is protected for one day"
+					: "Protect your streak for one day"}
 			</Text>
 			{!hasFreeze && onPurchase && (
 				<Pressable
 					onPress={onPurchase}
-					className="mt-3 bg-brand-secondary px-4 py-2 rounded-lg active:scale-95"
+					className="bg-brand-primary-vibrantGreen rounded-full px-4 py-2 active:scale-95"
 				>
-					<Text className="text-white font-semibold text-sm">Get Freeze</Text>
+					<Text className="text-body font-semibold text-brand-neutrals-textPrimary">
+						Get Freeze
+					</Text>
 				</Pressable>
 			)}
 		</View>
@@ -221,9 +225,4 @@ const StreakFreeze = ({
 };
 
 export { StreakCounter, StreakStatus, StreakMilestones, StreakFreeze };
-export type {
-	StreakCounterProps,
-	StreakStatusProps,
-	StreakMilestonesProps,
-	StreakFreezeProps,
-};
+export type { StreakCounterProps, StreakStatusProps, StreakMilestonesProps, StreakFreezeProps };

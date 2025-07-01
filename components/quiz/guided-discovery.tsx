@@ -1,20 +1,21 @@
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
-import { SafeAreaView } from "@/components/safe-area-view";
-import { Text } from "@/components/ui/text";
-import { H2, H3 } from "@/components/ui/typography";
+import { SafeAreaView } from "../safe-area-view";
+import { Text } from "../ui/text";
+import { Subtitle, Title } from "../ui/typography";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { useAuth } from "@/context/supabase-provider";
+import { useAuth } from "../../context/supabase-provider";
 import { useChat } from "@ai-sdk/react";
 import {
 	saveAIConversation,
 	getAIConversation,
 	saveBrandPurposeStatement,
 	updateUserProgress,
-} from "@/lib/database-helpers";
-import { Database } from "@/lib/database.types";
+} from "../../lib/database-helpers";
+import { Database } from "../../lib/database.types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Section = Database["public"]["Tables"]["card_sections"]["Row"];
@@ -456,7 +457,7 @@ export function GuidedDiscovery({
 						</Button>
 
 						<View className="items-center">
-							<H3 className="text-center font-bold">{card.name}</H3>
+							<Title className="text-center font-bold">{card.name}</Title>
 							<Text className="text-sm text-muted-foreground">
 								Discover your {card.name.toLowerCase()}
 							</Text>

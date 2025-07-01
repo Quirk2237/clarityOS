@@ -1,23 +1,26 @@
+import React from "react";
 import { useState, useEffect } from "react";
 import { View, ScrollView } from "react-native";
-import { SafeAreaView } from "@/components/safe-area-view";
-import { Text } from "@/components/ui/text";
-import { H2, H3 } from "@/components/ui/typography";
+import { SafeAreaView } from "../safe-area-view";
+import { Text } from "../ui/text";
+import { Subtitle, Title } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { HeartsDisplay } from "@/components/ui/hearts-display";
-import { useAuth } from "@/context/supabase-provider";
+import { useAuth } from "../../context/supabase-provider";
 import {
 	updateUserProgress,
 	recordQuestionAttempt,
 	awardAchievement,
-} from "@/lib/database-helpers";
-import { Database } from "@/lib/database.types";
+} from "../../lib/database-helpers";
+import { Database } from "../../lib/database.types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"] & {
 	card_sections: (Database["public"]["Tables"]["card_sections"]["Row"] & {
 		questions: (Database["public"]["Tables"]["questions"]["Row"] & {
-			answer_choices: Database["public"]["Tables"]["answer_choices"]["Row"][];
+			answer_choices: (Database["public"]["Tables"]["answer_choices"]["Row"] & {
+				icon: string | null;
+			})[];
 		})[];
 	})[];
 };
@@ -217,10 +220,10 @@ export function EducationalQuiz({
 
 	if (hearts === 0) {
 		return (
-			<SafeAreaView className="flex-1 bg-background">
+			<SafeAreaView className="flex-1 bg-neutral-900">
 				<View className="flex-1 items-center justify-center p-4">
 					<Text className="text-6xl mb-4">💔</Text>
-					<H2 className="text-center mb-4">No hearts left!</H2>
+					<Title className="text-center mb-4">No hearts left!</Title>
 					<Text className="text-center text-muted-foreground mb-6">
 						Don&apos;t worry, you can try again. Learning takes practice!
 					</Text>
@@ -233,127 +236,103 @@ export function EducationalQuiz({
 	}
 
 	return (
-		<SafeAreaView className="flex-1 bg-background">
-			{/* Header with progress and hearts */}
-			<View className="p-4 border-b border-border">
-				<View className="flex-row justify-between items-center mb-3">
-					<Button variant="ghost" size="sm" onPress={onExit}>
-						<Text className="text-lg">✕</Text>
+		<SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center">
+			{/* Centered Card Container */}
+			<View className="w-[92%] max-w-xl rounded-3xl bg-lime-200 p-4 pt-6 pb-0 shadow-lg items-stretch justify-between min-h-[80%]" style={{ minHeight: 520 }}>
+				{/* Close Button */}
+				<View className="absolute left-4 top-4 z-10">
+					<Button
+						variant="ghost"
+						size="icon"
+						onPress={onExit}
+						className="w-12 h-12 rounded-full bg-lime-300/60 items-center justify-center"
+					>
+						<Text className="text-2xl">✕</Text>
 					</Button>
-
-					<View className="items-center">
-						<H3 className="text-center font-bold">{card.name}</H3>
-						<Text className="text-sm text-muted-foreground">
-							Learn the basics
-						</Text>
-					</View>
-
-					<HeartsDisplay current={hearts} total={5} size="sm" />
 				</View>
 
-				<Progress
-					value={currentQuestionIndex + (showResult ? 1 : 0)}
-					max={questions.length}
-					showLabel={false}
-					className="h-3"
-					variant="default"
-				/>
-
-				<Text className="text-center text-sm text-muted-foreground mt-2">
-					Question {currentQuestionIndex + 1} of {questions.length}
-				</Text>
-			</View>
-
-			{/* Question Content */}
-			<ScrollView className="flex-1 p-4">
-				<View className="mb-8">
-					<H2 className="text-center mb-6 leading-tight">
+				{/* Quiz Content */}
+				<View className="flex-1 justify-between">
+					{/* Question */}
+					<Text className="text-2xl font-bold text-black mb-6 mt-2 text-left leading-tight">
 						{currentQuestion?.question_text}
-					</H2>
+					</Text>
 
-					<View className="gap-3">
-						{answerChoices.map((choice) => {
-							let variant: "outline" | "secondary" | "success" | "destructive" =
-								"outline";
-
-							if (selectedAnswer === choice.id && showResult) {
-								variant = choice.is_correct ? "success" : "destructive";
-							} else if (selectedAnswer === choice.id) {
-								variant = "secondary";
-							} else if (
-								showResult &&
-								choice.is_correct &&
-								selectedAnswer !== choice.id
-							) {
-								variant = "success";
-							}
-
+					{/* Answer Choices Grid */}
+					<View className="flex-row flex-wrap justify-between gap-y-4 mb-8">
+						{answerChoices.map((choice, idx) => {
+							const isSelected = selectedAnswer === choice.id;
+							const isCorrect = showResult && choice.is_correct;
+							const isWrong = showResult && isSelected && !choice.is_correct;
+							let borderColor = 'border-transparent';
+							if (isCorrect) borderColor = 'border-green-500';
+							else if (isWrong) borderColor = 'border-red-400';
+							else if (isSelected) borderColor = 'border-lime-500';
+							const bgColor = isSelected ? 'bg-lime-100' : 'bg-white';
 							return (
 								<Button
 									key={choice.id}
-									variant={variant}
-									size="lg"
-									onPress={() => handleAnswerSelect(choice.id)}
+									variant="ghost"
+									onPress={() => setSelectedAnswer(choice.id)}
 									disabled={showResult}
-									className="p-4 min-h-16 justify-start"
+									className={`w-[48%] min-h-28 rounded-2xl p-4 items-center justify-center border-2 ${bgColor} ${borderColor}`}
+									style={{ flexBasis: '48%' }}
 								>
-									<View className="flex-row items-center justify-between w-full">
-										<Text className="text-left flex-1 text-base">
-											{choice.choice_text}
-										</Text>
-										{showResult && choice.is_correct && (
-											<Text className="text-lg ml-2">✓</Text>
-										)}
-										{showResult &&
-											selectedAnswer === choice.id &&
-											!choice.is_correct && (
-												<Text className="text-lg ml-2">✗</Text>
-											)}
-									</View>
+									{choice.icon && (
+										<Text className="text-3xl mb-2">{choice.icon}</Text>
+									)}
+									<Text className="text-center text-base font-medium text-black">
+										{choice.choice_text}
+									</Text>
 								</Button>
 							);
 						})}
 					</View>
 
-					{/* Result feedback */}
+					{/* Feedback (optional, after check) */}
 					{showResult && (
-						<View className="mt-6 p-4 rounded-xl bg-card border border-border">
-							{selectedAnswer &&
-							answerChoices.find((a) => a.id === selectedAnswer)?.is_correct ? (
-								<View className="items-center">
-									<Text className="text-2xl mb-2">🎉</Text>
-									<Text className="text-center font-semibold text-success">
-										Correct! Great job!
-									</Text>
-								</View>
+						<View className="mt-2 mb-4 p-4 rounded-xl bg-white/80 border border-lime-300 items-center">
+							{selectedAnswer && answerChoices.find((a) => a.id === selectedAnswer)?.is_correct ? (
+								<Text className="text-xl font-semibold text-green-700">Correct! Great job! 🎉</Text>
 							) : (
-								<View className="items-center">
-									<Text className="text-2xl mb-2">💪</Text>
-									<Text className="text-center font-semibold text-destructive mb-2">
-										Not quite right
-									</Text>
-									<Text className="text-center text-sm text-muted-foreground">
-										The correct answer is highlighted above. Keep learning!
-									</Text>
-								</View>
+								<>
+									<Text className="text-xl font-semibold text-red-600 mb-1">Not quite right</Text>
+									<Text className="text-center text-base text-neutral-700">The correct answer is highlighted above. Keep learning!</Text>
+								</>
 							)}
 						</View>
 					)}
 				</View>
-			</ScrollView>
 
-			{/* Continue Button */}
-			{showResult && (
-				<View className="p-4 border-t border-border">
-					<Button variant="default" size="lg" onPress={handleNext}>
-						<Text className="font-semibold">
-							{currentQuestionIndex < questions.length - 1
-								? "Continue"
-								: "Complete Quiz"}
-						</Text>
+				{/* Spacer for bottom controls */}
+				<View className="h-2" />
+
+				{/* Check Button */}
+				<View className="w-full mb-2">
+					<Button
+						variant="default"
+						size="lg"
+						disabled={!selectedAnswer || showResult}
+						onPress={() => {
+							if (selectedAnswer) handleAnswerSelect(selectedAnswer);
+						}}
+						className="w-full rounded-2xl bg-lime-300/80"
+					>
+						<Text className="font-semibold text-lg text-lime-900">Check</Text>
 					</Button>
 				</View>
-			)}
+
+				{/* Progress Bar */}
+				<View className="w-full mt-1 mb-2">
+					<Progress
+						value={currentQuestionIndex + (showResult ? 1 : 0)}
+						max={questions.length}
+						showLabel={false}
+						className="h-3 bg-lime-100 rounded-full"
+						variant="default"
+					/>
+				</View>
+			</View>
 		</SafeAreaView>
 	);
 }

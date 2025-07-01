@@ -1,9 +1,9 @@
 import { View } from "react-native";
-import { SafeAreaView } from "@/components/safe-area-view";
+import { SafeAreaView } from "../../../components/safe-area-view";
 import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
-import { H1 } from "@/components/ui/typography";
-import { useAuth } from "@/context/supabase-provider";
+import { Text } from "../../../components/ui/text";
+import { Title } from "../../../components/ui/typography";
+import { useAuth } from "../../../context/supabase-provider";
 
 export default function Settings() {
 	const { signOut } = useAuth();
@@ -13,7 +13,7 @@ export default function Settings() {
 			<View className="flex-1 p-4">
 				{/* Header */}
 				<View className="items-center mb-6">
-					<H1 className="text-center text-white">Settings</H1>
+					<Title className="text-center text-white">Settings</Title>
 				</View>
 
 				{/* Coming Soon Message */}

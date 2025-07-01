@@ -107,6 +107,7 @@ export interface Database {
 					order_index: number;
 					is_active: boolean;
 					image_url: string | null;
+					color: string | null;
 					created_at: string;
 					updated_at: string;
 					deleted_at: string | null;
@@ -119,6 +120,7 @@ export interface Database {
 					order_index: number;
 					is_active?: boolean;
 					image_url?: string | null;
+					color?: string | null;
 					created_at?: string;
 					updated_at?: string;
 					deleted_at?: string | null;
@@ -131,6 +133,7 @@ export interface Database {
 					order_index?: number;
 					is_active?: boolean;
 					image_url?: string | null;
+					color?: string | null;
 					created_at?: string;
 					updated_at?: string;
 					deleted_at?: string | null;
@@ -213,6 +216,7 @@ export interface Database {
 					choice_text: string;
 					is_correct: boolean;
 					order_index: number;
+					icon: string | null;
 					created_at: string;
 					updated_at: string;
 					deleted_at: string | null;
@@ -223,6 +227,7 @@ export interface Database {
 					choice_text: string;
 					is_correct?: boolean;
 					order_index: number;
+					icon?: string | null;
 					created_at?: string;
 					updated_at?: string;
 					deleted_at?: string | null;
@@ -233,6 +238,7 @@ export interface Database {
 					choice_text?: string;
 					is_correct?: boolean;
 					order_index?: number;
+					icon?: string | null;
 					created_at?: string;
 					updated_at?: string;
 					deleted_at?: string | null;

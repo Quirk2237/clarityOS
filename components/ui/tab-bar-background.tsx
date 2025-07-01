@@ -8,7 +8,7 @@ export default function TabBarBackground({ style, ...props }: TabBarBackgroundPr
     <View
       style={[
         {
-          backgroundColor: 'transparent',
+          backgroundColor: '#1A1A1A', // ClarityOS dark background
         },
         style,
       ]}

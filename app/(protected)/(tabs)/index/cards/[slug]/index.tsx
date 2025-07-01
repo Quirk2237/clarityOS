@@ -1,16 +1,17 @@
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { View, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView } from "@/components/safe-area-view";
-import { Text } from "@/components/ui/text";
-import { useAuth } from "@/context/supabase-provider";
-import { getCard, getUserProgress } from "@/lib/database-helpers";
+import { SafeAreaView } from "../../../../../../components/safe-area-view";
+import { Text } from "../../../../../../components/ui/text";
+import { useAuth } from "../../../../../../context/supabase-provider";
+import { getCard, getUserProgress } from "../../../../../../lib/database-helpers";
 import {
 	EducationalQuiz,
 	GuidedDiscovery,
 	CompletionScreen,
-} from "@/components/quiz";
-import { Database } from "@/lib/database.types";
+} from "../../../../../../components/quiz";
+import { Database } from "../../../../../../lib/database.types";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"] & {
 	card_sections: (Database["public"]["Tables"]["card_sections"]["Row"] & {
@@ -33,26 +34,40 @@ export default function CardScreen() {
 	const [achievements, setAchievements] = useState<any[]>([]);
 
 	useEffect(() => {
-		if (slug && session) {
+		console.log("useEffect triggered:", { slug, hasSession: !!session });
+		if (slug) {
+			console.log("Starting to load card and progress");
 			loadCardAndProgress();
+		} else {
+			console.log("Missing slug");
 		}
 	}, [slug, session]);
 
 	const loadCardAndProgress = async () => {
 		try {
+			console.log("Loading card with slug:", slug);
 			// Load card data
 			const { data: cardData, error: cardError } = await getCard(slug);
-			if (cardError) throw cardError;
+			console.log("Card data response:", { cardData, cardError });
+			
+			if (cardError) {
+				console.error("Card error:", cardError);
+				throw cardError;
+			}
 
 			if (!cardData) {
+				console.error("No card data found for slug:", slug);
 				throw new Error("Card not found");
 			}
 
+			console.log("Card loaded successfully:", cardData.name);
 			setCard(cardData);
 
 			// Load user progress for this card (only if session exists)
 			if (!session?.user?.id) {
+				console.log("No session, starting with educational section");
 				setCurrentSection("educational");
+				setLoading(false);
 				return;
 			}
 
@@ -129,7 +144,7 @@ export default function CardScreen() {
 	};
 
 	const handleExit = () => {
-		router.back();
+		router.replace('/');
 	};
 
 	const handleCardComplete = () => {
@@ -140,7 +155,8 @@ export default function CardScreen() {
 		return (
 			<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
 				<View className="flex-1 items-center justify-center">
-					<Text className="text-lg text-white">Loading...</Text>
+					<Text className="text-lg text-white">Loading card...</Text>
+					<Text className="text-sm text-gray-400 mt-2">Slug: {slug}</Text>
 				</View>
 			</SafeAreaView>
 		);

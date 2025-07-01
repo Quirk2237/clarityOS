@@ -78,19 +78,19 @@ const HeartsCounter = ({
 			? "text-brand-error"
 			: current <= 2
 			? "text-brand-warning"
-			: "text-brand-gray-700",
+			: "text-brand-neutrals-textSecondary",
 	);
 
 	return (
 		<View className={cn("items-center", className)}>
 			<View
 				className={cn(
-					"flex-row items-center justify-center p-3 rounded-xl border-2",
+					"flex-row items-center justify-center p-3 rounded-large border-2",
 					current === 0
 						? "border-brand-error"
 						: current <= 2
 						? "border-brand-warning"
-						: "border-brand-gray-200",
+						: "border-brand-neutrals-textSecondary/30",
 				)}
 			>
 				<HeartsDisplay
@@ -100,7 +100,7 @@ const HeartsCounter = ({
 					onPress={onPress}
 				/>
 				{showLabel && (
-					<Text className="text-sm font-medium text-brand-gray-600 mb-1">
+					<Text className="text-caption font-medium text-brand-neutrals-textSecondary mb-1">
 						Hearts
 					</Text>
 				)}
@@ -109,12 +109,12 @@ const HeartsCounter = ({
 			{showLabel && (
 				<Text
 					className={cn(
-						"text-sm font-semibold mt-2",
+						"text-caption font-semibold mt-2",
 						current === 0
 							? "text-brand-error"
 							: current <= 2
 							? "text-brand-warning"
-							: "text-brand-gray-900",
+							: "text-brand-neutrals-textPrimary",
 					)}
 				>
 					{current} / {total}
@@ -122,7 +122,7 @@ const HeartsCounter = ({
 			)}
 
 			{current === 0 && (
-				<Text className="text-xs text-brand-gray-500 mt-1">
+				<Text className="text-caption text-brand-neutrals-textSecondary mt-1">
 					No hearts remaining
 				</Text>
 			)}
@@ -150,14 +150,14 @@ const HeartsStatus = ({
 	const canRefill = current < total;
 
 	return (
-		<View className={cn("bg-card rounded-xl p-4 border-2 border-border", className)}>
+		<View className={cn("bg-brand-neutrals-cardBackground rounded-large p-4 border-2 border-brand-neutrals-textSecondary/30", className)}>
 			<View className="flex-row items-center justify-between mb-3">
 				<HeartsDisplay current={current} total={total} size="md" />
 				<View className="items-end">
-					<Text className="text-lg font-bold text-card-foreground">
+					<Text className="text-subtitle font-bold text-brand-neutrals-textPrimary">
 						{current}/{total}
 					</Text>
-					<Text className="text-sm text-muted-foreground">Hearts</Text>
+					<Text className="text-caption text-brand-neutrals-textSecondary">Hearts</Text>
 				</View>
 			</View>
 
@@ -166,17 +166,17 @@ const HeartsStatus = ({
 					<View
 						className={cn(
 							"h-1 rounded-full overflow-hidden",
-							isEmpty ? "bg-brand-error" : "bg-brand-primary",
+							isEmpty ? "bg-brand-error" : "bg-brand-primary-vibrantGreen",
 						)}
 					>
 						<View
-							className="h-full bg-brand-primary rounded-full"
+							className="h-full bg-brand-primary-vibrantGreen rounded-full"
 							style={{
 								width: `${100 - (minutesUntilRefill / 60) * 100}%`,
 							}}
 						/>
 					</View>
-					<Text className="text-xs text-muted-foreground mt-1 text-center">
+					<Text className="text-caption text-brand-neutrals-textSecondary mt-1 text-center">
 						+1 heart in {minutesUntilRefill}m
 					</Text>
 				</View>
@@ -185,9 +185,9 @@ const HeartsStatus = ({
 			{onGetMoreHearts && (
 				<Pressable
 					onPress={onGetMoreHearts}
-					className="bg-brand-primary rounded-lg p-3 items-center active:scale-95"
+					className="bg-brand-primary-vibrantGreen rounded-full p-3 items-center active:scale-95"
 				>
-					<Text className="text-white font-semibold">Get More Hearts</Text>
+					<Text className="text-subtitle font-semibold text-brand-neutrals-textPrimary">Get More Hearts</Text>
 				</Pressable>
 			)}
 		</View>
@@ -206,27 +206,21 @@ const HeartsAnimation = ({
 	amount,
 	className,
 }: HeartsAnimationProps) => {
+	const isGain = type === "gain";
+	const heartIcon = isGain ? "❤️" : "💔";
+	const colorClass = isGain ? "text-brand-success" : "text-brand-error";
+
 	return (
 		<View className={cn("items-center", className)}>
-			<Text
-				className={cn(
-					"text-2xl font-bold",
-					type === "gain" ? "text-brand-success" : "text-brand-error",
-				)}
-			>
-				{type === "gain" ? "+" : "-"}{amount}
+			<Text className={cn("text-4xl animate-bounce", colorClass)}>
+				{heartIcon}
 			</Text>
-			<Text className="text-lg">
-				{type === "gain" ? "💚" : "💔"}
+			<Text className={cn("text-subtitle font-bold mt-2", colorClass)}>
+				{isGain ? "+" : "-"}{amount}
 			</Text>
 		</View>
 	);
 };
 
 export { HeartsDisplay, HeartsCounter, HeartsStatus, HeartsAnimation };
-export type {
-	HeartsDisplayProps,
-	HeartsCounterProps,
-	HeartsStatusProps,
-	HeartsAnimationProps,
-};
+export type { HeartsDisplayProps, HeartsCounterProps, HeartsStatusProps, HeartsAnimationProps };

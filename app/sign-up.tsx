@@ -3,12 +3,12 @@ import { useForm } from "react-hook-form";
 import { ActivityIndicator, View } from "react-native";
 import * as z from "zod";
 
-import { SafeAreaView } from "@/components/safe-area-view";
+import { SafeAreaView } from "../components/safe-area-view";
 import { Button } from "@/components/ui/button";
 import { Form, FormField, FormInput } from "@/components/ui/form";
-import { Text } from "@/components/ui/text";
-import { H1 } from "@/components/ui/typography";
-import { useAuth } from "@/context/supabase-provider";
+import { Text } from "../components/ui/text";
+import { Title } from "../components/ui/typography";
+import { useAuth } from "../context/supabase-provider";
 
 const formSchema = z
 	.object({
@@ -62,7 +62,7 @@ export default function SignUp() {
 	return (
 		<SafeAreaView className="flex-1 p-4" style={{ backgroundColor: "#292929" }} edges={["bottom"]}>
 			<View className="flex-1 gap-4 web:m-4">
-				<H1 className="self-start text-white">Sign Up</H1>
+				<Title className="self-start text-white">Sign Up</Title>
 				<Form {...form}>
 					<View className="gap-4">
 						<FormField
