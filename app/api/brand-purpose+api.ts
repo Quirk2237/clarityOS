@@ -73,21 +73,48 @@ const MAX_MESSAGES_COUNT = 50;
 
 export async function POST(req: Request) {
 	try {
-		const { messages, userId } = await req.json();
-
-		// Input validation
-		if (
-			!messages ||
-			!Array.isArray(messages) ||
-			messages.length > MAX_MESSAGES_COUNT
-		) {
-			return new Response("Invalid messages format or too many messages", {
-				status: 400,
+		// ✅ ENHANCED: Check OpenAI API key availability
+		if (!process.env.OPENAI_API_KEY) {
+			console.error('❌ OPENAI_API_KEY not found in environment variables');
+			return new Response(JSON.stringify({
+				error: 'API configuration error',
+				message: 'OpenAI API key not configured. Please check your environment setup.',
+				code: 'MISSING_API_KEY'
+			}), {
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
 			});
 		}
 
-		if (!userId || typeof userId !== "string") {
-			return new Response("Valid user ID required", { status: 401 });
+		const { messages, userId } = await req.json();
+
+		// ✅ ENHANCED: Better input validation with detailed errors
+		if (!messages || !Array.isArray(messages)) {
+			return new Response(JSON.stringify({
+				error: 'Invalid request format',
+				message: 'Messages must be provided as an array',
+				code: 'INVALID_MESSAGES_FORMAT'
+			}), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
+		if (messages.length > MAX_MESSAGES_COUNT) {
+			return new Response(JSON.stringify({
+				error: 'Too many messages',
+				message: `Maximum ${MAX_MESSAGES_COUNT} messages allowed per conversation`,
+				code: 'MESSAGE_LIMIT_EXCEEDED'
+			}), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
+		// ✅ Make userId optional - generate anonymous ID if needed
+		let sessionUserId = userId;
+		if (!sessionUserId || typeof sessionUserId !== "string") {
+			sessionUserId = `anonymous_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 		}
 
 		// Sanitize inputs
@@ -104,7 +131,14 @@ export async function POST(req: Request) {
 			.filter((msg) => msg.content.length > 0);
 
 		if (sanitizedMessages.length === 0) {
-			return new Response("No valid messages provided", { status: 400 });
+			return new Response(JSON.stringify({
+				error: 'No valid messages',
+				message: 'At least one valid message is required',
+				code: 'NO_VALID_MESSAGES'
+			}), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 
 		const messagesWithSystem = [
@@ -112,21 +146,46 @@ export async function POST(req: Request) {
 			...sanitizedMessages,
 		];
 
-		const result = streamText({
-			model: openai("gpt-4o"),
-			messages: messagesWithSystem,
-			maxTokens: 800,
-			temperature: 0.7,
-		});
+		// ✅ ENHANCED: Better error handling for OpenAI calls
+		try {
+			const result = streamText({
+				model: openai("gpt-4o"),
+				messages: messagesWithSystem,
+				maxTokens: 800,
+				temperature: 0.7,
+			});
 
-		return result.toDataStreamResponse({
-			headers: {
-				"Content-Type": "application/octet-stream",
-				"Content-Encoding": "none",
-			},
-		});
+			return result.toDataStreamResponse({
+				headers: {
+					"Content-Type": "application/octet-stream",
+					"Content-Encoding": "none",
+					"Access-Control-Allow-Origin": "*",
+					"Access-Control-Allow-Methods": "POST, OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization",
+				},
+			});
+		} catch (openaiError) {
+			console.error("OpenAI API error:", openaiError);
+			return new Response(JSON.stringify({
+				error: 'AI service error',
+				message: 'Failed to process AI request. Please try again.',
+				code: 'OPENAI_ERROR',
+				details: openaiError instanceof Error ? openaiError.message : 'Unknown error'
+			}), {
+				status: 503,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
 	} catch (error) {
 		console.error("Brand purpose API error:", error);
-		return new Response("Internal server error", { status: 500 });
+		return new Response(JSON.stringify({
+			error: 'Internal server error',
+			message: 'An unexpected error occurred. Please try again.',
+			code: 'INTERNAL_ERROR'
+		}), {
+			status: 500,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}
 }

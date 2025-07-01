@@ -10,6 +10,7 @@ import { SplashScreen, useRouter } from "expo-router";
 import { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/config/supabase";
+import { DataMigrator } from "../lib/data-migration";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,6 +36,33 @@ export function AuthProvider({ children }: PropsWithChildren) {
 	const [initialized, setInitialized] = useState(false);
 	const [session, setSession] = useState<Session | null>(null);
 	const router = useRouter();
+
+	// ✅ Data migration trigger
+	const triggerDataMigration = async (userSession: Session) => {
+		try {
+			// Check if there's local data to migrate
+			const hasLocalData = await DataMigrator.hasLocalData();
+			
+			if (hasLocalData) {
+				console.log("🔄 Local data detected, starting migration...");
+				
+				const migrator = new DataMigrator(userSession);
+				const result = await migrator.migrateAllLocalData();
+				
+				if (result.success) {
+					console.log("✅ Data migration completed successfully:", result.migratedItems);
+					// Could show a success toast here
+				} else {
+					console.error("❌ Data migration had errors:", result.errors);
+					// Could show an error toast here
+				}
+			} else {
+				console.log("ℹ️ No local data to migrate");
+			}
+		} catch (error) {
+			console.error("💥 Data migration failed:", error);
+		}
+	};
 
 	const signUp = async (email: string, password: string) => {
 		const { data, error } = await supabase.auth.signUp({
@@ -65,6 +93,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
 			setSession(data.session);
 			console.log("User signed up:", data.user);
+			
+			// ✅ Trigger data migration after successful sign-up
+			await triggerDataMigration(data.session);
 		} else {
 			console.log("No user returned from sign up");
 		}
@@ -84,6 +115,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 		if (data.session) {
 			setSession(data.session);
 			console.log("User signed in:", data.user);
+			
+			// ✅ Trigger data migration after successful sign-in
+			await triggerDataMigration(data.session);
 		} else {
 			console.log("No user returned from sign in");
 		}

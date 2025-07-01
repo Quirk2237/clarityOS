@@ -1,6 +1,6 @@
 import * as React from "react";
-import { useState, useEffect } from "react";
-import { View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable } from "react-native";
 import { SafeAreaView } from "../safe-area-view";
 import { Text } from "../ui/text";
 import { Subtitle, Title } from "../ui/typography";
@@ -10,7 +10,9 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "../../context/supabase-provider";
 import { useChat } from "@ai-sdk/react";
 import { ProgressManager } from "../../lib/progress-manager";
+import { LocalAIStorage } from "../../lib/local-storage";
 import { Database } from "../../lib/database.types";
+import { AIErrorBoundary } from "../ai-error-boundary";
 
 type Card = Database["public"]["Tables"]["cards"]["Row"];
 type Section = Database["public"]["Tables"]["card_sections"]["Row"];
@@ -166,6 +168,19 @@ export function GuidedDiscovery({
 	const [isCompleted, setIsCompleted] = useState(false);
 	const [debugInfo, setDebugInfo] = useState<any>({});
 	const [currentQuestion, setCurrentQuestion] = useState<string>("");
+	const [isInitialized, setIsInitialized] = useState(false);
+
+	// ✅ Generate anonymous user ID for unauthenticated users
+	const [anonymousUserId] = useState(() => 
+		`anonymous_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+	);
+	
+	// ✅ Use authenticated user ID or anonymous ID
+	const effectiveUserId = session?.user?.id || anonymousUserId;
+	const isAuthenticated = !!session?.user?.id;
+
+	// ✅ Ref to track if completion is in progress to prevent double triggers
+	const completionInProgress = useRef(false);
 
 	// Helper function to extract scores from AI response
 	const extractScoresFromResponse = (content: string) => {
@@ -284,6 +299,8 @@ export function GuidedDiscovery({
 				? "Imagine your brand disappeared tomorrow. What would your customers miss most — and why would that matter?"
 				: `Tell me about your brand and what makes it unique in the ${card.name.toLowerCase()} space.`
 		);
+
+		setIsInitialized(true);
 	}, [card]);
 
 	// Get the appropriate API endpoint based on card slug
@@ -308,11 +325,39 @@ export function GuidedDiscovery({
 		return endpoint;
 	};
 
-	const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
+	// ✅ Save conversation state to appropriate storage
+	const saveConversationState = async () => {
+		try {
+			if (isAuthenticated) {
+				// Save to database via ProgressManager
+				const progressManager = new ProgressManager(session);
+				await progressManager.saveAIConversation(
+					card.id,
+					{ messages, conversationState },
+					conversationState.step,
+					isCompleted,
+				);
+				debug.log("Conversation Saved to Database", "Successfully");
+			} else {
+				// Save to local storage
+				await LocalAIStorage.saveConversation(
+					card.id,
+					{ messages, conversationState },
+					conversationState.step,
+					isCompleted
+				);
+				debug.log("Conversation Saved Locally", "Successfully");
+			}
+		} catch (error) {
+			debug.error("Save Conversation Error", error);
+		}
+	};
+
+	const { messages, input, handleInputChange, handleSubmit, isLoading, error, append, setInput } =
 		useChat({
 			api: getApiEndpoint(card.slug),
 			body: {
-				userId: session?.user?.id,
+				userId: effectiveUserId, // ✅ Always send a user ID
 			},
 			initialMessages: [
 				{
@@ -328,7 +373,7 @@ export function GuidedDiscovery({
 				"Content-Type": "application/json",
 			},
 			onFinish: async (message) => {
-				debug.log("AI Response Received", {
+				debug.log("🤖 AI Response Received", {
 					messageId: message.id,
 					role: message.role,
 					contentLength: message.content.length,
@@ -338,54 +383,57 @@ export function GuidedDiscovery({
 
 				// Extract scores from AI response
 				const extractedScores = extractScoresFromResponse(message.content);
-				debug.log("Scores Extracted", extractedScores);
+				debug.log("📊 Scores Extracted", extractedScores);
 
-				// Update conversation state with new scores (additive approach)
-				setConversationState((prev) => ({
-					...prev,
-					scores: {
+				// Extract the next question from AI response
+				const extractedQuestion = extractQuestionFromContent(message.content);
+				
+				// Check if AI has generated a brand statement (synthesis step)
+				const content = message.content.toLowerCase();
+				const statementMatch = message.content.match(
+					/"([^"]*(?:we exist to|purpose|statement)[^"]*)"/i,
+				);
+
+				// ✅ FIXED: Single batched state update to prevent race conditions
+				setConversationState((prev) => {
+					const newState = { ...prev };
+					
+					// Update scores (additive approach)
+					newState.scores = {
 						audience: Math.max(prev.scores.audience, extractedScores.audience),
 						benefit: Math.max(prev.scores.benefit, extractedScores.benefit),
 						belief: Math.max(prev.scores.belief, extractedScores.belief),
 						impact: Math.max(prev.scores.impact, extractedScores.impact),
-					}
-				}));
+					};
 
-				// Extract the next question from AI response
-				const extractedQuestion = extractQuestionFromContent(message.content);
+					// Update step and statement if detected
+					if (
+						content.includes("we exist to") ||
+						content.includes("brand purpose statement") ||
+						content.includes("brand statement") ||
+						content.includes("here's your")
+					) {
+						if (statementMatch) {
+							debug.log("Statement Detected", {
+								statement: statementMatch[1],
+								step: "synthesis",
+							});
+
+							newState.step = "synthesis";
+							newState.draftStatement = statementMatch[1];
+						}
+					}
+
+					return newState;
+				});
+
+				// Update current question if extracted and different
 				if (extractedQuestion && extractedQuestion !== currentQuestion) {
 					setCurrentQuestion(extractedQuestion);
 					debug.log("Question Updated", { newQuestion: extractedQuestion });
 				}
 
-				// Look for completion indicators in AI response
-				const content = message.content.toLowerCase();
-
-				// Check if AI has generated a brand statement (synthesis step)
-				if (
-					content.includes("we exist to") ||
-					content.includes("brand purpose statement") ||
-					content.includes("brand statement") ||
-					content.includes("here's your")
-				) {
-					const statementMatch = message.content.match(
-						/"([^"]*(?:we exist to|purpose|statement)[^"]*)"/i,
-					);
-					if (statementMatch) {
-						debug.log("Statement Detected", {
-							statement: statementMatch[1],
-							step: "synthesis",
-						});
-
-						setConversationState((prev) => ({
-							...prev,
-							step: "synthesis",
-							draftStatement: statementMatch[1],
-						}));
-					}
-				}
-
-				// Check for completion phrases
+				// ✅ FIXED: Delay completion detection to let state updates complete
 				if (
 					(content.includes("perfect!") && content.includes("ready")) ||
 					content.includes("congratulations") ||
@@ -395,38 +443,21 @@ export function GuidedDiscovery({
 					debug.log("Completion Detected", {
 						content: content.substring(0, 200),
 					});
-					await handleCompletion();
-				}
-
-				// Save conversation state
-				try {
-					const progressManager = new ProgressManager(session);
 					
-					debug.log("Saving Conversation", {
-						userId: session?.user?.id,
-						cardId: card.id,
-						step: conversationState.step,
-						messageCount: messages.length,
-					});
-
-					await progressManager.saveAIConversation(
-						card.id,
-						{ messages, conversationState },
-						conversationState.step,
-						isCompleted,
-					);
-
-					debug.log("Conversation Saved", "Successfully");
-				} catch (error) {
-					debug.error("Save Conversation Error", error);
+					// ✅ Small delay to ensure state updates are processed
+					setTimeout(async () => {
+						if (!completionInProgress.current) {
+							await handleCompletion();
+						}
+					}, 200);
 				}
 			},
 			onError: (error) => {
-				debug.error("useChat Error", {
+				debug.error("❌ useChat Error", {
 					message: error.message,
 					stack: error.stack,
 					endpoint: getApiEndpoint(card.slug),
-					userId: session?.user?.id,
+					userId: effectiveUserId,
 					timestamp: new Date().toISOString(),
 				});
 
@@ -435,147 +466,210 @@ export function GuidedDiscovery({
 			},
 		});
 
-	// Debug useChat state changes
+	// ✅ Add intensive debugging for useChat state changes
 	useEffect(() => {
-		debug.log("useChat State Update", {
+		debug.log("🔄 useChat State Update", {
 			isLoading,
 			messageCount: messages.length,
 			inputLength: input.length,
+			hasError: !!error,
+			errorMessage: error?.message,
+			lastMessage: messages[messages.length - 1]?.content?.substring(0, 50),
+			timestamp: new Date().toISOString(),
 		});
+	}, [isLoading, messages, input, error]);
 
-		setDebugInfo((prev: any) => ({
-			...prev,
-			chatState: {
-				isLoading,
+	// ✅ FIXED: Use useEffect to save conversation state when it changes
+	useEffect(() => {
+		if (isInitialized && messages.length > 0) {
+			debug.log("💾 Saving Conversation State", {
 				messageCount: messages.length,
-				lastUpdate: new Date().toISOString(),
-			},
-		}));
-	}, [isLoading, messages, input]);
+				conversationStep: conversationState.step,
+				isCompleted,
+				isAuthenticated,
+				timestamp: new Date().toISOString()
+			});
+			
+			// Small delay to ensure all state updates are complete
+			const saveTimeout = setTimeout(() => {
+				saveConversationState();
+			}, 100);
+			
+			return () => clearTimeout(saveTimeout);
+		}
+	}, [conversationState, messages, isCompleted, isInitialized]);
 
-	// React Native compatible input handler
+	// React Native compatible input handler - use setInput directly
 	const handleTextChange = (text: string) => {
-		debug.log("Input Changed", { textLength: text.length });
-
-		// Create a synthetic event for the useChat hook that matches React Native patterns
-		const syntheticEvent = {
-			target: { value: text },
-			nativeEvent: { text },
-			preventDefault: () => {},
-		} as any;
-		handleInputChange(syntheticEvent);
+		const debugData = { 
+			textLength: text.length, 
+			text: text,
+			previousInput: input,
+			timestamp: new Date().toISOString()
+		};
+		debug.log("🔤 Input Changed", debugData);
+		console.log("🔤 INPUT CHANGED:", debugData);
+		
+		// Use setInput directly instead of synthetic events - much more reliable in React Native
+		setInput(text);
+		console.log("✅ setInput called with:", text);
 	};
 
+	// Debug input state changes
 	useEffect(() => {
-		if (session?.user?.id) {
-			loadExistingConversation();
-		}
-	}, [session]);
+		const debugData = { 
+			input, 
+			trimmed: input.trim(), 
+			isEmpty: !input.trim(),
+			shouldBeDisabled: !input.trim() || isLoading,
+			isLoading,
+			timestamp: new Date().toISOString()
+		};
+		debug.log("📝 Input State Changed", debugData);
+		console.log("📝 INPUT STATE:", debugData);
+	}, [input, isLoading]);
 
+	// ✅ FIXED: Load existing conversation from appropriate storage with actual restoration
 	const loadExistingConversation = async () => {
 		try {
-			const progressManager = new ProgressManager(session);
-			
-			debug.log("Loading Existing Conversation", {
-				userId: session?.user?.id,
-				cardId: card.id,
-			});
+			if (isAuthenticated) {
+				// Load from database
+				const progressManager = new ProgressManager(session);
+				const { data, error } = await progressManager.getAIConversation(card.id);
 
-			const { data, error } = await progressManager.getAIConversation(card.id);
+				if (error) {
+					debug.error("Load Conversation Error", error);
+					return;
+				}
 
-			if (error) {
-				debug.error("Load Conversation Error", error);
-				// Don't fail the component if we can't load existing conversation
-				return;
-			}
-
-			if (data && !data.is_completed && data.conversation_data?.messages) {
-				debug.log("Previous Conversation Found", {
-					conversationId: data.id,
-					step: data.current_step,
-					isCompleted: data.is_completed,
-					messageCount: data.conversation_data.messages.length,
-				});
-
-				// Could restore the conversation state here if needed
-				// For now, we'll start fresh but could enhance this later
+				if (data && !data.is_completed && data.conversation_data?.conversationState) {
+					debug.log("Previous Database Conversation Found", {
+						conversationId: data.id,
+						step: data.current_step,
+						isCompleted: data.is_completed,
+						messageCount: data.conversation_data.messages?.length || 0,
+					});
+					
+					// ✅ Actually restore conversation state
+					setConversationState(data.conversation_data.conversationState);
+					setIsCompleted(data.is_completed);
+				}
 			} else {
-				debug.log("No Previous Conversation", {
-					hasData: !!data,
-					isCompleted: data?.is_completed,
-					hasMessages: !!data?.conversation_data?.messages,
-				});
+				// Load from local storage
+				const localConversation = await LocalAIStorage.getConversation(card.id);
+				
+				if (localConversation && !localConversation.isCompleted && localConversation.conversationData?.conversationState) {
+					debug.log("Previous Local Conversation Found", {
+						conversationId: localConversation.id,
+						step: localConversation.currentStep,
+						isCompleted: localConversation.isCompleted,
+						messageCount: localConversation.conversationData.messages?.length || 0,
+					});
+					
+					// ✅ Actually restore conversation state
+					setConversationState(localConversation.conversationData.conversationState);
+					setIsCompleted(localConversation.isCompleted);
+				}
 			}
 		} catch (error) {
 			debug.error("Load Conversation Exception", error);
-			// Don't fail the component - just continue without loading previous conversation
 		}
 	};
 
+	// ✅ Load conversation on component mount
+	useEffect(() => {
+		if (isInitialized) {
+			loadExistingConversation();
+		}
+	}, [isAuthenticated, card.id, isInitialized]);
+
 	const handleCompletion = async () => {
-		if (isCompleted) return;
+		if (isCompleted || completionInProgress.current) return;
+
+		// ✅ Prevent double completion
+		completionInProgress.current = true;
 
 		debug.log("Handling Completion", {
-			userId: session?.user?.id,
+			userId: effectiveUserId,
+			isAuthenticated,
 			hasStatement: !!conversationState.draftStatement,
-			isAlreadyCompleted: isCompleted,
 		});
 
 		setIsCompleted(true);
 
 		try {
-			const progressManager = new ProgressManager(session);
+			if (isAuthenticated) {
+				// Save to database via ProgressManager
+				const progressManager = new ProgressManager(session);
 
-			// Save brand statement if it exists
-			if (conversationState.draftStatement) {
-				debug.log("Saving Brand Statement", {
-					statement: conversationState.draftStatement,
-					scores: conversationState.scores,
-				});
+				// Save brand statement if it exists
+				if (conversationState.draftStatement) {
+					debug.log("Saving Brand Statement to Database", {
+						statement: conversationState.draftStatement,
+						scores: conversationState.scores,
+					});
 
-				await progressManager.saveBrandPurposeStatement(
-					conversationState.draftStatement,
-					conversationState.scores.audience,
-					conversationState.scores.benefit,
-					conversationState.scores.belief,
-					conversationState.scores.impact,
+					await progressManager.saveBrandPurposeStatement(
+						conversationState.draftStatement,
+						conversationState.scores.audience,
+						conversationState.scores.benefit,
+						conversationState.scores.belief,
+						conversationState.scores.impact,
+					);
+				}
+
+				// Update user progress
+				await progressManager.updateProgress(
+					card.id,
+					{
+						status: "completed",
+						completedAt: new Date().toISOString(),
+					},
+					section.id,
 				);
+
+				debug.log("Progress Saved to Database Successfully", { sectionId: section.id });
+			} else {
+				// Save to local storage
+				if (conversationState.draftStatement) {
+					debug.log("Saving Brand Statement Locally", {
+						statement: conversationState.draftStatement,
+						scores: conversationState.scores,
+					});
+
+					// Use ProgressManager which will save to local storage for unauthenticated users
+					const progressManager = new ProgressManager(null);
+					await progressManager.saveBrandPurposeStatement(
+						conversationState.draftStatement,
+						conversationState.scores.audience,
+						conversationState.scores.benefit,
+						conversationState.scores.belief,
+						conversationState.scores.impact,
+					);
+
+					// Save progress locally
+					await progressManager.updateProgress(
+						card.id,
+						{
+							status: "completed",
+							completedAt: new Date().toISOString(),
+						},
+						section.id,
+					);
+				}
+
+				debug.log("Progress Saved Locally Successfully", { sectionId: section.id });
 			}
 
-			// Update user progress - mark section as completed
-			debug.log("Updating User Progress", {
-				userId: session?.user?.id,
-				cardId: card.id,
-				sectionId: section.id,
-			});
-
-			await progressManager.updateProgress(
-				card.id,
-				{
-					status: "completed",
-					completedAt: new Date().toISOString(),
-				},
-				section.id,
-			);
-
-			// Mark conversation as completed
-			await progressManager.saveAIConversation(
-				card.id,
-				{ messages, conversationState },
-				"complete",
-				true,
-			);
-
-			debug.log("Progress Saved Successfully", { sectionId: section.id });
-
-			// Delay before calling onComplete to show success message
-			setTimeout(() => {
-				debug.log("Calling onComplete", "Starting completion callback");
-				onComplete();
-			}, 2000);
 		} catch (error) {
 			debug.error("Completion Error", error);
 		}
+
+		// Show completion state and call onComplete
+		setTimeout(() => {
+			debug.log("Calling onComplete", "Starting completion callback");
+			onComplete();
+		}, 2000);
 	};
 
 	// Calculate progress based on conversation length and AI responses
@@ -596,18 +690,44 @@ export function GuidedDiscovery({
 
 	const progressPercentage = calculateProgress();
 
-	// Enhanced submit handler with debugging
-	const handleEnhancedSubmit = async () => {
+	// ✅ FIXED: Enhanced submit handler with explicit input clearing
+	const handleEnhancedSubmit = React.useCallback(async () => {
+		// ✅ Add immediate debug log to track button presses
+		const initialDebugData = {
+			timestamp: new Date().toISOString(),
+			input: input,
+			inputTrimmed: input.trim(),
+			inputLength: input.length,
+			isLoading: isLoading,
+			willProceed: !(!input.trim() || isLoading),
+			conversationStep: conversationState.step,
+			messageCount: messages.length
+		};
+		debug.log("🔥 Button Pressed!", initialDebugData);
+		console.log("🔥 BUTTON PRESSED!", initialDebugData);
+		
 		if (!input.trim() || isLoading) {
-			debug.log("Submit Blocked", "Empty input or already loading");
+			const blockDebugData = {
+				reason: !input.trim() ? "Empty input" : "Already loading",
+				input: input,
+				inputTrimmed: input.trim(),
+				isLoading: isLoading,
+				timestamp: new Date().toISOString()
+			};
+			debug.log("⛔ Submit Blocked", blockDebugData);
+			console.log("⛔ SUBMIT BLOCKED:", blockDebugData);
 			return;
 		}
 
-		debug.log("Submit Initiated", {
+		const proceedDebugData = {
 			inputLength: input.length,
 			isLoading,
 			endpoint: getApiEndpoint(card.slug),
-		});
+			userId: effectiveUserId,
+			timestamp: new Date().toISOString()
+		};
+		debug.log("✅ Submit Proceeding", proceedDebugData);
+		console.log("✅ SUBMIT PROCEEDING:", proceedDebugData);
 
 		// Check if the user is confirming completion
 		const userResponse = input.toLowerCase().trim();
@@ -618,46 +738,63 @@ export function GuidedDiscovery({
 				userResponse.includes("looks good") ||
 				userResponse.includes("that's right"))
 		) {
-			debug.log("User Confirmed Completion", "User accepted the statement");
+			debug.log("🎉 User Confirmed Completion", "User accepted the statement");
+			console.log("🎉 USER CONFIRMED COMPLETION");
+			// ✅ Clear input before completion
+			setInput("");
 			handleCompletion();
 			return;
 		}
 
-		// Call the original handleSubmit - React Native compatible
+		// ✅ Store input value before clearing it
+		const currentInput = input;
+
 		try {
-			debug.log("Calling handleSubmit", {
-				inputValue: input,
+			const appendDebugData = {
+				inputValue: currentInput,
 				messageCount: messages.length,
-				userId: session?.user?.id,
+				userId: effectiveUserId,
 				endpoint: getApiEndpoint(card.slug),
+				appendFunction: typeof append,
+				timestamp: new Date().toISOString()
+			};
+			debug.log("📤 Calling append", appendDebugData);
+			console.log("📤 CALLING APPEND:", appendDebugData);
+
+			// ✅ Clear input immediately after storing it
+			setInput("");
+			debug.log("🧹 Input cleared", { newInput: "", timestamp: new Date().toISOString() });
+			console.log("🧹 INPUT CLEARED");
+
+			// Use the more reliable append method for programmatic message sending
+			const appendResult = await append({
+				role: "user",
+				content: currentInput,
 			});
 
-			// Create a proper synthetic event for React Native
-			const syntheticEvent = {
-				preventDefault: () => {},
-				target: { value: input },
-				currentTarget: { value: input },
-				nativeEvent: { text: input },
-				type: "submit",
-			} as any;
-
-			await handleSubmit(syntheticEvent);
-
-			debug.log("handleSubmit Called", "Successfully completed");
+			debug.log("✅ append Called Successfully", { 
+				result: appendResult,
+				timestamp: new Date().toISOString()
+			});
+			console.log("✅ APPEND SUCCESS:", appendResult);
 		} catch (submitError) {
-			debug.error("Submit Error", {
+			// ✅ Restore input on error
+			setInput(currentInput);
+			
+			const errorDebugData = {
 				error: submitError,
-				message:
-					submitError instanceof Error ? submitError.message : "Unknown error",
+				message: submitError instanceof Error ? submitError.message : "Unknown error",
 				stack: submitError instanceof Error ? submitError.stack : undefined,
-			});
+				inputRestored: currentInput,
+				timestamp: new Date().toISOString()
+			};
+			debug.error("💥 Submit Error", errorDebugData);
+			console.error("💥 SUBMIT ERROR:", errorDebugData);
 
-			// Re-throw the error instead of showing fallback
-			throw new Error(
-				`Failed to submit message: ${submitError instanceof Error ? submitError.message : "Unknown error"}`,
-			);
+			// Show user-friendly error message
+			console.error("Failed to submit message:", submitError);
 		}
-	};
+	}, [input, isLoading, conversationState.step, append, setInput, effectiveUserId, card.slug, handleCompletion, messages.length]);
 
 	// Throw error if there's an API error
 	if (error) {
@@ -666,12 +803,38 @@ export function GuidedDiscovery({
 		);
 	}
 
+	// ✅ INTENSIVE DEBUGGING: Track component renders and state
+	debug.log("🔄 Component Render", {
+		timestamp: new Date().toISOString(),
+		input: input,
+		inputTrimmed: input.trim(),
+		inputLength: input.length,
+		isLoading: isLoading,
+		isCompleted: isCompleted,
+		conversationStep: conversationState.step,
+		messageCount: messages.length,
+		isAuthenticated: isAuthenticated,
+		effectiveUserId: effectiveUserId,
+		buttonShouldBeDisabled: !input.trim() || isLoading,
+		buttonShouldBeGreen: input.trim() && !isLoading,
+		handlerExists: typeof handleEnhancedSubmit === 'function'
+	});
+
+	console.log("🔄 COMPONENT RENDER:", {
+		input: input.substring(0, 50),
+		inputLength: input.length,
+		isLoading: isLoading,
+		buttonDisabled: !input.trim() || isLoading,
+		messageCount: messages.length
+	});
+
 	return (
-		<SafeAreaView className="flex-1 bg-background">
-			<KeyboardAvoidingView
-				className="flex-1"
-				behavior={Platform.OS === "ios" ? "padding" : "height"}
-			>
+		<AIErrorBoundary>
+			<SafeAreaView className="flex-1 bg-background">
+				<KeyboardAvoidingView
+					className="flex-1"
+					behavior={Platform.OS === "ios" ? "padding" : "height"}
+				>
 				{/* Header */}
 				<View className="p-4 border-b border-border">
 					<View className="flex-row justify-between items-center mb-3">
@@ -701,6 +864,23 @@ export function GuidedDiscovery({
 				{/* Main Content */}
 				<ScrollView className="flex-1 p-4">
 					<View className="gap-6">
+						{/* ✅ Anonymous User Notice */}
+						{!isAuthenticated && (
+							<View className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+								<View className="flex-row items-center gap-3">
+									<Text className="text-2xl">💡</Text>
+									<View className="flex-1">
+										<Text className="text-blue-800 font-semibold text-sm">
+											You're trying this anonymously
+										</Text>
+										<Text className="text-blue-600 text-xs mt-1">
+											Your progress is saved locally. Sign up to sync across devices!
+										</Text>
+									</View>
+								</View>
+							</View>
+						)}
+
 						{/* Debug Info Panel - Only in development */}
 						{__DEV__ && (
 							<View className="bg-yellow-100 rounded-xl p-4 border border-yellow-300">
@@ -713,7 +893,7 @@ export function GuidedDiscovery({
 								</Text>
 								<Text className="text-xs text-yellow-700 mt-1">
 									Endpoint: {getApiEndpoint(card.slug)} | Step:{" "}
-									{conversationState.step} | Scores: {JSON.stringify(conversationState.scores)}
+									{conversationState.step} | Scores: {JSON.stringify(conversationState.scores)} | Auth: {isAuthenticated ? "YES" : "NO"}
 								</Text>
 							</View>
 						)}
@@ -739,7 +919,19 @@ export function GuidedDiscovery({
 								<Textarea
 									placeholder={getExampleText(card.slug)}
 									value={input}
-									onChangeText={handleTextChange}
+									onChangeText={(text) => {
+										const textareaDebugData = {
+											timestamp: new Date().toISOString(),
+											newText: text,
+											newTextLength: text.length,
+											newTextTrimmed: text.trim(),
+											previousInput: input,
+											handlerType: typeof handleTextChange
+										};
+										debug.log("📝 Textarea onChangeText Called", textareaDebugData);
+										console.log("📝 TEXTAREA CHANGE:", textareaDebugData);
+										handleTextChange(text);
+									}}
 									className="min-h-32 text-base leading-relaxed border-2"
 									multiline
 									textAlignVertical="top"
@@ -751,21 +943,89 @@ export function GuidedDiscovery({
 									}}
 								/>
 
-								{/* Submit Button */}
-								<Button
-									variant="white"
-									size="lg"
-									onPress={handleEnhancedSubmit}
-									disabled={!input.trim() || isLoading}
+								{/* ✅ TOUCH TEST: Simple touch test button */}
+								<Pressable
+									onPress={() => {
+										console.log("🧪 TOUCH TEST BUTTON PRESSED!");
+										debug.log("🧪 Touch Test", { timestamp: new Date().toISOString() });
+									}}
 									style={{
-										backgroundColor: input.trim() && !isLoading ? '#9AFF9A' : 'rgba(255,255,255,0.3)',
-										borderRadius: 24,
+										backgroundColor: '#FF6B6B',
+										padding: 12,
+										borderRadius: 8,
+										alignItems: 'center' as const,
+										marginBottom: 8,
 									}}
 								>
-									<Text className={`font-semibold ${input.trim() && !isLoading ? 'text-black' : 'text-gray-400'}`}>
+									<Text style={{ color: 'white', fontWeight: '600' }}>
+										🧪 Touch Test (Click Me)
+									</Text>
+								</Pressable>
+
+								{/* ✅ FIXED: Direct Pressable Button with Intensive Debugging */}
+								<Pressable
+									onPress={() => {
+										const debugData = {
+											timestamp: new Date().toISOString(),
+											input: input,
+											inputTrimmed: input.trim(),
+											isLoading: isLoading,
+											handlerType: typeof handleEnhancedSubmit
+										};
+										debug.log("🖱️ Pressable onPress Called!", debugData);
+										console.log("🖱️ PRESSABLE PRESS DEBUG:", debugData);
+										console.log("🚀 ABOUT TO CALL handleEnhancedSubmit");
+										handleEnhancedSubmit();
+									}}
+									onPressIn={() => {
+										console.log("👇 PRESS IN - Button touched");
+										debug.log("👇 Button Press In", { timestamp: new Date().toISOString() });
+									}}
+									onPressOut={() => {
+										console.log("👆 PRESS OUT - Button released");
+										debug.log("👆 Button Press Out", { timestamp: new Date().toISOString() });
+									}}
+									disabled={(() => {
+										const isDisabled = !input.trim() || isLoading;
+										debug.log("🔒 Pressable Disabled Check", {
+											isDisabled,
+											inputEmpty: !input.trim(),
+											isLoading,
+											input: input,
+											inputTrimmed: input.trim()
+										});
+										console.log("🔒 PRESSABLE DISABLED:", isDisabled, "input:", input, "isLoading:", isLoading);
+										return isDisabled;
+									})()}
+									style={({ pressed }) => {
+										const baseStyle = {
+											borderRadius: 24,
+											paddingVertical: 16,
+											paddingHorizontal: 32,
+											alignItems: 'center' as const,
+											justifyContent: 'center' as const,
+											minHeight: 56,
+										};
+										
+										const enabledStyle = input.trim() && !isLoading ? {
+											backgroundColor: pressed ? '#8AEF8A' : '#9AFF9A', // Slightly darker when pressed
+										} : {
+											backgroundColor: '#E5E7EB',
+										};
+										
+										console.log("🎨 BUTTON STYLE:", { pressed, enabled: input.trim() && !isLoading });
+										
+										return { ...baseStyle, ...enabledStyle };
+									}}
+								>
+									<Text style={{ 
+										fontWeight: '600',
+										fontSize: 16,
+										color: input.trim() && !isLoading ? '#000000' : '#9CA3AF'
+									}}>
 										{isLoading ? "Processing..." : "Continue"}
 									</Text>
-								</Button>
+								</Pressable>
 							</View>
 						</View>
 
@@ -853,5 +1113,6 @@ export function GuidedDiscovery({
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</SafeAreaView>
+		</AIErrorBoundary>
 	);
 }

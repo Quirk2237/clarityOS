@@ -75,8 +75,11 @@ export async function POST(req: Request) {
 			});
 		}
 
-		if (!userId || typeof userId !== "string") {
-			return new Response("Valid user ID required", { status: 401 });
+		// ✅ Make userId optional - generate anonymous ID if needed
+		let sessionUserId = userId;
+		if (!sessionUserId || typeof sessionUserId !== "string") {
+			// Generate anonymous session ID for rate limiting
+			sessionUserId = `anonymous_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 		}
 
 		// Sanitize inputs

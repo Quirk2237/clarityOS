@@ -12,7 +12,11 @@
 		"generate-colors": "node ./scripts/generate-colors.js && eslint ./constants/colors.ts --fix",
 		"clean": "rm -rf node_modules && rm -rf .expo && pnpm install",
 		"reset": "pnpm clean && pnpm install",
-		"verify-ai": "node ./scripts/verify-ai-setup.js"
+		"verify-ai": "node ./scripts/verify-ai-setup.js",
+		"validate-env": "node ./scripts/validate-environment.js",
+		"setup": "node ./scripts/validate-environment.js && pnpm verify-ai",
+		"debug-network": "expo start --no-dev --minify",
+		"test-api": "node ./scripts/test-api-security.js"
 	},
 	"dependencies": {
 		"@ai-sdk/openai": "1.3.22",

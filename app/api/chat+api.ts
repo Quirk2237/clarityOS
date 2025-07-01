@@ -21,6 +21,13 @@ export async function POST(req: Request) {
 			});
 		}
 
+		// ✅ Make userId optional - generate anonymous ID if needed
+		let sessionUserId = userId;
+		if (!sessionUserId || typeof sessionUserId !== "string") {
+			// Generate anonymous session ID for rate limiting
+			sessionUserId = `anonymous_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		}
+
 		// Sanitize inputs
 		const sanitizedMessages = messages
 			.map((msg) => ({
