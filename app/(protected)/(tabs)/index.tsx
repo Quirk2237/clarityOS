@@ -22,6 +22,7 @@ interface CardWithProgress {
 	progress: number;
 	total: number;
 	status: string;
+	card_status?: "open" | "coming_soon";
 }
 
 // Unified Card Component for all cards
@@ -35,6 +36,7 @@ const Card = ({
 	const [imageError, setImageError] = useState(false);
 	const isCompleted = card.status === "completed";
 	const isStarted = card.status === "in_progress";
+	const isComingSoon = card.card_status === "coming_soon";
 	const backgroundColor = card.color || "#ACFF64";
 
 	return (
@@ -135,13 +137,14 @@ const Card = ({
 
 				{/* Action button */}
 				<Button
-					onPress={onPress}
+					onPress={isComingSoon ? undefined : onPress}
 					size="lg"
-					variant="action"
+					variant={isComingSoon ? "secondary" : "action"}
 					className="rounded-full py-4 shadow-md"
+					disabled={isComingSoon}
 				>
 					<Text className="text-brand-neutrals-textPrimary text-lg font-semibold">
-						{isStarted || isCompleted ? "Continue" : "Start Now"}
+						{isComingSoon ? "Coming Soon" : (isStarted || isCompleted ? "Continue" : "Start Now")}
 					</Text>
 				</Button>
 			</Pressable>
@@ -186,6 +189,7 @@ export default function Home() {
 						progress: 0,
 						total: card.card_sections?.length || 0,
 						status: "not_started" as const,
+						card_status: card.status,
 					}));
 					console.log("Transformed cards:", cardsWithDefaultProgress.length, "cards");
 					setCards(cardsWithDefaultProgress);
@@ -212,7 +216,12 @@ export default function Home() {
 
 	// Show all cards in order, with the first uncompleted card highlighted
 	const sortedCards = cards.sort((a, b) => a.order_index - b.order_index);
-	const activeCard = sortedCards.find(card => card.status !== "completed") || sortedCards[0];
+	
+	// Prioritize open cards over coming soon cards for the active card
+	const activeCard = sortedCards.find(card => 
+		card.status !== "completed" && card.card_status === "open"
+	) || sortedCards.find(card => card.status !== "completed") || sortedCards[0];
+	
 	const otherCards = sortedCards.filter(card => card.id !== activeCard?.id);
 	
 	console.log("Total cards:", cards.length);
@@ -244,7 +253,11 @@ export default function Home() {
 				{activeCard && (
 					<Card
 						card={activeCard}
-						onPress={() => router.push(`./cards/${activeCard.slug}`)}
+						onPress={() => {
+							if (activeCard.card_status !== "coming_soon") {
+								router.push(`./cards/${activeCard.slug}`);
+							}
+						}}
 					/>
 				)}
 
@@ -261,7 +274,11 @@ export default function Home() {
 						<Card
 							key={card.id}
 							card={card}
-							onPress={() => router.push(`./cards/${card.slug}`)}
+							onPress={() => {
+								if (card.card_status !== "coming_soon") {
+									router.push(`./cards/${card.slug}`);
+								}
+							}}
 						/>
 					);
 				})}

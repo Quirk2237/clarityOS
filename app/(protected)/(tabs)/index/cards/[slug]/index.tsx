@@ -153,7 +153,7 @@ export default function CardScreen() {
 
 	if (loading) {
 		return (
-			<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
+			<SafeAreaView className="flex-1 bg-brand-neutrals-darkBackground">
 				<View className="flex-1 items-center justify-center">
 					<Text className="text-lg text-white">Loading card...</Text>
 					<Text className="text-sm text-gray-400 mt-2">Slug: {slug}</Text>
@@ -164,7 +164,7 @@ export default function CardScreen() {
 
 	if (!card) {
 		return (
-			<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
+			<SafeAreaView className="flex-1 bg-brand-neutrals-darkBackground">
 				<View className="flex-1 items-center justify-center">
 					<Text className="text-lg text-white">Card not found</Text>
 				</View>
@@ -178,7 +178,7 @@ export default function CardScreen() {
 	const guidedSection = card.card_sections.find((s) => s.type === "guided");
 
 	return (
-		<SafeAreaView className="flex-1" style={{ backgroundColor: "#292929" }}>
+		<SafeAreaView className="flex-1 bg-brand-neutrals-darkBackground">
 			{currentSection === "educational" && educationalSection && (
 				<EducationalQuiz
 					card={card}

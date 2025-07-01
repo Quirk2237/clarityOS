@@ -36,7 +36,7 @@ SwitchWeb.displayName = "SwitchWeb";
 
 // ClarityOS color scheme
 const RGB_COLORS = {
-	primary: "rgb(154, 255, 154)", // vibrantGreen
+	primary: "rgb(172, 255, 100)", // vibrantGreen
 	input: "rgb(102, 102, 102)", // textSecondary
 };
 

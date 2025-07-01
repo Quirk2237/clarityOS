@@ -2,7 +2,7 @@
 export const brandColors = {
 	// Primary Brand Colors - Vibrant ClarityOS palette
 	primary: {
-		vibrantGreen: "#9AFF9A",
+		vibrantGreen: "#ACFF64",
 		neonGreen: "#7EFF7E",
 		vibrantPink: "#FF69B4",
 		hotPink: "#FF1493",
@@ -24,7 +24,7 @@ export const brandColors = {
 	},
 
 	// Semantic Colors
-	success: "#9AFF9A", // Vibrant green
+	success: "#ACFF64", // Vibrant green
 	warning: "#FFA500", // Orange
 	error: "#FF1493", // Hot pink
 	info: "#7EFF7E", // Neon green

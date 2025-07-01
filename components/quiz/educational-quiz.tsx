@@ -238,14 +238,15 @@ export function EducationalQuiz({
 	return (
 		<SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center">
 			{/* Centered Card Container */}
-			<View className="w-[92%] max-w-xl rounded-3xl bg-lime-200 p-4 pt-6 pb-0 shadow-lg items-stretch justify-between min-h-[80%]" style={{ minHeight: 520 }}>
+			<View className="w-[92%] max-w-xl rounded-3xl p-4 pt-6 pb-0 shadow-lg items-stretch justify-between min-h-[80%]" style={{ minHeight: 520, backgroundColor: "#ACFF64" }}>
 				{/* Close Button */}
 				<View className="absolute left-4 top-4 z-10">
 					<Button
 						variant="ghost"
 						size="icon"
 						onPress={onExit}
-						className="w-12 h-12 rounded-full bg-lime-300/60 items-center justify-center"
+						className="w-12 h-12 rounded-full items-center justify-center"
+						style={{ backgroundColor: "rgba(255, 255, 255, 0.3)" }}
 					>
 						<Text className="text-2xl">✕</Text>
 					</Button>
@@ -267,8 +268,8 @@ export function EducationalQuiz({
 							let borderColor = 'border-transparent';
 							if (isCorrect) borderColor = 'border-green-500';
 							else if (isWrong) borderColor = 'border-red-400';
-							else if (isSelected) borderColor = 'border-lime-500';
-							const bgColor = isSelected ? 'bg-lime-100' : 'bg-white';
+							else if (isSelected) borderColor = 'border-black';
+							const bgColor = isSelected ? 'bg-white/80' : 'bg-white';
 							return (
 								<Button
 									key={choice.id}
@@ -291,7 +292,7 @@ export function EducationalQuiz({
 
 					{/* Feedback (optional, after check) */}
 					{showResult && (
-						<View className="mt-2 mb-4 p-4 rounded-xl bg-white/80 border border-lime-300 items-center">
+						<View className="mt-2 mb-4 p-4 rounded-xl bg-white/80 border border-black/20 items-center">
 							{selectedAnswer && answerChoices.find((a) => a.id === selectedAnswer)?.is_correct ? (
 								<Text className="text-xl font-semibold text-green-700">Correct! Great job! 🎉</Text>
 							) : (
@@ -316,9 +317,10 @@ export function EducationalQuiz({
 						onPress={() => {
 							if (selectedAnswer) handleAnswerSelect(selectedAnswer);
 						}}
-						className="w-full rounded-2xl bg-lime-300/80"
+						className="w-full rounded-2xl"
+						style={{ backgroundColor: "rgba(255, 255, 255, 0.8)" }}
 					>
-						<Text className="font-semibold text-lg text-lime-900">Check</Text>
+						<Text className="font-semibold text-lg text-black">Check</Text>
 					</Button>
 				</View>
 
@@ -328,7 +330,8 @@ export function EducationalQuiz({
 						value={currentQuestionIndex + (showResult ? 1 : 0)}
 						max={questions.length}
 						showLabel={false}
-						className="h-3 bg-lime-100 rounded-full"
+						className="h-3 rounded-full"
+						style={{ backgroundColor: "rgba(255, 255, 255, 0.5)" }}
 						variant="default"
 					/>
 				</View>

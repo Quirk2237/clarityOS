@@ -27,7 +27,7 @@ export function CompletionScreen({
 		if (score >= 95)
 			return { emoji: "🏆", message: "Perfect!", color: "#FFD700" };
 		if (score >= 85)
-			return { emoji: "🌟", message: "Excellent!", color: "#58CC02" };
+			return { emoji: "🌟", message: "Excellent!", color: "#ACFF64" };
 		if (score >= 75)
 			return { emoji: "🎯", message: "Great job!", color: "#1CB0F6" };
 		if (score >= 65)

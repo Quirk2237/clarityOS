@@ -108,6 +108,7 @@ export interface Database {
 					is_active: boolean;
 					image_url: string | null;
 					color: string | null;
+					status: "open" | "coming_soon";
 					created_at: string;
 					updated_at: string;
 					deleted_at: string | null;
@@ -121,6 +122,7 @@ export interface Database {
 					is_active?: boolean;
 					image_url?: string | null;
 					color?: string | null;
+					status?: "open" | "coming_soon";
 					created_at?: string;
 					updated_at?: string;
 					deleted_at?: string | null;
@@ -134,6 +136,7 @@ export interface Database {
 					is_active?: boolean;
 					image_url?: string | null;
 					color?: string | null;
+					status?: "open" | "coming_soon";
 					created_at?: string;
 					updated_at?: string;
 					deleted_at?: string | null;

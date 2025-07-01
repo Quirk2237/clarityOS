@@ -22,7 +22,7 @@ export default function WelcomeScreen() {
 	};
 
 	return (
-		<SafeAreaView className="flex flex-1" style={{ backgroundColor: "#9AFF9A" }}>
+		<SafeAreaView className="flex flex-1" style={{ backgroundColor: "#ACFF64" }}>
 			<View className="flex flex-1 items-center justify-center px-6 py-8">
 				{/* Welcome Illustration */}
 				<View className="flex-1 items-center justify-center">

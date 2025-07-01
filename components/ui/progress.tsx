@@ -226,7 +226,7 @@ const ProgressCard = ({
 	title,
 	progress,
 	total,
-	color = "#9AFF9A",
+	color = "#ACFF64",
 	className,
 }: ProgressCardProps) => {
 	const percentage = Math.min(100, Math.max(0, (progress / total) * 100));

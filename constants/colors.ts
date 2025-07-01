@@ -7,7 +7,7 @@
 export const brandColors = {
 	// Primary Brand Colors - Vibrant ClarityOS palette
 	primary: {
-		vibrantGreen: "#9AFF9A",
+		vibrantGreen: "#ACFF64",
 		neonGreen: "#7EFF7E",
 		vibrantPink: "#FF69B4",
 		hotPink: "#FF1493",
@@ -29,7 +29,7 @@ export const brandColors = {
 	},
 
 	// Semantic Colors
-	success: "#9AFF9A", // Vibrant green
+	success: "#ACFF64", // Vibrant green
 	warning: "#FFA500", // Orange
 	error: "#FF1493", // Hot pink
 	info: "#7EFF7E", // Neon green
@@ -43,7 +43,7 @@ export const colors = {
 	cardForeground: "#000000", // Black text on cards
 	popover: "#FFFFFF",
 	popoverForeground: "#000000",
-	primary: "#9AFF9A", // Vibrant green
+	primary: "#ACFF64", // Vibrant green
 	primaryForeground: "#000000", // Black text on primary
 	secondary: "#7EFF7E", // Neon green
 	secondaryForeground: "#000000",
@@ -55,5 +55,5 @@ export const colors = {
 	destructiveForeground: "#FFFFFF",
 	border: "#666666",
 	input: "#666666",
-	ring: "#9AFF9A", // Vibrant green
+	ring: "#ACFF64", // Vibrant green
 };

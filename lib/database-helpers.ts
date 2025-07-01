@@ -448,6 +448,7 @@ export async function getAllCardsWithProgress(userId: string) {
 				order_index,
 				image_url,
 				color,
+				status,
 				card_sections (
 					id,
 					type
