@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from "../safe-area-view";
 import { Text } from "../ui/text";
 import { Subtitle, Title } from "@/components/ui/typography";
-import { Button } from "@/components/ui/button";
+import { Button, TransparentIcon } from "@/components/ui/button";
 import { Image } from "../image";
 
 import { QuizCompletionModal } from "./quiz-completion-modal";
@@ -70,11 +70,6 @@ export function EducationalQuiz({
 	// Load saved progress when component mounts
 	useEffect(() => {
 		const loadProgress = async () => {
-			if (!session?.user?.id) {
-				setIsLoadingProgress(false);
-				return;
-			}
-
 			try {
 				const progressManager = new ProgressManager(session);
 				const result = await progressManager.getProgress(card.id);
@@ -88,8 +83,11 @@ export function EducationalQuiz({
 					let currentQuestionId = null;
 					
 					if (Array.isArray(progressData)) {
-						// Find the progress entry for this card
-						const cardProgress = progressData.find(p => p.cardId === card.id || p.card_id === card.id);
+						// Find the progress entry for this card and section
+						const cardProgress = progressData.find(p => 
+							(p.cardId === card.id || p.card_id === card.id) && 
+							(p.sectionId === section.id || p.section_id === section.id)
+						);
 						currentQuestionId = cardProgress?.questionId || cardProgress?.question_id;
 					} else if (progressData.question_id || progressData.questionId) {
 						// Single progress object
@@ -115,7 +113,7 @@ export function EducationalQuiz({
 		};
 
 		loadProgress();
-	}, [session?.user?.id, card.id, questions]);
+	}, [session?.user?.id, card.id, section.id, questions]);
 
 	const handleAnswerSelect = async (answerId: string) => {
 		if (showResult) return;
@@ -267,14 +265,9 @@ export function EducationalQuiz({
 			>
 				{/* Close Button */}
 				<View style={{ position: 'absolute', left: 16, top: 16, zIndex: 10 }}>
-					<Button
-						size="icon"
-						onPress={onExit}
-						className="w-12 h-12 rounded-full items-center justify-center"
-						style={{ backgroundColor: "#9EEC5A" }}
-					>
-						<Text className="text-2xl">✕</Text>
-					</Button>
+					<TransparentIcon onPress={onExit}>
+						<Text className="text-white text-lg font-bold">✕</Text>
+					</TransparentIcon>
 				</View>
 
 				{/* Question */}

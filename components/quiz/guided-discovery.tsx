@@ -1,6 +1,16 @@
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable } from "react-native";
+import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, {
+	useSharedValue,
+	useAnimatedStyle,
+	useAnimatedGestureHandler,
+	withSpring,
+	runOnJS,
+	interpolate,
+	Extrapolate,
+} from 'react-native-reanimated';
 import { SafeAreaView } from "../safe-area-view";
 import { Text } from "../ui/text";
 import { Subtitle, Title } from "../ui/typography";
@@ -67,6 +77,12 @@ interface GuidedDiscoveryProps {
 	educationalScore: number;
 }
 
+interface QuestionAnswer {
+	question: string;
+	answer: string;
+	timestamp: number;
+}
+
 interface ConversationState {
 	step: "opening" | "follow_up" | "synthesis" | "validation" | "refinement" | "complete";
 	scores: {
@@ -78,6 +94,7 @@ interface ConversationState {
 	draftStatement?: string;
 	validationFeedback?: "yes" | "no" | "not_sure";
 	refinementArea?: "audience" | "what" | "why" | "belief";
+	questionHistory: QuestionAnswer[];
 }
 
 // ScoreWidgets component for displaying the 4 scoring dimensions
@@ -209,7 +226,7 @@ function ScoreWidgets({ scores, cardSlug }: ScoreWidgetsProps) {
 				<View 
 					key={item.key}
 					className="flex-1 min-w-[45%] rounded-2xl p-4 flex-row items-center"
-					style={{ minWidth: '45%', backgroundColor: colors.surface }}
+					style={{ minWidth: '45%', backgroundColor: '#383838' }}
 				>
 					{/* Circular Progress */}
 					<View className="mr-3">
@@ -242,18 +259,37 @@ export function GuidedDiscovery({
 	onExit,
 	educationalScore,
 }: GuidedDiscoveryProps) {
+	// Guard against undefined card
+	if (!card) {
+		return (
+			<AIErrorBoundary>
+				<View className="flex-1 items-center justify-center p-6">
+					<Text className="text-lg text-center" style={{ color: colors.background }}>
+						Card data is not available. Please try again.
+					</Text>
+					<Button variant="white" onPress={onExit} className="mt-4">
+						<Text>Go Back</Text>
+					</Button>
+				</View>
+			</AIErrorBoundary>
+		);
+	}
+
 	const { session } = useAuth();
 	const synthesisForced = useRef(false);
 	const [conversationState, setConversationState] = useState<ConversationState>(
 		{
 			step: "opening",
 			scores: { audience: 0, benefit: 0, belief: 0, impact: 0 },
+			questionHistory: [],
 		},
 	);
 	const [isCompleted, setIsCompleted] = useState(false);
 	// Removed debugInfo state
 	const [currentQuestion, setCurrentQuestion] = useState<string>("");
 	const [isInitialized, setIsInitialized] = useState(false);
+	const [currentStackIndex, setCurrentStackIndex] = useState(0);
+	const cardHeights = useSharedValue<{ [key: string]: number }>({});
 
 	// ✅ Generate anonymous user ID for unauthenticated users
 	const [anonymousUserId] = useState(() => 
@@ -384,7 +420,7 @@ export function GuidedDiscovery({
 		isLoading, 
 		error, 
 		data: aiResponse,
-		handleSubmit
+		handleSubmit: originalHandleSubmit
 	} = useAIChat<z.infer<typeof ClaritySchema>>({
 		endpoint: `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/ai-handler`,
 		schema: ClaritySchema,
@@ -394,7 +430,7 @@ export function GuidedDiscovery({
 			userId: effectiveUserId,
 		},
 		onError: (error) => {
-			debug.error("❌ AI Chat Error", {
+			console.error("❌ AI Chat Error", {
 				message: error.message,
 				endpoint: `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/ai-handler`,
 				userId: effectiveUserId,
@@ -403,12 +439,36 @@ export function GuidedDiscovery({
 		},
 	});
 
+	// Enhanced handleSubmit to store question/answer history
+	const handleSubmit = (e: any) => {
+		if (!input.trim()) return;
+		
+		// Add current question and answer to history
+		setConversationState(prev => ({
+			...prev,
+			questionHistory: [
+				...prev.questionHistory,
+				{
+					question: currentQuestion,
+					answer: input.trim(),
+					timestamp: Date.now()
+				}
+			]
+		}));
+
+		// Reset stack to show current question
+		setCurrentStackIndex(0);
+		
+		// Call original submit
+		originalHandleSubmit(e);
+	};
+
 	// ✅ Process structured data from the AI when it's available
 	useEffect(() => {
 		if (!aiResponse) return;
 
 		try {
-			debug.log("📊 Structured AI Response", aiResponse);
+			console.log("📊 Structured AI Response", aiResponse);
 
 			// Update conversation state with structured data
 			setConversationState((prev) => {
@@ -430,7 +490,7 @@ export function GuidedDiscovery({
 					// Reset validation state for fresh review
 					newState.validationFeedback = undefined;
 					newState.refinementArea = undefined;
-					debug.log("Synthesis Phase Started", {
+					console.log("Synthesis Phase Started", {
 						isComplete: aiResponse.isComplete,
 						draftStatement: aiResponse.draftStatement,
 						previousStep: prev.step,
@@ -443,7 +503,8 @@ export function GuidedDiscovery({
 			// Update current question from structured response
 			if (aiResponse.question && aiResponse.question !== currentQuestion) {
 				setCurrentQuestion(aiResponse.question);
-				debug.log("Question Updated from JSON", {
+				setCurrentStackIndex(0); // Reset to show current question
+				console.log("Question Updated from JSON", {
 					newQuestion: aiResponse.question,
 				});
 			}
@@ -451,7 +512,7 @@ export function GuidedDiscovery({
 			// Don't auto-complete anymore - let user validate the statement first
 			// Completion now happens through user interaction in the synthesis/validation phases
 		} catch (parseError: any) {
-			debug.warn("Data Parse Error", {
+			console.warn("Data Parse Error", {
 				error: parseError,
 				message: "AI returned non-JSON data object",
 			});
@@ -464,7 +525,7 @@ export function GuidedDiscovery({
 
 	// ✅ Add intensive debugging for useAIChat state changes
 	useEffect(() => {
-		debug.log("🔄 useAIChat State Update", {
+		console.log("🔄 useAIChat State Update", {
 			isLoading,
 			hasError: !!error,
 			errorMessage: error?.message,
@@ -476,7 +537,7 @@ export function GuidedDiscovery({
 	// ✅ FIXED: Use useEffect to save conversation state when it changes
 	useEffect(() => {
 		if (isInitialized) {
-			debug.log("💾 Saving Conversation State", {
+			console.log("💾 Saving Conversation State", {
 				conversationStep: conversationState.step,
 				isCompleted,
 				isAuthenticated,
@@ -502,7 +563,7 @@ export function GuidedDiscovery({
 			(step === "opening" || step === "follow_up") &&
 			!synthesisForced.current
 		) {
-			debug.log("Client-Side Completion", "Scores maxed, forcing synthesis request.");
+			console.log("Client-Side Completion", "Scores maxed, forcing synthesis request.");
 			synthesisForced.current = true;
 
 			const finalRequestInput =
@@ -524,12 +585,12 @@ export function GuidedDiscovery({
 				const { data, error } = await progressManager.getAIConversation(card.id);
 
 				if (error) {
-					debug.error("Load Conversation Error", error);
+					console.error("Load Conversation Error", error);
 					return;
 				}
 
 				if (data && data.conversation_data?.conversationState) {
-					debug.log("Previous Database Conversation Found", {
+					console.log("Previous Database Conversation Found", {
 						conversationId: data.id,
 						step: data.current_step,
 						isCompleted: data.is_completed,
@@ -539,6 +600,10 @@ export function GuidedDiscovery({
 					if (data.is_completed) {
 						loadedState.step = "complete";
 					}
+					// Ensure questionHistory exists for backward compatibility
+					if (!loadedState.questionHistory) {
+						loadedState.questionHistory = [];
+					}
 					setConversationState(loadedState);
 					setIsCompleted(data.is_completed);
 				}
@@ -546,7 +611,7 @@ export function GuidedDiscovery({
 				const localConversation = await LocalAIStorage.getConversation(card.id);
 				
 				if (localConversation && localConversation.conversationData?.conversationState) {
-					debug.log("Previous Local Conversation Found", {
+					console.log("Previous Local Conversation Found", {
 						conversationId: localConversation.id,
 						step: localConversation.currentStep,
 						isCompleted: localConversation.isCompleted,
@@ -556,12 +621,16 @@ export function GuidedDiscovery({
 					if (localConversation.isCompleted) {
 						loadedState.step = "complete";
 					}
+					// Ensure questionHistory exists for backward compatibility
+					if (!loadedState.questionHistory) {
+						loadedState.questionHistory = [];
+					}
 					setConversationState(loadedState);
 					setIsCompleted(localConversation.isCompleted);
 				}
 			}
 		} catch (error: any) {
-			debug.error("Load Conversation Exception", error);
+			console.error("Load Conversation Exception", error);
 		}
 	};
 
@@ -574,12 +643,14 @@ export function GuidedDiscovery({
 
 	const handleRestart = () => {
 		synthesisForced.current = false;
-		debug.log("🔄 Restarting Card", { cardId: card.id });
+		console.log("🔄 Restarting Card", { cardId: card.id });
 		setConversationState({
 			step: "opening",
 			scores: { audience: 0, benefit: 0, belief: 0, impact: 0 },
+			questionHistory: [],
 		});
 		setIsCompleted(false);
+		// currentStackIndex will be reset by useEffect when stackCards changes
 		setCurrentQuestion(
 			card.slug === "purpose"
 				? "Imagine your brand disappeared tomorrow. What would your customers miss most, and why would that matter?"
@@ -591,7 +662,7 @@ export function GuidedDiscovery({
 	const handleCompletion = async () => {
 		if (completionInProgress.current) return;
 		completionInProgress.current = true;
-		debug.log("🏁 Handling Completion", {
+		console.log("🏁 Handling Completion", {
 			draftStatement: conversationState.draftStatement,
 			scores: conversationState.scores,
 		});
@@ -628,137 +699,348 @@ export function GuidedDiscovery({
 				}
 			}
 
-			debug.log("✅ Completion Logic Finished", { card: card.slug });
+			console.log("✅ Completion Logic Finished", { card: card.slug });
 		} catch (error: any) {
-			debug.error("Completion Error", error);
+			console.error("Completion Error", error);
 		} finally {
+			onComplete();
 			completionInProgress.current = false;
 		}
 	};
 
 	const calculateProgress = () => {
-		const totalPossibleScore = 8;
-		const currentScore = Object.values(conversationState.scores).reduce(
-			(sum, score) => sum + score,
-			0,
-		);
-		const progress = Math.min(
-			100,
-			(currentScore / totalPossibleScore) * 100,
-		);
-		debug.log("📊 Progress Calculation", {
-			currentScore,
-			totalPossibleScore,
-			progress,
+		const { scores } = conversationState;
+		const totalScore = Object.values(scores).reduce((sum, s) => sum + s, 0);
+		const maxScore = 8; // 4 dimensions * 2 points max
+		const progressPercentage = Math.round((totalScore / maxScore) * 100);
+
+		console.log("📊 Progress Calculation", {
+			currentScore: totalScore,
+			totalPossibleScore: maxScore,
+			progress: progressPercentage,
 		});
-		return progress;
+		return progressPercentage;
 	};
 
+	// Apple Wallet-style card stack using react-native-reanimated
+	const translateY = useSharedValue(0);
+	const isGestureActive = useSharedValue(false);
+	
+	// Dynamic fan configuration - cards positioned 6px above previous card
+	const gapBetweenCards = 6;
+	const defaultCardHeight = 220; // Fallback height before measurement
+	
+
+	
+	const gestureHandler = useAnimatedGestureHandler({
+		onStart: () => {
+			isGestureActive.value = true;
+		},
+		onActive: (event) => {
+			// Smoother pull down with gentle resistance
+			const maxPullDown = 300;
+			
+			if (event.translationY > 0) {
+				// Gentle resistance curve - smoother than before
+				const resistance = 1 / (1 + event.translationY / 400);
+				translateY.value = Math.min(event.translationY * resistance, maxPullDown);
+			} else {
+				// Pushing up - light compression
+				translateY.value = event.translationY * 0.1;
+			}
+		},
+		onEnd: (event) => {
+			isGestureActive.value = false;
+			
+			// Spring back to neutral with gentler settings
+			translateY.value = withSpring(0, {
+				damping: 15,
+				stiffness: 150,
+				mass: 0.8,
+			});
+		},
+	});
+
+	// Prepare stack cards
+	const stackCards = React.useMemo(() => {
+		const allCards = [...conversationState.questionHistory].reverse().concat([{ question: currentQuestion, answer: '', timestamp: Date.now() }]);
+		
+		console.log("Stack Debug:", {
+			historyLength: conversationState.questionHistory.length,
+			totalCards: allCards.length,
+			currentStackIndex,
+		});
+		
+		return allCards;
+	}, [conversationState.questionHistory, currentQuestion, currentStackIndex]);
+
+	// Create animated style for the expanding stack container
+	const stackContainerStyle = useAnimatedStyle(() => {
+		const numberOfCards = stackCards.length;
+		
+		// Fixed base height for collapsed state - matches typical card content
+		const baseCollapsedHeight = 280;
+		
+		// Calculate expansion with each card 6px above the previous one
+		let maxConstrainedOffset = 0;
+		for (let j = 0; j < numberOfCards - 1; j++) {
+			const cardKey = `${stackCards[j]?.timestamp}-${j}`;
+			const cardHeight = cardHeights.value[cardKey] || defaultCardHeight;
+			// Each card positioned 6px below the bottom of the card below it
+			maxConstrainedOffset += cardHeight + gapBetweenCards;
+		}
+		
+		const fanExpansion = interpolate(
+			translateY.value,
+			[0, 80, 160, 240],
+			[
+				0, // No expansion when collapsed
+				maxConstrainedOffset * 0.1, // Very light fanning (10%)
+				maxConstrainedOffset * 0.4, // Medium fanning (40%)
+				maxConstrainedOffset // Max fanning with exact 6px gaps
+			],
+			Extrapolate.CLAMP
+		);
+		
+		// Always set explicit height: base + expansion
+		return {
+			height: baseCollapsedHeight + fanExpansion,
+		};
+	});
+
+	// Create animated style for the whole stack translation
+	const stackTranslationStyle = useAnimatedStyle(() => {
+		return {
+			transform: [{ translateY: translateY.value * 0.3 }], // Gentle overall movement
+		};
+	});
+
+	// Create multiple animated styles for different card positions (Apple Wallet fanning)
+	const cardFanStyles = Array.from({ length: 6 }, (_, i) => {
+		return useAnimatedStyle(() => {
+			// Bottom card (index 0) stays fixed, others fan down progressively
+			const fanMultiplier = i; // 0 for bottom card, increases for cards above
+			
+			// Calculate cumulative position with each card 6px above the previous one
+			let cumulativePosition = 0;
+			for (let j = 0; j < fanMultiplier; j++) {
+				const cardKey = `${stackCards[j]?.timestamp}-${j}`;
+				const cardHeight = cardHeights.value[cardKey] || defaultCardHeight;
+				// Position this card 6px below the bottom of the card below it
+				cumulativePosition += cardHeight + gapBetweenCards;
+			}
+			
+			const fanOffset = interpolate(
+				translateY.value,
+				[0, 80, 160, 240],
+				[
+					0, // No movement when closed
+					cumulativePosition * 0.1, // Very light fanning (10%)
+					cumulativePosition * 0.4, // Medium fanning (40%)
+					cumulativePosition  // Max fanning with exact 6px gaps
+				],
+				Extrapolate.CLAMP
+			);
+			
+			// Scale effect - current card (highest index) becomes most prominent
+			const fanScale = interpolate(
+				translateY.value,
+				[0, 120, 240],
+				[
+					i === 0 ? 0.95 : (i === 5 ? 1 : 0.97), // Bottom card smaller, current card normal
+					i === 0 ? 0.97 : (i === 5 ? 1 : 0.98), // Cards grow when being revealed  
+					i === 0 ? 0.98 : (i === 5 ? 1 : 1.0)   // All cards reach good size when fully revealed
+				],
+				Extrapolate.CLAMP
+			);
+			
+			// All cards fully opaque - no transparency
+			const staticOpacity = 1;
+			
+			return {
+				transform: [
+					{ translateY: fanOffset },
+					{ scale: fanScale }
+				],
+				opacity: staticOpacity,
+			};
+		});
+	});
+
+	// Initialize currentStackIndex to current question when cards change
+	useEffect(() => {
+		setCurrentStackIndex(stackCards.length - 1);
+	}, [stackCards.length]);
+
 	return (
-		<AIErrorBoundary>
-			<View className="flex-1">
-				{/* Header */}
-				<View className="p-4 flex-row justify-between items-center" style={{ borderBottomWidth: 1, borderBottomColor: colors.surface }}>
-					<Title style={{ color: colors.background }}>{card.name}</Title>
-					<Button variant="white" onPress={onExit}>
-						<Text>Exit</Text>
-					</Button>
-				</View>
-
-					{/* Main Content */}
-					<ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-						{/* Question Container - White Background - Show during discovery and refinement phases */}
-						{(conversationState.step === "opening" || conversationState.step === "follow_up" || conversationState.step === "refinement") && (
-							<>
-								<View className="rounded-3xl p-6 mb-6" style={{ backgroundColor: '#FFFFFF' }}>
-									{/* Gray Question Box */}
-									<View className="rounded-2xl p-4 mb-4" style={{ backgroundColor: '#F5F5F5' }}>
-										{isLoading ? (
-											<View className="items-center justify-center py-4">
-												<Text className="text-lg mb-2 text-gray-800">Thinking...</Text>
-												<View className="w-6 h-6 rounded-full" style={{ 
-													borderWidth: 2, 
-													borderColor: colors.primary, 
-													borderTopColor: 'transparent' 
-												}} />
-											</View>
-										) : (
-											<Text className="text-lg font-medium leading-relaxed text-gray-800">
-												{currentQuestion}
-											</Text>
-										)}
-									</View>
-
-									{/* White Input Area with Placeholder */}
-									<View>
-										<Textarea
-											value={input}
-											onChangeText={setInput}
-											placeholder={getContextualExampleText(currentQuestion, card.slug)}
-											className="rounded-2xl p-4 min-h-[100px]"
-											style={{ 
-												backgroundColor: '#FFFFFF',
-												borderWidth: 1, 
-												borderColor: '#E5E5E5', 
-												color: '#000000',
-												fontSize: 16,
-												lineHeight: 22
-											}}
-											placeholderTextColor="#999999"
-											editable={!isLoading}
-											multiline
-										/>
-									</View>
-								</View>
-
-								{/* Action Buttons - Below the white container */}
-								<View className="flex-row gap-3 mb-6">
-									{/* Examples Button */}
-									<PrimaryButton
-										onPress={() => {
-											console.log("Examples button pressed");
-											setInput("I'd like to explore this question further with some guidance.");
-											handleSubmit({ preventDefault: () => {} } as any);
-										}}
-										className="flex-1 py-3 px-6"
-										style={{ height: 44 }}
-										disabled={isLoading}
-									>
-										<Text className="font-medium text-base" style={{ color: '#000000' }}>
-											Examples?
-										</Text>
-									</PrimaryButton>
+		<GestureHandlerRootView style={{ flex: 1 }}>
+			<AIErrorBoundary>
+				<View className="flex-1 p-4">
+														{/* Animated FlatList Deck - Show during discovery and refinement phases */}
+				{(conversationState.step === "opening" || conversationState.step === "follow_up" || conversationState.step === "refinement") && (
+					<>
+						<PanGestureHandler onGestureEvent={gestureHandler}>
+							<Animated.View 
+								className="mb-6" 
+								style={[stackContainerStyle, stackTranslationStyle]}
+							>
+								{stackCards.map((qa, index) => {
+									const isCurrentQuestion = index === stackCards.length - 1;
+									const cardRelativeIndex = index - currentStackIndex;
+									const distanceFromCurrent = Math.abs(cardRelativeIndex);
+									const isVisible = distanceFromCurrent < 3; // Show current + 2 cards above/below
 									
-									{/* Submit/Arrow Button */}
-									<PrimaryButton
-										onPress={() => {
-											if (!input.trim() || isLoading) return;
-											handleSubmit({ preventDefault: () => {} } as any);
+									if (!isVisible) return null;
+									
+									const zIndex = stackCards.length - distanceFromCurrent;
+									
+									// Get the appropriate animated style for this card position
+									// Map actual stack index to style index (bottom card = 0, current card = highest)
+									const cardStyleIndex = Math.max(0, Math.min(5, index)); // Use actual index, clamp to 0-5 range
+									const cardFanStyle = cardFanStyles[cardStyleIndex];
+									const baseOffset = cardRelativeIndex * 12;
+									
+									return (
+																			<Animated.View
+										key={`${qa.timestamp}-${index}`}
+										className="absolute w-full rounded-3xl p-4"
+										style={[
+											cardFanStyle, // Apple Wallet fanning animation
+											{
+												backgroundColor: '#FFFFFF',
+												zIndex: zIndex,
+												top: baseOffset, // Static card stacking
+												shadowColor: '#000',
+												shadowOffset: {
+													width: 0,
+													height: distanceFromCurrent * 2 + 4,
+												},
+												shadowOpacity: cardRelativeIndex === 0 ? 0.1 : 0.3,
+												shadowRadius: cardRelativeIndex === 0 ? 6 : 12,
+												elevation: zIndex,
+											}
+										]}
+										onLayout={(event) => {
+											const { height } = event.nativeEvent.layout;
+											const cardKey = `${qa.timestamp}-${index}`;
+											cardHeights.value = {
+												...cardHeights.value,
+												[cardKey]: height
+											};
 										}}
-										style={{ width: 44, height: 44 }}
-										disabled={isLoading || !input.trim()}
 									>
-										<Text className="font-bold text-lg" style={{ color: '#000000' }}>
-											→
-										</Text>
-									</PrimaryButton>
-								</View>
-							</>
-						)}
+										{/* Gray Question Box */}
+										<View 
+											className="rounded-2xl p-3 mb-3" 
+											style={{ backgroundColor: '#F5F5F5' }}
+										>
+												{isCurrentQuestion && cardRelativeIndex === 0 && isLoading ? (
+													<View className="items-center justify-center py-4">
+														<Text className="text-lg mb-2 text-gray-800">Thinking...</Text>
+														<View className="w-6 h-6 rounded-full" style={{ 
+															borderWidth: 2, 
+															borderColor: colors.primary, 
+															borderTopColor: 'transparent' 
+														}} />
+													</View>
+												) : (
+													<Text className="text-lg font-medium leading-relaxed text-gray-800">
+														{qa.question}
+													</Text>
+												)}
+											</View>
 
-						{/* Progress Scores - Always show */}
-						<View className="mb-6">
-							<ScoreWidgets scores={conversationState.scores} cardSlug={card.slug} />
-						</View>
+											{/* Input Area or Answer */}
+											<View>
+												{isCurrentQuestion && cardRelativeIndex === 0 ? (
+													// Current question - show input
+													<Textarea
+														value={input}
+														onChangeText={setInput}
+														placeholder={getContextualExampleText(currentQuestion, card.slug)}
+														className="p-3 min-h-[80px]"
+														style={{ 
+															color: '#000000',
+															fontSize: 16,
+															lineHeight: 22,
+															borderWidth: 0
+														}}
+														placeholderTextColor="#999999"
+														editable={!isLoading}
+														multiline
+													/>
+												) : (
+													// Previous question - show answer
+													<View className="px-3">
+														<Text className="text-base leading-relaxed text-gray-800">
+															{qa.answer || "No answer provided"}
+														</Text>
+													</View>
+												)}
+											</View>
+										</Animated.View>
+									);
+								})}
+							</Animated.View>
+						</PanGestureHandler>
+
+														{/* Action Buttons - Below the stack, only show for current question */}
+						{currentStackIndex === stackCards.length - 1 && (
+							<View className="flex-row gap-3 mb-6 mt-2">
+										{/* Examples Button */}
+										<PrimaryButton
+											onPress={() => {
+												console.log("Examples button pressed");
+												setInput("I'd like to explore this question further with some guidance.");
+												handleSubmit({ preventDefault: () => {} } as any);
+											}}
+											className="flex-1 py-3 px-6"
+											style={{ height: 44 }}
+											disabled={isLoading}
+										>
+											<Text className="font-medium text-base" style={{ color: '#000000' }}>
+												Examples?
+											</Text>
+										</PrimaryButton>
+										
+										{/* Submit/Arrow Button */}
+										<PrimaryButton
+											onPress={() => {
+												if (!input.trim() || isLoading) return;
+												handleSubmit({ preventDefault: () => {} } as any);
+											}}
+											style={{ width: 44, height: 44 }}
+											disabled={isLoading || !input.trim()}
+										>
+											<Text className="font-bold text-lg" style={{ color: '#000000' }}>
+												→
+											</Text>
+										</PrimaryButton>
+									</View>
+								)}
+
+							</>
+										)}
+
+				{/* Scrollable Content Below Stack */}
+				<ScrollView 
+					className="flex-1" 
+					contentContainerStyle={{ paddingBottom: 20 }}
+					showsVerticalScrollIndicator={false}
+				>
+					{/* Progress Scores - Always show */}
+					<View className="mb-6">
+						<ScoreWidgets scores={conversationState.scores} cardSlug={card.slug} />
+					</View>
 
 						{/* Synthesis Phase - Show Draft Statement */}
 						{conversationState.step === "synthesis" && conversationState.draftStatement && (
-							<View className="rounded-3xl p-6 mb-6" style={{ backgroundColor: '#FFFFFF' }}>
+							<View className="rounded-3xl p-4 mb-6" style={{ backgroundColor: '#FFFFFF' }}>
 								<Text className="text-lg font-medium mb-3 text-gray-800">
 									Thanks — based on everything you've shared, here's a first draft of your brand purpose statement:
 								</Text>
 								
-								<View className="rounded-2xl p-4 mb-4" style={{ backgroundColor: colors.surface }}>
+								<View className="rounded-2xl p-3 mb-4" style={{ backgroundColor: colors.surface }}>
 									<Text className="text-lg leading-relaxed font-medium" style={{ color: colors.background }}>
 										{conversationState.draftStatement}
 									</Text>
@@ -815,7 +1097,7 @@ export function GuidedDiscovery({
 
 						{/* Validation Phase - Handle Yes Response */}
 						{conversationState.step === "validation" && conversationState.validationFeedback === "yes" && (
-							<View className="rounded-3xl p-6 mb-6" style={{ backgroundColor: '#FFFFFF' }}>
+							<View className="rounded-3xl p-4 mb-6" style={{ backgroundColor: '#FFFFFF' }}>
 								<Text className="text-lg font-medium mb-3 text-gray-800">
 									Great! Would you like to:
 								</Text>
@@ -847,7 +1129,7 @@ export function GuidedDiscovery({
 
 						{/* Validation Phase - Handle No/Not Sure Response */}
 						{conversationState.step === "validation" && (conversationState.validationFeedback === "no" || conversationState.validationFeedback === "not_sure") && (
-							<View className="rounded-3xl p-6 mb-6" style={{ backgroundColor: '#FFFFFF' }}>
+							<View className="rounded-3xl p-4 mb-6" style={{ backgroundColor: '#FFFFFF' }}>
 								<Text className="text-lg font-medium mb-3 text-gray-800">
 									No problem! Which part doesn't feel quite right?
 								</Text>
@@ -920,9 +1202,9 @@ export function GuidedDiscovery({
 						{/* Final Completion State - The Plaque */}
 						{conversationState.step === "complete" && (
 							<>
-								<View className="rounded-3xl p-6 mb-6" style={{ backgroundColor: colors.surface }}>
+								<View className="rounded-3xl p-4 mb-6" style={{ backgroundColor: colors.surface }}>
 									<Title className="mb-4 text-center" style={{ color: colors.primary }}>Your Brand Purpose</Title>
-									<View className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#000000' }}>
+									<View className="rounded-2xl p-3 mb-6" style={{ backgroundColor: '#000000' }}>
 										<Text className="text-lg leading-relaxed text-center font-medium" style={{ color: colors.background }}>
 											{conversationState.draftStatement || "No statement saved."}
 										</Text>
@@ -963,6 +1245,7 @@ export function GuidedDiscovery({
 						)}
 				</ScrollView>
 			</View>
-		</AIErrorBoundary>
+			</AIErrorBoundary>
+		</GestureHandlerRootView>
 	);
 }

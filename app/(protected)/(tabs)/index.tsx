@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from "../../../components/safe-area-view";
 import { Text } from "../../../components/ui/text";
 import { Title, Subtitle } from "@/components/ui/typography";
-import { Button } from "@/components/ui/button";
+import { Button, TransparentIcon } from "@/components/ui/button";
 import { Image } from "@/components/image";
 import { useAuth } from "../../../context/supabase-provider";
 import { getCard } from "../../../lib/database-helpers";
@@ -139,7 +139,6 @@ const Card = ({
 	const backgroundColor = card.color || colors.primary;
 
 	const handleMenuPress = () => {
-		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 		showNativeCardMenu({
 			cardName: card.name,
 			onStartOver: () => onStartOver(card.id)
@@ -168,12 +167,7 @@ const Card = ({
 			>
 				{/* Menu dots */}
 				<View className="flex-row justify-end mb-4">
-					<Pressable 
-						className="bg-white/20 rounded-full p-2 active:bg-white/30"
-						onPress={handleMenuPress}
-					>
-						<Text className="text-white text-lg font-bold">⋯</Text>
-					</Pressable>
+					<TransparentIcon onPress={handleMenuPress} />
 				</View>
 
 				{/* Card Cover - only shows when image is available */}
@@ -246,22 +240,34 @@ export default function Home() {
 		viewState: "home",
 	});
 
-	const loadCardsWithProgress = async () => {
+	const loadCardsWithProgress = async (forceFresh: boolean = false) => {
 		try {
-			const progressManager = new ProgressManager(session);
-
-			// Use the new caching system
-			const { cards: cardsWithProgress, fromCache } = await progressManager.getAllCardsWithCaching();
+			// Set loading to true at the start of the operation
+			setLoading(true);
 			
-			setCards(cardsWithProgress);
+			const progressManager = new ProgressManager(session);
+			console.log('ProgressManager created with session:', !!session, 'userId:', session?.user?.id);
 
-			// Only show loading if we got no cards (first time load)
-			if (cardsWithProgress.length === 0) {
-				setLoading(true);
+			let cardsWithProgress: CardWithProgress[];
+			
+			if (forceFresh) {
+				// Force fresh data retrieval - used when returning from quiz
+				console.log('Loading fresh cards data...');
+				cardsWithProgress = await progressManager.getAllCardsWithFreshData();
 			} else {
-				setLoading(false);
+				// Use the cached system for normal loads
+				console.log('Loading cards with caching...');
+				const { cards, fromCache } = await progressManager.getAllCardsWithCaching();
+				console.log('Cards loaded:', cards.length, 'fromCache:', fromCache);
+				cardsWithProgress = cards;
 			}
+			
+			console.log('Final cards count:', cardsWithProgress.length);
+			setCards(cardsWithProgress);
 		} catch (error) {
+			console.error('Error loading cards:', error);
+		} finally {
+			// Always set loading to false when operation completes, regardless of results
 			setLoading(false);
 		}
 	};
@@ -342,8 +348,8 @@ export default function Home() {
 			educationalScore: 0,
 			viewState: "home",
 		});
-		// Refresh cards to update progress
-		loadCardsWithProgress();
+		// Refresh cards with fresh data to update progress after quiz
+		loadCardsWithProgress(true);
 	};
 
 	const handleCardComplete = () => {
@@ -357,8 +363,8 @@ export default function Home() {
 			const progressManager = new ProgressManager(session);
 			await progressManager.resetCardProgress(cardId);
 			
-			// Refresh cards to update progress
-			await loadCardsWithProgress();
+			// Refresh cards with fresh data to update progress after reset
+			await loadCardsWithProgress(true);
 		} catch (error) {
 			// Handle error silently
 		}
@@ -420,7 +426,7 @@ export default function Home() {
 			<SafeAreaView className="flex-1" style={{ backgroundColor: "#1A1A1A" }}>
 				<View className="flex-1 items-center justify-center">
 					<Text className="text-lg text-white">
-						Loading cards for the first time...
+						Loading cards...
 					</Text>
 				</View>
 			</SafeAreaView>

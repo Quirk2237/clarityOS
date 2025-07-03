@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Pressable, View } from "react-native";
+import * as Haptics from 'expo-haptics';
 import { cn } from "@/lib/utils";
 import { TextClassContext } from "./text";
 import { Text } from "./text";
@@ -143,7 +144,57 @@ const PrimaryButton = React.forwardRef<
 
 PrimaryButton.displayName = "PrimaryButton";
 
+// Transparent Icon - Flexible icon button with square dimensions
+interface TransparentIconProps {
+	onPress: () => void;
+	children?: React.ReactNode;
+	icon?: React.ReactNode;
+	disabled?: boolean;
+	className?: string;
+	style?: any;
+	hapticStyle?: Haptics.ImpactFeedbackStyle;
+}
 
+const TransparentIcon = React.forwardRef<
+	React.ElementRef<typeof Pressable>,
+	TransparentIconProps
+>(({ 
+	onPress, 
+	children,
+	icon,
+	disabled = false, 
+	className, 
+	style,
+	hapticStyle = Haptics.ImpactFeedbackStyle.Light 
+}, ref) => {
+	const handlePress = () => {
+		Haptics.impactAsync(hapticStyle);
+		onPress();
+	};
 
-export { Button, buttonVariants, buttonTextVariants, PrimaryButton };
-export type { ButtonProps, PrimaryButtonProps };
+	// Use icon prop, children, or default three dots
+	const iconContent = icon || children || <Text className="text-white text-lg font-bold">⋯</Text>;
+
+	return (
+		<Pressable
+			onPress={handlePress}
+			disabled={disabled}
+			className={cn("bg-white/20 rounded-full items-center justify-center active:bg-white/30", className)}
+			style={[
+				{
+					width: 50,
+					height: 50,
+				},
+				style
+			]}
+			ref={ref}
+		>
+			{iconContent}
+		</Pressable>
+	);
+});
+
+TransparentIcon.displayName = "TransparentIcon";
+
+export { Button, buttonVariants, buttonTextVariants, PrimaryButton, TransparentIcon };
+export type { ButtonProps, PrimaryButtonProps, TransparentIconProps };

@@ -89,15 +89,23 @@ export class ProgressManager {
         await checkAndUpdateCardCompletion(this.userId, cardId);
       }
 
+      // IMPORTANT: Clear cache when progress is updated so UI shows fresh data
+      await this.clearCardsCache();
+
       return result;
     } else {
       // Save to local storage
-      return await LocalProgressStorage.updateProgress(
+      const result = await LocalProgressStorage.updateProgress(
         cardId,
         updates,
         sectionId,
         questionId
       );
+
+      // Also clear cache for unauthenticated users
+      await this.clearCardsCache();
+
+      return result;
     }
   }
 
@@ -191,18 +199,24 @@ export class ProgressManager {
         return { cards: cachedCards, fromCache: true };
       }
 
-      // If no cache, fetch from authenticated source
+      // If no cache, fetch from appropriate source
       if (this.userId) {
+        // Authenticated user - get cards with progress from database
         const { data: cards, error } = await getAllCardsWithProgress(this.userId);
         if (error) {
           return { cards: [], fromCache: false };
         }
+        
+        // Cache the results for future use
+        await CardCacheStorage.setCachedCards(cards || []);
+        return { cards: cards || [], fromCache: false };
+      } else {
+        // Unauthenticated user - fetch cards and merge with local progress
+        const cards = await this.fetchAndCacheCards();
         return { cards, fromCache: false };
       }
-      
-      return { cards: [], fromCache: false };
     } catch (error) {
-      // Handle error silently
+      console.error('Error in getAllCardsWithCaching:', error);
       return { cards: [], fromCache: false };
     }
   }
@@ -216,18 +230,21 @@ export class ProgressManager {
 
       if (this.isAuthenticated && this.userId) {
         // Authenticated user - get cards with progress from database
+        console.log('Fetching cards for authenticated user:', this.userId);
         const { data, error } = await getAllCardsWithProgress(this.userId);
         if (error) {
           console.error('Error getting authenticated cards:', error);
           return [];
         }
         rawCards = data || [];
+        console.log('Authenticated cards fetched:', rawCards.length);
         
         // Cache the raw cards data for future use
         await CardCacheStorage.setCachedCards(rawCards);
         return rawCards;
       } else {
         // Unauthenticated user - get cards from database and merge with local progress
+        console.log('Fetching cards for unauthenticated user');
         const { data, error } = await getActiveCards();
         if (error) {
           console.error('Error getting cards:', error);
@@ -235,12 +252,15 @@ export class ProgressManager {
         }
         
         rawCards = data || [];
+        console.log('Unauthenticated cards fetched:', rawCards.length, 'cards:', rawCards.map(c => ({ name: c.name, status: c.status })));
         
         // Cache the raw cards
         await CardCacheStorage.setCachedCards(rawCards);
         
         // Merge with local progress
-        return await this.mergeCardsWithProgress(rawCards);
+        const cardsWithProgress = await this.mergeCardsWithProgress(rawCards);
+        console.log('Cards after merging progress:', cardsWithProgress.length);
+        return cardsWithProgress;
       }
     } catch (error) {
       console.error('Error fetching and caching cards:', error);
@@ -254,14 +274,18 @@ export class ProgressManager {
   private async mergeCardsWithProgress(rawCards: any[]): Promise<CardWithProgress[]> {
     if (this.isAuthenticated) {
       // For authenticated users, cards already have progress
+      console.log('Authenticated user - returning cards as-is');
       return rawCards;
     }
+
+    console.log('Merging local progress for unauthenticated user. Raw cards:', rawCards.length);
 
     // For unauthenticated users, merge with local progress
     const cardsWithProgress: CardWithProgress[] = [];
 
     for (const card of rawCards) {
       const localProgress = await this.getCardProgress(card.id);
+      console.log(`Card ${card.name}: progress=${localProgress.progress}, total=${localProgress.total}, status=${localProgress.status}`);
       
       cardsWithProgress.push({
         id: card.id,
@@ -279,6 +303,7 @@ export class ProgressManager {
       });
     }
 
+    console.log('Final merged cards:', cardsWithProgress.length);
     return cardsWithProgress;
   }
 
@@ -331,21 +356,35 @@ export class ProgressManager {
   ): Promise<any> {
     if (this.isAuthenticated && this.userId) {
       // Save to database
-      return await saveAIConversation(
+      const result = await saveAIConversation(
         this.userId,
         cardId,
         conversationData,
         currentStep,
         isCompleted
       );
+      
+      // Clear cache when conversation state changes, especially when completed
+      if (isCompleted) {
+        await this.clearCardsCache();
+      }
+      
+      return result;
     } else {
       // Save to local storage
-      return await LocalAIStorage.saveConversation(
+      const result = await LocalAIStorage.saveConversation(
         cardId,
         conversationData,
         currentStep,
         isCompleted
       );
+      
+      // Clear cache for local storage too when completed
+      if (isCompleted) {
+        await this.clearCardsCache();
+      }
+      
+      return result;
     }
   }
 
@@ -413,6 +452,9 @@ export class ProgressManager {
         await deleteUserProgress(this.userId, cardId);
         await deleteQuestionAttemptsForCard(this.userId, cardId);
         await deleteAIConversation(this.userId, cardId);
+        
+        // Clear cache so UI shows updated (reset) progress
+        await this.clearCardsCache();
       } catch (error) {
         console.error('Error resetting card progress in database:', error);
         throw error;
@@ -423,6 +465,9 @@ export class ProgressManager {
         await LocalProgressStorage.clearCardProgress(cardId);
         await LocalQuestionStorage.clearCardQuestionAttempts(cardId);
         await LocalAIStorage.clearCardAIConversations(cardId);
+        
+        // Clear cache for local storage too
+        await this.clearCardsCache();
       } catch (error) {
         console.error('Error resetting card progress in local storage:', error);
         throw error;
@@ -436,5 +481,42 @@ export class ProgressManager {
 
   getUserId(): string | undefined {
     return this.userId;
+  }
+
+  private async clearCardsCache(): Promise<void> {
+    try {
+      await CardCacheStorage.clearCache();
+    } catch (error) {
+      console.error('Error clearing cards cache:', error);
+      // Don't throw - cache clearing failure shouldn't break the app
+    }
+  }
+
+  /**
+   * Forces fresh data retrieval bypassing cache - use when you need up-to-date progress
+   */
+  async getAllCardsWithFreshData(): Promise<CardWithProgress[]> {
+    try {
+      // Clear cache first to ensure fresh data
+      await this.clearCardsCache();
+      
+      if (this.isAuthenticated && this.userId) {
+        const { data, error } = await getAllCardsWithProgress(this.userId);
+        if (error) {
+          console.error('Error getting fresh cards with progress:', error);
+          return [];
+        }
+        
+        // Cache the fresh data for future use
+        await CardCacheStorage.setCachedCards(data || []);
+        return data || [];
+      } else {
+        // For unauthenticated users, fetch cards and merge with local progress
+        return await this.fetchAndCacheCards();
+      }
+    } catch (error) {
+      console.error('Error getting fresh cards data:', error);
+      return [];
+    }
   }
 } 
