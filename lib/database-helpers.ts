@@ -137,26 +137,26 @@ export async function getActiveCards() {
 }
 
 export async function getCard(slug: string) {
-	const { data, error } = await supabase
-		.from("cards")
-		.select(
-			`
-      *,
-      card_sections (
-        *,
-        questions (
-          *,
-          answer_choices (*)
-        )
-      )
-    `,
-		)
-		.eq("slug", slug)
-		.eq("is_active", true)
-		.is("deleted_at", null)
+	const { data: cardData, error: cardError } = await supabase
+		.from('cards')
+		.select(`
+			*,
+			card_sections (
+				*,
+				questions (
+					*,
+					answer_choices (*, icon)
+				)
+			)
+		`)
+		.eq('slug', slug)
 		.single();
 
-	return { data, error };
+	if (cardError) {
+		throw new Error(cardError.message);
+	}
+
+	return { data: cardData, error: null };
 }
 
 // Progress Tracking Operations
@@ -374,7 +374,6 @@ export async function getCardProgress(userId: string, cardSlug: string) {
 			.eq("status", "completed");
 
 		if (progressError) {
-			console.error("Error fetching progress:", progressError);
 			return {
 				progress: 0,
 				total: card.card_sections.length,
@@ -399,7 +398,6 @@ export async function getCardProgress(userId: string, cardSlug: string) {
 			status,
 		};
 	} catch (error) {
-		console.error("Error calculating card progress:", error);
 		return { progress: 0, total: 0, status: "not_started" };
 	}
 }
@@ -434,7 +432,6 @@ export async function checkAndUpdateCardCompletion(userId: string, cardId: strin
 			.single();
 
 		if (cardError || !card) {
-			console.error("Error fetching card:", cardError);
 			return { updated: false, error: cardError };
 		}
 
@@ -447,7 +444,6 @@ export async function checkAndUpdateCardCompletion(userId: string, cardId: strin
 			.eq("status", "completed");
 
 		if (progressError) {
-			console.error("Error fetching progress:", progressError);
 			return { updated: false, error: progressError };
 		}
 
@@ -458,18 +454,11 @@ export async function checkAndUpdateCardCompletion(userId: string, cardId: strin
 		if (completedSections === totalSections && card.status !== "completed") {
 			const { error: updateError } = await updateCardStatus(cardId, "completed");
 			
-			if (updateError) {
-				console.error("Error updating card status:", updateError);
-				return { updated: false, error: updateError };
-			}
-
-			console.log(`Card ${cardId} marked as completed`);
-			return { updated: true, error: null };
+			return { updated: true, error: updateError };
 		}
 
 		return { updated: false, error: null };
 	} catch (error) {
-		console.error("Error checking card completion:", error);
 		return { updated: false, error };
 	}
 }
@@ -500,8 +489,7 @@ export async function getAllCardsWithProgress(userId: string) {
 			.order("order_index");
 
 		if (cardsError || !cards) {
-			console.error("Error fetching cards:", cardsError);
-			return { data: [], error: cardsError };
+			throw new Error("Error fetching cards: " + cardsError?.message);
 		}
 
 		// Get all user progress
@@ -512,7 +500,7 @@ export async function getAllCardsWithProgress(userId: string) {
 			.eq("status", "completed");
 
 		if (progressError) {
-			console.error("Error fetching user progress:", progressError);
+			throw new Error("Error fetching user progress: " + progressError?.message);
 		}
 
 		// Calculate progress for each card
@@ -538,9 +526,8 @@ export async function getAllCardsWithProgress(userId: string) {
 		});
 
 		return { data: cardsWithProgress, error: null };
-	} catch (error) {
-		console.error("Error getting cards with progress:", error);
-		return { data: [], error };
+	} catch (error: any) {
+		throw new Error("Error getting cards with progress: " + error?.message);
 	}
 }
 
@@ -556,13 +543,11 @@ export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
 			.maybeSingle();
 
 		if (error) {
-			console.error("Error checking onboarding status:", error);
 			return false;
 		}
 
 		return !!data;
 	} catch (error) {
-		console.error("Error checking onboarding status:", error);
 		return false;
 	}
 }

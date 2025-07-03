@@ -337,44 +337,38 @@ export const CardCacheStorage = {
 
   async getCachedCards(): Promise<any[] | null> {
     try {
-      const cacheData = await AsyncStorage.getItem(STORAGE_KEYS.CARDS_CACHE);
-      if (!cacheData) return null;
-
-      const cache: LocalCardCache = JSON.parse(cacheData);
-      const now = new Date().getTime();
-      const expiresAt = new Date(cache.expiresAt).getTime();
-
-      // Check if cache is expired
-      if (now > expiresAt) {
-        console.log('🕒 Card cache expired, removing...');
-        await AsyncStorage.removeItem(STORAGE_KEYS.CARDS_CACHE);
+      const cacheKey = STORAGE_KEYS.CARDS_CACHE;
+      const cacheString = await AsyncStorage.getItem(cacheKey);
+      
+      if (!cacheString) return null;
+      
+      const cacheData = JSON.parse(cacheString);
+      
+      // Check if cache is expired (1 hour)
+      const now = Date.now();
+      const oneHour = 60 * 60 * 1000;
+      
+      if (now - cacheData.timestamp > oneHour) {
+        await AsyncStorage.removeItem(cacheKey);
         return null;
       }
-
-      console.log('✅ Loading cards from cache');
-      return cache.cards;
+      
+      return cacheData.cards;
     } catch (error) {
-      console.error('Error getting cached cards:', error);
       return null;
     }
   },
 
   async setCachedCards(cards: any[]): Promise<void> {
     try {
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + this.CACHE_DURATION_MS);
-
-      const cache: LocalCardCache = {
+      const cacheData = {
+        timestamp: Date.now(),
         cards,
-        cachedAt: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
       };
-
-      await AsyncStorage.setItem(STORAGE_KEYS.CARDS_CACHE, JSON.stringify(cache));
-      console.log('💾 Cards cached successfully');
+      
+      await AsyncStorage.setItem(STORAGE_KEYS.CARDS_CACHE, JSON.stringify(cacheData));
     } catch (error) {
-      console.error('Error caching cards:', error);
-      throw error;
+      // Handle error silently
     }
   },
 

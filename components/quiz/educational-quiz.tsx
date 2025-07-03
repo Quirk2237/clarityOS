@@ -7,7 +7,7 @@ import { Text } from "../ui/text";
 import { Subtitle, Title } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Image } from "../image";
-import { Progress } from "@/components/ui/progress";
+
 import { QuizCompletionModal } from "./quiz-completion-modal";
 import { useAuth } from "../../context/supabase-provider";
 import { ProgressManager } from "../../lib/progress-manager";
@@ -406,19 +406,7 @@ export function EducationalQuiz({
 					})}
 				</View>
 
-				{/* Feedback (optional, after check) */}
-				{showResult && (
-					<View className="p-4 rounded-xl bg-white/80 border border-black/20 items-center" style={{ marginBottom: 20 }}>
-						{selectedAnswer && answerChoices.find((a) => a.id === selectedAnswer)?.is_correct ? (
-							<Text className="text-lg font-semibold text-green-700">Correct! Great job! 🎉</Text>
-						) : (
-							<>
-								<Text className="text-lg font-semibold text-red-600 mb-1">Not quite right</Text>
-								<Text className="text-center text-sm text-neutral-700">The correct answer is highlighted above. Keep learning!</Text>
-							</>
-						)}
-					</View>
-				)}
+
 
 				{/* Continue Button */}
 				<View style={{ marginBottom: 20, marginTop: 8 }}>
@@ -444,17 +432,31 @@ export function EducationalQuiz({
 					</Pressable>
 				</View>
 
-				{/* Progress Bar */}
-				<View>
-					<Progress
-						value={currentQuestionIndex + (showResult ? 1 : 0)}
-						max={questions.length}
-						showLabel={false}
-						className="h-3 rounded-full"
-						style={{ backgroundColor: "rgba(255, 255, 255, 0.5)" }}
-						variant="default"
-					/>
-				</View>
+			</View>
+
+			{/* Progress Dots */}
+			<View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
+				{questions.map((_, index) => {
+					const isCompleted = index < currentQuestionIndex || (index === currentQuestionIndex && showResult);
+					const isCurrent = index === currentQuestionIndex && !showResult;
+					
+					return (
+						<View
+							key={index}
+							style={{
+								width: 8,
+								height: 8,
+								borderRadius: 4,
+								marginHorizontal: 4,
+								backgroundColor: isCompleted 
+									? colors.primary 
+									: isCurrent 
+										? 'rgba(158, 236, 90, 0.5)' 
+										: 'rgba(255, 255, 255, 0.3)',
+							}}
+						/>
+					);
+				})}
 			</View>
 		</View>
 	);

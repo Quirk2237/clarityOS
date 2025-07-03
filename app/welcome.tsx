@@ -32,12 +32,12 @@ export default function WelcomeScreen() {
 
 				{/* Content Section */}
 				<View className="items-center gap-y-4 mb-8">
-					<Title className="text-center text-4xl font-bold" style={{ color: colors.text }}>
+					<Title className="text-center text-4xl font-bold" style={{ color: colors.surface }}>
 						ClarityOS
 					</Title>
 					<Caption 
 						className="text-center px-4 leading-relaxed text-base" 
-						style={{ color: colors.text }}
+						style={{ color: colors.surface }}
 					>
 						Brand Strategy for the everyday{"\n"}business owner
 					</Caption>

@@ -233,18 +233,7 @@ function ScoreWidgets({ scores, cardSlug }: ScoreWidgetsProps) {
 	);
 }
 
-// Debugging utility
-const debug = {
-	log: (tag: string, data: any) => {
-		console.log(`[GuidedDiscovery:${tag}]`, data);
-	},
-	error: (tag: string, error: any) => {
-		console.error(`[GuidedDiscovery:${tag}]`, error);
-	},
-	warn: (tag: string, data: any) => {
-		console.warn(`[GuidedDiscovery:${tag}]`, data);
-	},
-};
+// Component removed debugging utility
 
 export function GuidedDiscovery({
 	card,
@@ -262,7 +251,7 @@ export function GuidedDiscovery({
 		},
 	);
 	const [isCompleted, setIsCompleted] = useState(false);
-	const [debugInfo, setDebugInfo] = useState<any>({});
+	// Removed debugInfo state
 	const [currentQuestion, setCurrentQuestion] = useState<string>("");
 	const [isInitialized, setIsInitialized] = useState(false);
 
@@ -275,22 +264,13 @@ export function GuidedDiscovery({
 	const effectiveUserId = session?.user?.id || anonymousUserId;
 	const isAuthenticated = !!session?.user?.id;
 
-	// ✅ Add debugging for auth headers
+	// Chat headers for API requests
 	const chatHeaders = {
 		"Content-Type": "application/json",
 		Authorization: `Bearer ${
 			session?.access_token || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
 		}`,
 	};
-
-	useEffect(() => {
-		console.log("🔒 [Auth Debug] Creating headers with:", {
-			hasSession: !!session,
-			hasAccessToken: !!session?.access_token,
-			usedToken: chatHeaders.Authorization.substring(0, 30) + "...",
-			anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 30) + "...",
-		});
-	}, [session]);
 
 	const completionInProgress = useRef(false);
 
@@ -361,30 +341,8 @@ export function GuidedDiscovery({
 		return cardExamples[cardSlug as keyof typeof cardExamples] || "Share your thoughts here...";
 	};
 
-	// Initial debug logging
+	// Component initialization
 	useEffect(() => {
-		debug.log("Component Initialized", {
-			cardSlug: card.slug,
-			sectionId: section.id,
-			userId: session?.user?.id,
-			educationalScore,
-			timestamp: new Date().toISOString(),
-		});
-
-		debug.log("🔑 Session Debug", {
-			hasSession: !!session,
-			sessionKeys: session ? Object.keys(session) : [],
-			hasAccessToken: !!session?.access_token,
-			accessTokenPrefix: session?.access_token?.substring(0, 20) + "...",
-			hasUser: !!session?.user,
-			userId: session?.user?.id,
-		});
-
-		debug.log("Environment Check", {
-			nodeEnv: process.env.NODE_ENV,
-			platform: Platform.OS,
-		});
-
 		// Set initial question
 		setCurrentQuestion(
 			card.slug === "purpose"
@@ -395,7 +353,7 @@ export function GuidedDiscovery({
 		setIsInitialized(true);
 	}, [card]);
 
-	// ✅ Save conversation state to appropriate storage
+	// Save conversation state to appropriate storage
 	const saveConversationState = async () => {
 		try {
 			if (isAuthenticated) {
@@ -406,7 +364,6 @@ export function GuidedDiscovery({
 					conversationState.step,
 					isCompleted,
 				);
-				debug.log("Conversation Saved to Database", "Successfully");
 			} else {
 				await LocalAIStorage.saveConversation(
 					card.id,
@@ -414,10 +371,9 @@ export function GuidedDiscovery({
 					conversationState.step,
 					isCompleted
 				);
-				debug.log("Conversation Saved Locally", "Successfully");
 			}
 		} catch (error: any) {
-			debug.error("Save Conversation Error", error);
+			// Handle error silently
 		}
 	};
 

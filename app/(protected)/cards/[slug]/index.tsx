@@ -33,38 +33,30 @@ export default function CardScreen() {
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		console.log("useEffect triggered:", { slug, hasSession: !!session });
 		if (slug) {
-			console.log("Starting to load card and progress");
 			loadCardAndProgress();
-		} else {
-			console.log("Missing slug");
 		}
 	}, [slug, session]);
 
 	const loadCardAndProgress = async () => {
 		try {
-			console.log("Loading card with slug:", slug);
+			setLoading(true);
+
 			// Load card data
 			const { data: cardData, error: cardError } = await getCard(slug);
-			console.log("Card data response:", { cardData, cardError });
 			
 			if (cardError) {
-				console.error("Card error:", cardError);
 				throw cardError;
 			}
 
 			if (!cardData) {
-				console.error("No card data found for slug:", slug);
 				throw new Error("Card not found");
 			}
 
-			console.log("Card loaded successfully:", cardData.name);
 			setCard(cardData);
 
 			// Load user progress for this card (only if session exists)
 			if (!session?.user?.id) {
-				console.log("No session, starting with educational section");
 				setCurrentSection("educational");
 				setLoading(false);
 				return;
@@ -74,7 +66,7 @@ export default function CardScreen() {
 				await getUserProgress(session.user.id, cardData.id);
 
 			if (progressError) {
-				console.error("Error loading progress:", progressError);
+				// Handle error silently or show user-friendly message
 			}
 
 			// Determine which section to start with based on progress
@@ -120,9 +112,7 @@ export default function CardScreen() {
 
 			setCurrentSection(startingSection);
 
-			console.log("Starting with section:", startingSection);
 		} catch (error) {
-			console.error("Error loading card and progress:", error);
 			Alert.alert("Error", "Failed to load card content");
 		} finally {
 			setLoading(false);

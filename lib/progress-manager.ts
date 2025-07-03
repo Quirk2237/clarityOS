@@ -122,8 +122,8 @@ export class ProgressManager {
         const progressData = await getCardProgress(this.userId, cardId);
         return progressData;
       } catch (error) {
-        console.error('Error getting authenticated card progress:', error);
-        return { progress: 0, total: 2, status: 'not_started' };
+        // Handle error silently
+        return { progress: 0, total: 0, status: "not_started" };
       }
     } else {
       return await LocalProgressStorage.getCardProgress(cardId);
@@ -184,22 +184,27 @@ export class ProgressManager {
     cards: CardWithProgress[], 
     fromCache: boolean 
   }> {
-    // Try to get cached cards first
-    const cachedCards = await CardCacheStorage.getCachedCards();
-    
-    if (cachedCards && cachedCards.length > 0) {
-      // Return cached cards immediately and fetch fresh data in background
-      this.refreshCardsInBackground();
-      
-      // Convert cached cards to CardWithProgress format
-      const cardsWithProgress = await this.mergeCardsWithProgress(cachedCards);
-      return { cards: cardsWithProgress, fromCache: true };
-    }
+    try {
+      // Check for cached cards first
+      const cachedCards = await CardCacheStorage.getCachedCards();
+      if (cachedCards && cachedCards.length > 0) {
+        return { cards: cachedCards, fromCache: true };
+      }
 
-    // No cache available, fetch fresh data
-    console.log('📡 No cache available, fetching fresh cards...');
-    const cards = await this.fetchAndCacheCards();
-    return { cards, fromCache: false };
+      // If no cache, fetch from authenticated source
+      if (this.userId) {
+        const { data: cards, error } = await getAllCardsWithProgress(this.userId);
+        if (error) {
+          return { cards: [], fromCache: false };
+        }
+        return { cards, fromCache: false };
+      }
+      
+      return { cards: [], fromCache: false };
+    } catch (error) {
+      // Handle error silently
+      return { cards: [], fromCache: false };
+    }
   }
 
   /**

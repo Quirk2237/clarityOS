@@ -75,19 +75,8 @@ const CardCover = ({
 		setImageError(false);
 	}, [imageSource]);
 
-	// Debug logging to see what we're getting
-	useEffect(() => {
-		console.log(`Card: ${cardName}, imageUrl: ${imageUrl}, slug: ${slug}`);
-		console.log(`imageSource:`, imageSource);
-		console.log(`imageSource type:`, typeof imageSource);
-		if (imageSource && typeof imageSource === 'object') {
-			console.log(`imageSource keys:`, Object.keys(imageSource));
-		}
-	}, [imageSource, cardName, imageUrl, slug]);
-
 	// Only render if we have a valid image source and no error
 	if (!imageSource || imageError) {
-		console.log(`Not rendering image for ${cardName}: imageSource=${!!imageSource}, imageError=${imageError}`);
 		return null;
 	}
 
@@ -96,10 +85,7 @@ const CardCover = ({
 	const isSvgComponent = imageSource && typeof imageSource === 'object' && 
 		(imageSource.default || typeof imageSource === 'function');
 
-	console.log(`Card ${cardName}: isUrl=${isUrl}, isSvgComponent=${isSvgComponent}`);
-
 	if (!isUrl && !isSvgComponent) {
-		console.log(`No valid image format for ${cardName}`);
 		return null;
 	}
 
@@ -110,12 +96,11 @@ const CardCover = ({
 					source={{ uri: imageSource }}
 					className="w-full h-48"
 					contentFit="contain"
-					onError={(error) => {
+					onError={() => {
 						setImageError(true);
-						console.log(`Failed to load image for card: ${cardName}`, error);
 					}}
 					onLoad={() => {
-						console.log(`Successfully loaded image for card: ${cardName}`);
+						// Image loaded successfully
 					}}
 				/>
 			) : isSvgComponent ? (
@@ -268,7 +253,6 @@ export default function Home() {
 			// Use the new caching system
 			const { cards: cardsWithProgress, fromCache } = await progressManager.getAllCardsWithCaching();
 			
-			console.log(`Loaded ${cardsWithProgress.length} cards ${fromCache ? 'from cache' : 'from database'}`);
 			setCards(cardsWithProgress);
 
 			// Only show loading if we got no cards (first time load)
@@ -278,7 +262,6 @@ export default function Home() {
 				setLoading(false);
 			}
 		} catch (error) {
-			console.error("Error loading cards:", error);
 			setLoading(false);
 		}
 	};
@@ -288,12 +271,10 @@ export default function Home() {
 		try {
 			const { data: card, error } = await getCard(slug);
 			if (error) {
-				console.error("Error loading card:", error);
 				return null;
 			}
 			return card as Card;
 		} catch (error) {
-			console.error("Error loading card:", error);
 			return null;
 		}
 	};
@@ -305,7 +286,6 @@ export default function Home() {
 		// Load full card data with sections and questions
 		const fullCard = await loadFullCard(card.slug);
 		if (!fullCard) {
-			console.error("Failed to load full card data");
 			return;
 		}
 
@@ -380,8 +360,7 @@ export default function Home() {
 			// Refresh cards to update progress
 			await loadCardsWithProgress();
 		} catch (error) {
-			console.error("Error resetting card progress:", error);
-			// You might want to show an error message to the user here
+			// Handle error silently
 		}
 	};
 
@@ -435,11 +414,6 @@ export default function Home() {
 	) || sortedCards.find(card => card.status !== "completed") || sortedCards[0];
 	
 	const otherCards = sortedCards.filter(card => card.id !== activeCard?.id);
-	
-	console.log("Total cards:", cards.length);
-	console.log("Sorted cards:", sortedCards.length);
-	console.log("Active card:", activeCard?.name);
-	console.log("Other cards:", otherCards.length, otherCards.map(c => c.name));
 
 	if (loading) {
 		return (
