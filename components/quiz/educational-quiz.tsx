@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { View, ScrollView, Pressable } from "react-native";
+import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from "../safe-area-view";
 import { Text } from "../ui/text";
 import { Subtitle, Title } from "@/components/ui/typography";
@@ -55,6 +56,7 @@ export function EducationalQuiz({
 	const [attempts, setAttempts] = useState<QuestionAttempt[]>([]);
 	const [showCompletionModal, setShowCompletionModal] = useState(false);
 	const [finalScore, setFinalScore] = useState(0);
+	const [isLoadingProgress, setIsLoadingProgress] = useState(true);
 
 	const questions = section.questions.sort(
 		(a, b) => a.order_index - b.order_index,
@@ -65,8 +67,61 @@ export function EducationalQuiz({
 			(a, b) => a.order_index - b.order_index,
 		) || [];
 
+	// Load saved progress when component mounts
+	useEffect(() => {
+		const loadProgress = async () => {
+			if (!session?.user?.id) {
+				setIsLoadingProgress(false);
+				return;
+			}
+
+			try {
+				const progressManager = new ProgressManager(session);
+				const result = await progressManager.getProgress(card.id);
+				
+				// Handle the response structure
+				const progressData = result?.data || result;
+				
+				if (progressData) {
+					// For authenticated users, progressData might be an array or single object
+					// For unauthenticated users, it's an array from local storage
+					let currentQuestionId = null;
+					
+					if (Array.isArray(progressData)) {
+						// Find the progress entry for this card
+						const cardProgress = progressData.find(p => p.cardId === card.id || p.card_id === card.id);
+						currentQuestionId = cardProgress?.questionId || cardProgress?.question_id;
+					} else if (progressData.question_id || progressData.questionId) {
+						// Single progress object
+						currentQuestionId = progressData.question_id || progressData.questionId;
+					}
+					
+					if (currentQuestionId) {
+						// Find the index of the saved question
+						const savedQuestionIndex = questions.findIndex(
+							q => q.id === currentQuestionId
+						);
+						
+						if (savedQuestionIndex !== -1) {
+							setCurrentQuestionIndex(savedQuestionIndex);
+						}
+					}
+				}
+			} catch (error) {
+				console.error("Error loading progress:", error);
+			}
+			
+			setIsLoadingProgress(false);
+		};
+
+		loadProgress();
+	}, [session?.user?.id, card.id, questions]);
+
 	const handleAnswerSelect = async (answerId: string) => {
 		if (showResult) return;
+
+		// Add haptic feedback when answer is selected
+		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
 		setSelectedAnswer(answerId);
 		const isCorrect =
@@ -190,9 +245,22 @@ export function EducationalQuiz({
 		);
 	}
 
+	// Show loading state while progress is being loaded
+	if (isLoadingProgress) {
+		return (
+			<SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center px-4">
+				<View 
+					className="w-full max-w-xl rounded-3xl p-8 shadow-lg items-center justify-center" 
+					style={{ backgroundColor: colors.primary, minHeight: 200 }}
+				>
+					<Text className="text-xl font-semibold text-black">Loading your progress...</Text>
+				</View>
+			</SafeAreaView>
+		);
+	}
+
 	return (
-		<SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center px-4">
-			{/* Centered Card Container */}
+		<View className="flex-1 justify-start items-center px-4 pt-8">
 			<View 
 				className="w-full max-w-xl rounded-3xl p-3 shadow-lg" 
 				style={{ backgroundColor: colors.primary }}
@@ -200,18 +268,17 @@ export function EducationalQuiz({
 				{/* Close Button */}
 				<View style={{ position: 'absolute', left: 16, top: 16, zIndex: 10 }}>
 					<Button
-						variant="white"
 						size="icon"
 						onPress={onExit}
 						className="w-12 h-12 rounded-full items-center justify-center"
-						style={{ backgroundColor: "rgba(255, 255, 255, 0.3)" }}
+						style={{ backgroundColor: "#9EEC5A" }}
 					>
 						<Text className="text-2xl">✕</Text>
 					</Button>
 				</View>
 
 				{/* Question */}
-				<View style={{ paddingTop: 56, marginBottom: 20 }}>
+				<View style={{ paddingTop: 80, marginBottom: 20 }}>
 					<Text className="text-2xl font-bold text-black text-left leading-tight">
 						{currentQuestion?.question_text}
 					</Text>
@@ -245,6 +312,10 @@ export function EducationalQuiz({
 										minHeight: 120,
 										alignItems: 'flex-start',
 										justifyContent: 'flex-start',
+										...(isWrong && {
+											borderWidth: 2,
+											borderColor: colors.error,
+										}),
 										...(isSelected && {
 											shadowColor: '#000',
 											shadowOffset: { width: 0, height: 2 },
@@ -284,17 +355,13 @@ export function EducationalQuiz({
 								{/* Correct Answer Indicator - Green Circle with Checkmark */}
 								{isCorrect && (
 									<View 
-										className="absolute bg-green-500 rounded-full items-center justify-center"
+										className="absolute rounded-full items-center justify-center"
 										style={{
-											width: 32,
-											height: 32,
+											width: 28,
+											height: 28,
 											top: 12,
 											right: 12,
-											shadowColor: '#000',
-											shadowOffset: { width: 0, height: 2 },
-											shadowOpacity: 0.2,
-											shadowRadius: 4,
-											elevation: 4,
+											backgroundColor: '#9EEC5A',
 										}}
 									>
 										<Text className="text-white text-lg font-bold">✓</Text>
@@ -304,17 +371,13 @@ export function EducationalQuiz({
 								{/* Wrong Answer Indicator */}
 								{isWrong && (
 									<View 
-										className="absolute bg-red-500 rounded-full items-center justify-center"
+										className="absolute rounded-full items-center justify-center"
 										style={{
-											width: 32,
-											height: 32,
+											width: 28,
+											height: 28,
 											top: 12,
 											right: 12,
-											shadowColor: '#000',
-											shadowOffset: { width: 0, height: 2 },
-											shadowOpacity: 0.2,
-											shadowRadius: 4,
-											elevation: 4,
+											backgroundColor: colors.error,
 										}}
 									>
 										<Text className="text-white text-lg font-bold">✕</Text>
@@ -324,37 +387,20 @@ export function EducationalQuiz({
 								{/* Show Correct Answer when user was wrong */}
 								{shouldShowCorrectAnswer && (
 									<View 
-										className="absolute bg-green-500 rounded-full items-center justify-center"
+										className="absolute rounded-full items-center justify-center"
 										style={{
-											width: 32,
-											height: 32,
+											width: 28,
+											height: 28,
 											top: 12,
 											right: 12,
-											shadowColor: '#000',
-											shadowOffset: { width: 0, height: 2 },
-											shadowOpacity: 0.2,
-											shadowRadius: 4,
-											elevation: 4,
+											backgroundColor: '#9EEC5A',
 										}}
 									>
 										<Text className="text-white text-lg font-bold">✓</Text>
 									</View>
 								)}
 
-								{/* Selected Indicator (when not showing results) */}
-								{isSelected && !showResult && (
-									<View 
-										className="absolute bg-blue-500 rounded-full items-center justify-center"
-										style={{
-											width: 24,
-											height: 24,
-											top: 16,
-											right: 16,
-										}}
-									>
-										<View className="w-3 h-3 bg-white rounded-full" />
-									</View>
-								)}
+
 							</View>
 						);
 					})}
@@ -410,6 +456,6 @@ export function EducationalQuiz({
 					/>
 				</View>
 			</View>
-		</SafeAreaView>
+		</View>
 	);
 }

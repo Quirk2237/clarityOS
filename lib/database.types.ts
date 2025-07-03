@@ -603,7 +603,7 @@ export type Database = {
         | "one_to_five_years"
         | "industry_pro"
         | "local_household_name"
-      card_status: "open" | "coming_soon"
+      card_status: "open" | "coming_soon" | "completed"
       goal_type:
         | "get_clarity"
         | "build_confidence"
@@ -742,7 +742,7 @@ export const Constants = {
         "industry_pro",
         "local_household_name",
       ],
-      card_status: ["open", "coming_soon"],
+      card_status: ["open", "coming_soon", "completed"],
       goal_type: [
         "get_clarity",
         "build_confidence",

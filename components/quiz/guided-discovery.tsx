@@ -254,6 +254,7 @@ export function GuidedDiscovery({
 	educationalScore,
 }: GuidedDiscoveryProps) {
 	const { session } = useAuth();
+	const synthesisForced = useRef(false);
 	const [conversationState, setConversationState] = useState<ConversationState>(
 		{
 			step: "opening",
@@ -534,7 +535,30 @@ export function GuidedDiscovery({
 		}
 	}, [conversationState, isCompleted, isInitialized]);
 
+	// ✅ Force completion if scores are maxed but AI hasn't completed
+	useEffect(() => {
+		const { scores, step } = conversationState;
+		const totalScore = Object.values(scores).reduce((sum, s) => sum + s, 0);
+		const maxScore = 8; // 4 dimensions * 2 points max
 
+		if (
+			totalScore >= maxScore &&
+			(step === "opening" || step === "follow_up") &&
+			!synthesisForced.current
+		) {
+			debug.log("Client-Side Completion", "Scores maxed, forcing synthesis request.");
+			synthesisForced.current = true;
+
+			const finalRequestInput =
+				"Based on our conversation, all criteria for a strong brand purpose statement have been met. Please provide the final draft statement for my review, setting isComplete to true.";
+			setInput(finalRequestInput);
+
+			// Defer submission to avoid state update issues within render cycle
+			setTimeout(() => {
+				handleSubmit({ preventDefault: () => {} } as any);
+			}, 50);
+		}
+	}, [conversationState]);
 
 	// ✅ Load existing conversation from appropriate storage
 	const loadExistingConversation = async () => {
@@ -548,27 +572,35 @@ export function GuidedDiscovery({
 					return;
 				}
 
-				if (data && !data.is_completed && data.conversation_data?.conversationState) {
+				if (data && data.conversation_data?.conversationState) {
 					debug.log("Previous Database Conversation Found", {
 						conversationId: data.id,
 						step: data.current_step,
 						isCompleted: data.is_completed,
 					});
 					
-					setConversationState(data.conversation_data.conversationState);
+					const loadedState = data.conversation_data.conversationState;
+					if (data.is_completed) {
+						loadedState.step = "complete";
+					}
+					setConversationState(loadedState);
 					setIsCompleted(data.is_completed);
 				}
 			} else {
 				const localConversation = await LocalAIStorage.getConversation(card.id);
 				
-				if (localConversation && !localConversation.isCompleted && localConversation.conversationData?.conversationState) {
+				if (localConversation && localConversation.conversationData?.conversationState) {
 					debug.log("Previous Local Conversation Found", {
 						conversationId: localConversation.id,
 						step: localConversation.currentStep,
 						isCompleted: localConversation.isCompleted,
 					});
 					
-					setConversationState(localConversation.conversationData.conversationState);
+					const loadedState = localConversation.conversationData.conversationState;
+					if (localConversation.isCompleted) {
+						loadedState.step = "complete";
+					}
+					setConversationState(loadedState);
 					setIsCompleted(localConversation.isCompleted);
 				}
 			}
@@ -584,6 +616,22 @@ export function GuidedDiscovery({
 		}
 	}, [isAuthenticated, card.id, isInitialized]);
 
+	const handleRestart = () => {
+		synthesisForced.current = false;
+		debug.log("🔄 Restarting Card", { cardId: card.id });
+		setConversationState({
+			step: "opening",
+			scores: { audience: 0, benefit: 0, belief: 0, impact: 0 },
+		});
+		setIsCompleted(false);
+		setCurrentQuestion(
+			card.slug === "purpose"
+				? "Imagine your brand disappeared tomorrow. What would your customers miss most, and why would that matter?"
+				: `Tell me about your brand and what makes it unique in the ${card.name.toLowerCase()} space.`,
+		);
+		setInput(""); // Clear user input
+	};
+
 	const handleCompletion = async () => {
 		if (completionInProgress.current) return;
 		completionInProgress.current = true;
@@ -598,9 +646,21 @@ export function GuidedDiscovery({
 			setIsCompleted(true);
 			await saveConversationState();
 
-			// Save the brand purpose statement if authenticated
+			// Mark the guided section as completed and save progress
 			if (session) {
 				const progressManager = new ProgressManager(session);
+				
+				// Mark guided section as completed
+				await progressManager.updateProgress(
+					card.id,
+					{
+						status: "completed",
+						completedAt: new Date().toISOString(),
+					},
+					section.id
+				);
+
+				// Save the brand purpose statement if authenticated
 				if (conversationState.draftStatement) {
 					await progressManager.saveBrandPurposeStatement(
 						conversationState.draftStatement,
@@ -640,15 +700,14 @@ export function GuidedDiscovery({
 
 	return (
 		<AIErrorBoundary>
-			<SafeAreaView style={{ flex: 1, backgroundColor: "#000000" }}>
-				<View className="flex-1">
-					{/* Header */}
-					<View className="p-4 flex-row justify-between items-center" style={{ borderBottomWidth: 1, borderBottomColor: colors.surface }}>
-						<Title style={{ color: colors.background }}>{card.name}</Title>
-						<Button variant="white" onPress={onExit}>
-							<Text>Exit</Text>
-						</Button>
-					</View>
+			<View className="flex-1">
+				{/* Header */}
+				<View className="p-4 flex-row justify-between items-center" style={{ borderBottomWidth: 1, borderBottomColor: colors.surface }}>
+					<Title style={{ color: colors.background }}>{card.name}</Title>
+					<Button variant="white" onPress={onExit}>
+						<Text>Exit</Text>
+					</Button>
+				</View>
 
 					{/* Main Content */}
 					<ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
@@ -902,30 +961,52 @@ export function GuidedDiscovery({
 							</View>
 						)}
 
-						{/* Final Completion State */}
+						{/* Final Completion State - The Plaque */}
 						{conversationState.step === "complete" && (
-							<View className="rounded-3xl p-6 mb-6" style={{ 
-								backgroundColor: 'rgba(172, 255, 100, 0.1)', 
-								borderWidth: 1, 
-								borderColor: colors.primary 
-							}}>
-								<Text className="text-lg font-medium mb-3" style={{ color: colors.primary }}>
-									🎉 Purpose Statement Complete!
-								</Text>
-								<Text className="text-base leading-relaxed mb-4" style={{ color: colors.background }}>
-									Your brand purpose statement has been saved. You can now move on to the next brand discovery card.
-								</Text>
-								<PrimaryButton
-									onPress={onComplete}
-									className="py-3"
-								>
-									<Text className="font-medium" style={{ color: '#000000' }}>Continue to Next Card</Text>
-								</PrimaryButton>
-							</View>
+							<>
+								<View className="rounded-3xl p-6 mb-6" style={{ backgroundColor: colors.surface }}>
+									<Title className="mb-4 text-center" style={{ color: colors.primary }}>Your Brand Purpose</Title>
+									<View className="rounded-2xl p-4 mb-6" style={{ backgroundColor: '#000000' }}>
+										<Text className="text-lg leading-relaxed text-center font-medium" style={{ color: colors.background }}>
+											{conversationState.draftStatement || "No statement saved."}
+										</Text>
+									</View>
+								</View>
+								
+								<View className="gap-3">
+									<PrimaryButton
+										onPress={() => {
+											// Logic to refine statement
+											setInput(conversationState.draftStatement || "");
+											setCurrentQuestion("What aspects of your statement would you like to refine?");
+											setConversationState(prev => ({ ...prev, step: "refinement" }));
+											setIsCompleted(false);
+										}}
+										className="py-3"
+									>
+										<Text className="font-medium" style={{ color: '#000000' }}>Refine Purpose Statement</Text>
+									</PrimaryButton>
+						
+									<Button
+										onPress={handleRestart}
+										variant="white"
+										className="py-3"
+									>
+										<Text className="font-medium">Restart Card</Text>
+									</Button>
+									
+									<Button
+										onPress={onExit}
+										variant="white"
+										className="py-3"
+									>
+										<Text className="font-medium">Go Home</Text>
+									</Button>
+								</View>
+							</>
 						)}
-					</ScrollView>
-				</View>
-			</SafeAreaView>
+				</ScrollView>
+			</View>
 		</AIErrorBoundary>
 	);
 }

@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   ONBOARDING_RESPONSES: 'canopy_onboarding_responses',
   USER_SESSIONS: 'canopy_user_sessions',
   SYNC_QUEUE: 'canopy_sync_queue',
+  CARDS_CACHE: 'canopy_cards_cache',
 };
 
 // Local Data Types
@@ -66,6 +67,12 @@ export interface LocalOnboardingResponse {
   businessStage: string;
   businessStageOtherText?: string;
   completedAt: string;
+}
+
+export interface LocalCardCache {
+  cards: any[];
+  cachedAt: string;
+  expiresAt: string;
 }
 
 // Local Storage Manager
@@ -321,5 +328,79 @@ export const LocalBrandPurposeStorage = {
   async getCurrentStatement(): Promise<LocalBrandPurposeStatement | null> {
     const statements = await LocalStorage.getItem<LocalBrandPurposeStatement>(STORAGE_KEYS.BRAND_PURPOSE_STATEMENTS);
     return statements.find(s => s.isCurrent) || null;
+  },
+};
+
+export const CardCacheStorage = {
+  // Cache expires after 5 minutes
+  CACHE_DURATION_MS: 5 * 60 * 1000,
+
+  async getCachedCards(): Promise<any[] | null> {
+    try {
+      const cacheData = await AsyncStorage.getItem(STORAGE_KEYS.CARDS_CACHE);
+      if (!cacheData) return null;
+
+      const cache: LocalCardCache = JSON.parse(cacheData);
+      const now = new Date().getTime();
+      const expiresAt = new Date(cache.expiresAt).getTime();
+
+      // Check if cache is expired
+      if (now > expiresAt) {
+        console.log('🕒 Card cache expired, removing...');
+        await AsyncStorage.removeItem(STORAGE_KEYS.CARDS_CACHE);
+        return null;
+      }
+
+      console.log('✅ Loading cards from cache');
+      return cache.cards;
+    } catch (error) {
+      console.error('Error getting cached cards:', error);
+      return null;
+    }
+  },
+
+  async setCachedCards(cards: any[]): Promise<void> {
+    try {
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + this.CACHE_DURATION_MS);
+
+      const cache: LocalCardCache = {
+        cards,
+        cachedAt: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+      };
+
+      await AsyncStorage.setItem(STORAGE_KEYS.CARDS_CACHE, JSON.stringify(cache));
+      console.log('💾 Cards cached successfully');
+    } catch (error) {
+      console.error('Error caching cards:', error);
+      throw error;
+    }
+  },
+
+  async isCacheValid(): Promise<boolean> {
+    try {
+      const cacheData = await AsyncStorage.getItem(STORAGE_KEYS.CARDS_CACHE);
+      if (!cacheData) return false;
+
+      const cache: LocalCardCache = JSON.parse(cacheData);
+      const now = new Date().getTime();
+      const expiresAt = new Date(cache.expiresAt).getTime();
+
+      return now <= expiresAt;
+    } catch (error) {
+      console.error('Error checking cache validity:', error);
+      return false;
+    }
+  },
+
+  async clearCache(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.CARDS_CACHE);
+      console.log('🗑 Card cache cleared');
+    } catch (error) {
+      console.error('Error clearing card cache:', error);
+      throw error;
+    }
   },
 }; 

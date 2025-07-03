@@ -2,13 +2,14 @@ import * as React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { View, ScrollView, Pressable } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
+import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from "../../../components/safe-area-view";
 import { Text } from "../../../components/ui/text";
 import { Title, Subtitle } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/image";
 import { useAuth } from "../../../context/supabase-provider";
-import { getActiveCards, getCard } from "../../../lib/database-helpers";
+import { getCard } from "../../../lib/database-helpers";
 import { ProgressManager } from "../../../lib/progress-manager";
 import { getCardImage } from "@/lib/card-images";
 import { colors } from "@/constants/colors";
@@ -19,6 +20,7 @@ import {
 } from "../../../components/quiz";
 import { showNativeCardMenu } from "../../../components/ui/native-card-menu";
 import { Database } from "../../../lib/database.types";
+import { registerTabResetCallback, unregisterTabResetCallback } from "./_layout";
 
 // Types
 type Card = Database["public"]["Tables"]["cards"]["Row"] & {
@@ -152,16 +154,23 @@ const Card = ({
 	const backgroundColor = card.color || colors.primary;
 
 	const handleMenuPress = () => {
+		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 		showNativeCardMenu({
 			cardName: card.name,
 			onStartOver: () => onStartOver(card.id)
 		});
 	};
 
+	// Calculate display progress - show 100% if card is completed
+	const displayProgress = isCompleted ? 100 : (card.progress / card.total) * 100;
+
 	return (
 		<View className="mx-4 mb-6">
 			<Pressable
-				onPress={onPress}
+				onPress={() => {
+					Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+					onPress();
+				}}
 				className="rounded-large p-6 shadow-lg active:scale-98"
 				style={{
 					backgroundColor,
@@ -206,7 +215,7 @@ const Card = ({
 							<View
 								className="h-full bg-white rounded-full"
 								style={{
-									width: `${(card.progress / card.total) * 100}%`,
+									width: `${displayProgress}%`,
 								}}
 							/>
 						</View>
@@ -215,14 +224,22 @@ const Card = ({
 
 				{/* Action button */}
 				<Button
-					onPress={isComingSoon ? undefined : onPress}
+					onPress={isComingSoon ? undefined : () => {
+						Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+						onPress();
+					}}
 					size="lg"
 					variant="white"
 					className="rounded-full py-4"
 					disabled={isComingSoon}
 				>
 					<Text className="text-lg font-semibold">
-						{isComingSoon ? "Coming Soon" : (isStarted || isCompleted ? "Continue" : "Start Now")}
+						{isComingSoon 
+							? "Coming Soon" 
+							: isCompleted 
+								? "Completed" 
+								: (isStarted ? "Continue" : "Start Now")
+						}
 					</Text>
 				</Button>
 			</Pressable>
@@ -234,7 +251,7 @@ export default function Home() {
 	const router = useRouter();
 	const { session } = useAuth();
 	const [cards, setCards] = useState<CardWithProgress[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(false);
 	
 	// Quiz state
 	const [quizState, setQuizState] = useState<QuizState>({
@@ -245,51 +262,23 @@ export default function Home() {
 	});
 
 	const loadCardsWithProgress = async () => {
-		setLoading(true);
 		try {
 			const progressManager = new ProgressManager(session);
 
-			if (session?.user?.id) {
-				// Authenticated user - load cards with progress
-				const cardsWithProgress = await progressManager.getAllCardsWithProgress();
-				console.log("Loaded cards with progress:", cardsWithProgress.length, "cards");
-				setCards(cardsWithProgress);
+			// Use the new caching system
+			const { cards: cardsWithProgress, fromCache } = await progressManager.getAllCardsWithCaching();
+			
+			console.log(`Loaded ${cardsWithProgress.length} cards ${fromCache ? 'from cache' : 'from database'}`);
+			setCards(cardsWithProgress);
+
+			// Only show loading if we got no cards (first time load)
+			if (cardsWithProgress.length === 0) {
+				setLoading(true);
 			} else {
-				// Non-authenticated user - load cards and merge with local progress
-				const { data, error } = await getActiveCards();
-				if (error) {
-					console.error("Error loading cards:", error);
-				} else if (data) {
-					console.log("Loaded active cards:", data.length, "cards");
-					
-					// Get local progress for each card
-					const cardsWithProgress = await Promise.all(
-						data.map(async (card) => {
-							const localProgress = await progressManager.getCardProgress(card.id);
-							return {
-								id: card.id,
-								name: card.name,
-								slug: card.slug,
-								description: card.description,
-								order_index: card.order_index,
-								image_url: card.image_url,
-								color: card.color,
-								progress: localProgress.progress,
-								total: localProgress.total,
-								status: localProgress.status,
-								card_status: card.status,
-								card_sections: card.card_sections || [],
-							};
-						})
-					);
-					
-					console.log("Cards with local progress:", cardsWithProgress.length, "cards");
-					setCards(cardsWithProgress);
-				}
+				setLoading(false);
 			}
 		} catch (error) {
 			console.error("Error loading cards:", error);
-		} finally {
 			setLoading(false);
 		}
 	};
@@ -410,47 +399,32 @@ export default function Home() {
 		}, [session, quizState.viewState]),
 	);
 
-	// Render quiz views
-	if (quizState.viewState !== "home" && quizState.currentCard) {
-		const educationalSection = quizState.currentCard.card_sections.find(
-			(s) => s.type === "educational",
-		);
-		const guidedSection = quizState.currentCard.card_sections.find(
-			(s) => s.type === "guided"
-		);
+	// Register tab reset callback
+	useEffect(() => {
+		const resetQuizState = () => {
+			if (quizState.viewState !== "home") {
+				setQuizState({
+					currentCard: null,
+					currentSection: "educational",
+					educationalScore: 0,
+					viewState: "home",
+				});
+			}
+		};
 
-		return (
-			<>
-				{quizState.viewState === "educational" && educationalSection && (
-					<EducationalQuiz
-						card={quizState.currentCard}
-						section={educationalSection}
-						onComplete={handleEducationalComplete}
-						onExit={handleQuizExit}
-					/>
-				)}
+		registerTabResetCallback(resetQuizState);
 
-				{quizState.viewState === "guided" && guidedSection && (
-					<GuidedDiscovery
-						card={quizState.currentCard}
-						section={guidedSection}
-						onComplete={handleGuidedComplete}
-						onExit={handleQuizExit}
-						educationalScore={quizState.educationalScore}
-					/>
-				)}
+		return () => {
+			unregisterTabResetCallback();
+		};
+	}, [quizState.viewState]);
 
-				{quizState.viewState === "completed" && (
-					<View className="flex-1 items-center justify-center bg-neutral-900">
-						<Text className="text-white text-xl">Card completed!</Text>
-						<Button onPress={handleCardComplete} className="mt-4">
-							<Text>Back to Home</Text>
-						</Button>
-					</View>
-				)}
-			</>
-		);
-	}
+	const educationalSection = quizState.currentCard?.card_sections.find(
+		(s) => s.type === "educational",
+	);
+	const guidedSection = quizState.currentCard?.card_sections.find(
+		(s) => s.type === "guided"
+	);
 
 	// Show all cards in order, with the first uncompleted card highlighted
 	const sortedCards = cards.sort((a, b) => a.order_index - b.order_index);
@@ -472,7 +446,7 @@ export default function Home() {
 			<SafeAreaView className="flex-1" style={{ backgroundColor: "#1A1A1A" }}>
 				<View className="flex-1 items-center justify-center">
 					<Text className="text-lg text-white">
-						Loading your progress...
+						Loading cards for the first time...
 					</Text>
 				</View>
 			</SafeAreaView>
@@ -480,44 +454,101 @@ export default function Home() {
 	}
 
 	return (
-		<SafeAreaView className="flex-1" style={{ backgroundColor: "#1A1A1A" }}>
-			<ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-				{/* Header */}
-				<View className="items-center pt-4 pb-6">
-					<Title className="text-brand-primary-vibrantGreen text-2xl font-bold">ClarityOS</Title>
-				</View>
+		<SafeAreaView className="flex-1" style={{ backgroundColor: colors.surface }}>
+			{/* Header */}
+			<View className="items-center pt-4 pb-6">
+				<Pressable 
+					onPress={() => {
+						// Return to home when ClarityOS is tapped during a quiz
+						if (quizState.viewState !== "home") {
+							Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+							setQuizState({
+								currentCard: null,
+								currentSection: "educational",
+								educationalScore: 0,
+								viewState: "home",
+							});
+						}
+					}}
+					className="py-2 px-4 rounded-lg"
+				>
+					<Title className="text-brand-primary-vibrantGreen text-2xl font-medium">ClarityOS</Title>
+				</Pressable>
+			</View>
 
-				{/* Featured Card */}
-				{activeCard && (
-					<Card
-						card={activeCard}
-						onPress={() => handleCardPress(activeCard)}
-						onStartOver={handleStartOver}
+			{/* Main Content Area */}
+			<View className="flex-1">
+				{/* Quiz Views */}
+				{quizState.viewState === "educational" && educationalSection && (
+					<EducationalQuiz
+						card={quizState.currentCard!}
+						section={educationalSection}
+						onComplete={handleEducationalComplete}
+						onExit={handleQuizExit}
 					/>
 				)}
 
-				{/* Show message if no cards loaded */}
-				{!loading && cards.length === 0 && (
-					<View className="items-center justify-center py-8">
-						<Text className="text-white text-lg">No cards available</Text>
+				{quizState.viewState === "guided" && guidedSection && (
+					<GuidedDiscovery
+						card={quizState.currentCard!}
+						section={guidedSection}
+						onComplete={handleGuidedComplete}
+						onExit={handleQuizExit}
+						educationalScore={quizState.educationalScore}
+					/>
+				)}
+
+				{quizState.viewState === "completed" && (
+					<View className="flex-1 items-center justify-center">
+						<Text className="text-white text-xl">Card completed!</Text>
+						<Button onPress={() => {
+							Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+							handleCardComplete();
+						}} className="mt-4">
+							<Text>Back to Home</Text>
+						</Button>
 					</View>
 				)}
 
-				{/* All Other Cards */}
-				{otherCards.map((card, index) => {
-					return (
-						<Card
-							key={card.id}
-							card={card}
-							onPress={() => handleCardPress(card)}
-							onStartOver={handleStartOver}
-						/>
-					);
-				})}
+				{/* Home View - Card List */}
+				{quizState.viewState === "home" && (
+					<ScrollView 
+						className="flex-1" 
+						showsVerticalScrollIndicator={false}
+						contentContainerStyle={{ paddingBottom: 120 }} // Add padding for floating tab bar
+					>
+						{/* Featured Card */}
+						{activeCard && (
+							<Card
+								card={activeCard}
+								onPress={() => handleCardPress(activeCard)}
+								onStartOver={handleStartOver}
+							/>
+						)}
 
-				{/* Spacing for bottom navigation */}
-				<View className="h-8" />
-			</ScrollView>
+						{/* Show message if no cards loaded */}
+						{!loading && cards.length === 0 && (
+							<View className="items-center justify-center py-8">
+								<Text className="text-white text-lg">No cards available</Text>
+							</View>
+						)}
+
+						{/* All Other Cards */}
+						{otherCards.map((card, index) => {
+							return (
+								<Card
+									key={card.id}
+									card={card}
+									onPress={() => handleCardPress(card)}
+									onStartOver={handleStartOver}
+								/>
+							);
+						})}
+
+
+					</ScrollView>
+				)}
+			</View>
 		</SafeAreaView>
 	);
 }

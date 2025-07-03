@@ -7,7 +7,7 @@ import { Text } from "./text";
 import { colors } from "@/constants/colors";
 
 const buttonVariants = cva(
-	"items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 web:select-none web:focus:outline-none web:focus-visible:outline-none web:focus-visible:ring-1 web:focus-visible:ring-ring border-0",
+	"items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 web:select-none web:focus:outline-none web:focus-visible:outline-none border-0",
 	{
 		variants: {
 			variant: {

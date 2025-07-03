@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, ViewProps } from 'react-native';
+import { colors } from '@/constants/colors';
 
 interface TabBarBackgroundProps extends ViewProps {}
 
@@ -8,7 +9,9 @@ export default function TabBarBackground({ style, ...props }: TabBarBackgroundPr
     <View
       style={[
         {
-          backgroundColor: '#1A1A1A', // ClarityOS dark background
+          backgroundColor: colors.surface, // Use surface color from design system
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(255, 255, 255, 0.1)',
         },
         style,
       ]}

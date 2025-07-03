@@ -4,6 +4,7 @@ import {
   LocalQuestionStorage,
   LocalAIStorage,
   LocalBrandPurposeStorage,
+  CardCacheStorage,
   LocalUserProgress,
   LocalQuestionAttempt,
   LocalAIConversation,
@@ -19,6 +20,8 @@ import {
   getCurrentBrandPurposeStatement,
   getAllCardsWithProgress,
   getCardProgress,
+  checkAndUpdateCardCompletion,
+  getActiveCards
 } from "./database-helpers";
 import { Database } from "./database.types";
 
@@ -44,6 +47,7 @@ export interface CardWithProgress {
   progress: number;
   total: number;
   status: string;
+  card_status?: "open" | "coming_soon";
   card_sections: { id: any; type: any; }[];
 }
 
@@ -59,13 +63,13 @@ export class ProgressManager {
   // Progress Operations
   async updateProgress(
     cardId: string,
-    updates: ProgressUpdate,
+    updates: Partial<LocalUserProgress>,
     sectionId?: string,
     questionId?: string
   ): Promise<any> {
     if (this.isAuthenticated && this.userId) {
       // Save to database
-      return await updateUserProgress(
+      const result = await updateUserProgress(
         this.userId,
         cardId,
         {
@@ -79,6 +83,13 @@ export class ProgressManager {
         sectionId,
         questionId
       );
+
+      // Check if card should be marked as completed
+      if (updates.status === 'completed') {
+        await checkAndUpdateCardCompletion(this.userId, cardId);
+      }
+
+      return result;
     } else {
       // Save to local storage
       return await LocalProgressStorage.updateProgress(
@@ -163,6 +174,117 @@ export class ProgressManager {
       // For now, return empty array as cards are fetched separately
       return [];
     }
+  }
+
+  /**
+   * Gets cards with caching support - loads from cache immediately, fetches fresh data in background
+   * Returns: { cards: CardWithProgress[], fromCache: boolean }
+   */
+  async getAllCardsWithCaching(): Promise<{ 
+    cards: CardWithProgress[], 
+    fromCache: boolean 
+  }> {
+    // Try to get cached cards first
+    const cachedCards = await CardCacheStorage.getCachedCards();
+    
+    if (cachedCards && cachedCards.length > 0) {
+      // Return cached cards immediately and fetch fresh data in background
+      this.refreshCardsInBackground();
+      
+      // Convert cached cards to CardWithProgress format
+      const cardsWithProgress = await this.mergeCardsWithProgress(cachedCards);
+      return { cards: cardsWithProgress, fromCache: true };
+    }
+
+    // No cache available, fetch fresh data
+    console.log('📡 No cache available, fetching fresh cards...');
+    const cards = await this.fetchAndCacheCards();
+    return { cards, fromCache: false };
+  }
+
+  /**
+   * Fetches fresh cards from database and caches them
+   */
+  private async fetchAndCacheCards(): Promise<CardWithProgress[]> {
+    try {
+      let rawCards: any[] = [];
+
+      if (this.isAuthenticated && this.userId) {
+        // Authenticated user - get cards with progress from database
+        const { data, error } = await getAllCardsWithProgress(this.userId);
+        if (error) {
+          console.error('Error getting authenticated cards:', error);
+          return [];
+        }
+        rawCards = data || [];
+        
+        // Cache the raw cards data for future use
+        await CardCacheStorage.setCachedCards(rawCards);
+        return rawCards;
+      } else {
+        // Unauthenticated user - get cards from database and merge with local progress
+        const { data, error } = await getActiveCards();
+        if (error) {
+          console.error('Error getting cards:', error);
+          return [];
+        }
+        
+        rawCards = data || [];
+        
+        // Cache the raw cards
+        await CardCacheStorage.setCachedCards(rawCards);
+        
+        // Merge with local progress
+        return await this.mergeCardsWithProgress(rawCards);
+      }
+    } catch (error) {
+      console.error('Error fetching and caching cards:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Merges raw cards data with local progress for unauthenticated users
+   */
+  private async mergeCardsWithProgress(rawCards: any[]): Promise<CardWithProgress[]> {
+    if (this.isAuthenticated) {
+      // For authenticated users, cards already have progress
+      return rawCards;
+    }
+
+    // For unauthenticated users, merge with local progress
+    const cardsWithProgress: CardWithProgress[] = [];
+
+    for (const card of rawCards) {
+      const localProgress = await this.getCardProgress(card.id);
+      
+      cardsWithProgress.push({
+        id: card.id,
+        name: card.name,
+        slug: card.slug,
+        description: card.description,
+        order_index: card.order_index,
+        image_url: card.image_url,
+        color: card.color,
+        progress: localProgress.progress,
+        total: localProgress.total,
+        status: localProgress.status,
+        card_status: card.status, // Map database 'status' to 'card_status' for UI
+        card_sections: card.card_sections || [],
+      });
+    }
+
+    return cardsWithProgress;
+  }
+
+  /**
+   * Refreshes cards in background without blocking UI
+   */
+  private refreshCardsInBackground(): void {
+    // Don't await this - let it run in background
+    this.fetchAndCacheCards().catch(error => {
+      console.error('Background card refresh failed:', error);
+    });
   }
 
   // Question Attempt Operations

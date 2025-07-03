@@ -341,10 +341,6 @@ export async function endUserSession(
 	return { data, error };
 }
 
-
-
-
-
 // Calculate card progress based on completed sections
 export async function getCardProgress(userId: string, cardSlug: string) {
 	try {
@@ -405,6 +401,76 @@ export async function getCardProgress(userId: string, cardSlug: string) {
 	} catch (error) {
 		console.error("Error calculating card progress:", error);
 		return { progress: 0, total: 0, status: "not_started" };
+	}
+}
+
+// Update card status (e.g., to "completed")
+export async function updateCardStatus(cardId: string, status: "open" | "coming_soon" | "completed") {
+	const { data, error } = await supabase
+		.from("cards")
+		.update({ status })
+		.eq("id", cardId)
+		.select()
+		.single();
+
+	return { data, error };
+}
+
+// Check if a card should be marked as completed and update its status
+export async function checkAndUpdateCardCompletion(userId: string, cardId: string) {
+	try {
+		// Get the card and its sections
+		const { data: card, error: cardError } = await supabase
+			.from("cards")
+			.select(`
+				id,
+				status,
+				card_sections (
+					id,
+					type
+				)
+			`)
+			.eq("id", cardId)
+			.single();
+
+		if (cardError || !card) {
+			console.error("Error fetching card:", cardError);
+			return { updated: false, error: cardError };
+		}
+
+		// Get user progress for this card
+		const { data: progressData, error: progressError } = await supabase
+			.from("user_progress")
+			.select("section_id, status")
+			.eq("user_id", userId)
+			.eq("card_id", cardId)
+			.eq("status", "completed");
+
+		if (progressError) {
+			console.error("Error fetching progress:", progressError);
+			return { updated: false, error: progressError };
+		}
+
+		const completedSections = progressData?.length || 0;
+		const totalSections = card.card_sections.length;
+
+		// If all sections are completed and card status is not already "completed"
+		if (completedSections === totalSections && card.status !== "completed") {
+			const { error: updateError } = await updateCardStatus(cardId, "completed");
+			
+			if (updateError) {
+				console.error("Error updating card status:", updateError);
+				return { updated: false, error: updateError };
+			}
+
+			console.log(`Card ${cardId} marked as completed`);
+			return { updated: true, error: null };
+		}
+
+		return { updated: false, error: null };
+	} catch (error) {
+		console.error("Error checking card completion:", error);
+		return { updated: false, error };
 	}
 }
 
