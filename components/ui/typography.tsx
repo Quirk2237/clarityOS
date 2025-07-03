@@ -12,7 +12,7 @@ const Title = React.forwardRef<TextRef, SlottableTextProps>(
 				role="heading"
 				aria-level="1"
 				className={cn(
-					"text-title text-brand-neutrals-textPrimary font-bold tracking-tight web:select-text",
+					"text-title text-brand-neutrals-textPrimary font-funnel-display-bold tracking-tight web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -32,7 +32,7 @@ const Subtitle = React.forwardRef<TextRef, SlottableTextProps>(
 				role="heading"
 				aria-level="2"
 				className={cn(
-					"text-subtitle text-brand-neutrals-textPrimary font-medium tracking-tight web:select-text",
+					"text-subtitle text-brand-neutrals-textPrimary font-funnel-display tracking-tight web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -49,7 +49,7 @@ const Body = React.forwardRef<TextRef, SlottableTextProps>(
 		const Component = asChild ? Slot.Text : RNText;
 		return (
 			<Component
-				className={cn("text-body text-brand-neutrals-textPrimary web:select-text", className)}
+				className={cn("text-body text-brand-neutrals-textPrimary font-funnel-sans web:select-text", className)}
 				ref={ref}
 				{...props}
 			/>
@@ -64,7 +64,7 @@ const Caption = React.forwardRef<TextRef, SlottableTextProps>(
 		const Component = asChild ? Slot.Text : RNText;
 		return (
 			<Component
-				className={cn("text-caption text-brand-neutrals-textSecondary web:select-text", className)}
+				className={cn("text-caption text-brand-neutrals-textSecondary font-funnel-sans web:select-text", className)}
 				ref={ref}
 				{...props}
 			/>
@@ -82,7 +82,7 @@ const BlockQuote = React.forwardRef<TextRef, SlottableTextProps>(
 				// @ts-ignore - role of blockquote renders blockquote element on the web
 				role={Platform.OS === "web" ? "blockquote" : undefined}
 				className={cn(
-					"mt-6 native:mt-4 border-l-2 border-brand-neutrals-textSecondary pl-6 native:pl-3 text-body text-brand-neutrals-textPrimary italic web:select-text",
+					"mt-6 native:mt-4 border-l-2 border-brand-neutrals-textSecondary pl-6 native:pl-3 text-body text-brand-neutrals-textPrimary italic font-funnel-sans web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -102,7 +102,7 @@ const Code = React.forwardRef<TextRef, SlottableTextProps>(
 				// @ts-ignore - role of code renders code element on the web
 				role={Platform.OS === "web" ? "code" : undefined}
 				className={cn(
-					"relative rounded-small bg-brand-neutrals-textSecondary/10 px-[0.3rem] py-[0.2rem] text-caption text-brand-neutrals-textPrimary font-semibold web:select-text",
+					"relative rounded-small bg-brand-neutrals-textSecondary/10 px-[0.3rem] py-[0.2rem] text-caption text-brand-neutrals-textPrimary font-funnel-sans-medium web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -120,7 +120,7 @@ const Lead = React.forwardRef<TextRef, SlottableTextProps>(
 		return (
 			<Component
 				className={cn(
-					"text-subtitle text-brand-neutrals-textSecondary web:select-text",
+					"text-subtitle text-brand-neutrals-textSecondary font-funnel-sans web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -138,7 +138,7 @@ const Large = React.forwardRef<TextRef, SlottableTextProps>(
 		return (
 			<Component
 				className={cn(
-					"text-subtitle text-brand-neutrals-textPrimary font-semibold web:select-text",
+					"text-subtitle text-brand-neutrals-textPrimary font-funnel-sans-bold web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -156,7 +156,7 @@ const Small = React.forwardRef<TextRef, SlottableTextProps>(
 		return (
 			<Component
 				className={cn(
-					"text-caption text-brand-neutrals-textPrimary font-medium leading-none web:select-text",
+					"text-caption text-brand-neutrals-textPrimary font-funnel-sans-medium leading-none web:select-text",
 					className,
 				)}
 				ref={ref}
@@ -174,7 +174,7 @@ const Muted = React.forwardRef<TextRef, SlottableTextProps>(
 		return (
 			<Component
 				className={cn(
-					"text-caption text-brand-neutrals-textSecondary web:select-text",
+					"text-caption text-brand-neutrals-textSecondary font-funnel-sans web:select-text",
 					className,
 				)}
 				ref={ref}

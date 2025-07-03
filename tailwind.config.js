@@ -81,11 +81,17 @@ module.exports = {
 				caption: ["12px", { lineHeight: "16px", letterSpacing: "0.2px" }],
 			},
 			fontFamily: {
-				// SF Pro Display font family
-				sans: ["SF Pro Display", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
-				"sans-medium": ["SF Pro Display", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
-				"sans-semibold": ["SF Pro Display", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
-				"sans-bold": ["SF Pro Display", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+				// Funnel fonts as primary fonts
+				'funnel-sans': ['FunnelSans-Regular'],
+				'funnel-sans-medium': ['FunnelSans-Medium'],
+				'funnel-sans-bold': ['FunnelSans-Bold'],
+				'funnel-display': ['FunnelDisplay-Regular'],
+				'funnel-display-bold': ['FunnelDisplay-Bold'],
+				// Default to Funnel Sans for main text
+				sans: ['FunnelSans-Regular', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+				'sans-medium': ['FunnelSans-Medium', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+				'sans-semibold': ['FunnelSans-Medium', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+				'sans-bold': ['FunnelSans-Bold', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
 			},
 			spacing: {
 				// ClarityOS spacing scale

@@ -2,19 +2,13 @@ import "../polyfills";
 import "../global.css";
 
 import { Stack } from "expo-router";
-import {
-	useFonts,
-	Inter_400Regular,
-	Inter_500Medium,
-	Inter_600SemiBold,
-	Inter_700Bold,
-} from "@expo-google-fonts/inter";
 import Feather from '@expo/vector-icons/Feather';
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 
 import { AuthProvider } from "../context/supabase-provider";
 import { colors } from "@/constants/colors";
+import { useCustomFonts } from "@/lib/fonts";
 
 // Disable Reanimated strict mode warnings
 if (typeof global !== "undefined") {
@@ -31,17 +25,11 @@ if (typeof global !== "undefined") {
 SplashScreen.preventAutoHideAsync();
 
 export default function AppLayout() {
-	const [fontsLoaded] = useFonts({
-		Inter_400Regular,
-		Inter_500Medium,
-		Inter_600SemiBold,
-		Inter_700Bold,
-		...Feather.font,
-	});
+	const fontsLoaded = useCustomFonts();
 	
 	useEffect(() => {
 		if (fontsLoaded) {
-			console.log('🚀 App ready - hiding splash screen');
+			console.log('🚀 App ready with Funnel fonts - hiding splash screen');
 			SplashScreen.hideAsync();
 		}
 	}, [fontsLoaded]);

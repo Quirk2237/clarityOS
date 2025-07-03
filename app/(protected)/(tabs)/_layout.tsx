@@ -29,6 +29,15 @@ export default function TabLayout() {
 				headerShown: false,
 				tabBarButton: HapticTab,
 				tabBarBackground: TabBarBackgroundWrapper,
+				tabBarLabelStyle: {
+					fontFamily: 'FunnelSans-Medium', // Use Funnel font for tab labels
+					fontSize: 12,
+					marginTop: 4, // Add margin between icon and text
+					marginBottom: Platform.OS === 'ios' ? 0 : 2,
+				},
+				tabBarIconStyle: {
+					marginBottom: Platform.OS === 'ios' ? -2 : 0, // Adjust icon position
+				},
 				tabBarStyle: Platform.select({
 					ios: {
 						backgroundColor: 'transparent',

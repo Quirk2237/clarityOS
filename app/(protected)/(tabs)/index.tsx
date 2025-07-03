@@ -452,7 +452,7 @@ export default function Home() {
 					}}
 					className="py-2 px-4 rounded-lg"
 				>
-					<Title className="text-brand-primary-vibrantGreen text-2xl font-medium">Mouse</Title>
+					<Title className="text-brand-primary-vibrantGreen text-2xl font-medium">mouse</Title>
 				</Pressable>
 			</View>
 

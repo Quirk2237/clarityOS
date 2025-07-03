@@ -33,7 +33,7 @@ export default function WelcomeScreen() {
 				{/* Content Section */}
 				<View className="items-center gap-y-4 mb-8">
 					<Title className="text-center text-4xl font-bold" style={{ color: colors.surface }}>
-						Mouse
+						mouse
 					</Title>
 					<Caption 
 						className="text-center px-4 leading-relaxed text-base" 

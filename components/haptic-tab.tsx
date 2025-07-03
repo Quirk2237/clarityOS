@@ -1,8 +1,9 @@
 import React from 'react';
-import { Pressable, View, Platform } from 'react-native';
+import { Pressable, View, Platform, Text } from 'react-native';
 import type { PressableProps } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+import { cn } from '@/lib/utils';
 
 interface HapticTabProps extends PressableProps {
   children?: React.ReactNode;
@@ -19,7 +20,9 @@ export const HapticTab = ({ children, onPress, style, ...props }: HapticTabProps
       flex: 1,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      paddingVertical: 8,
+      paddingVertical: 12, // Increased padding for better touch target
+      paddingHorizontal: 8,
+      gap: 6, // Add gap between icon and text
     },
     typeof style === 'function' ? undefined : style
   ];
@@ -42,8 +45,16 @@ export const HapticTab = ({ children, onPress, style, ...props }: HapticTabProps
         {...props}
         style={pressableStyle}
         onPress={handlePress}
+        className="font-funnel-sans-medium" // Apply Funnel font to tab text
       >
-        {children}
+        <View style={{ 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: 4, // Specific gap between icon and text
+          paddingTop: Platform.OS === 'ios' ? 2 : 0, // Slight adjustment for iOS
+        }}>
+          {children}
+        </View>
       </Pressable>
     </View>
   );
