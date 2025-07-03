@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
-import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable } from "react-native";
+import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable, Modal } from "react-native";
 import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
 	useSharedValue,
@@ -160,6 +160,58 @@ function CircularProgress({ value, maxValue, size, strokeWidth, color, backgroun
 }
 
 function ScoreWidgets({ scores, cardSlug }: ScoreWidgetsProps) {
+	const [activePopup, setActivePopup] = useState<string | null>(null);
+
+	// Get score explanations based on card type
+	const getScoreExplanations = (cardSlug: string) => {
+		const explanationMap: { [key: string]: { [key: string]: string } } = {
+			purpose: {
+				audience: "How clearly you've defined who your brand serves. A higher score means you have a specific, well-defined target audience.",
+				benefit: "How compelling and clear your brand's benefit is to customers. A higher score means you've articulated a valuable outcome.",
+				belief: "How strong your underlying brand values and beliefs are. A higher score means you have a clear philosophical foundation.",
+				impact: "How tangible and measurable your brand's impact is on customers. A higher score means you can clearly demonstrate results."
+			},
+			positioning: {
+				audience: "How well you've identified your target market. A higher score means you understand exactly who you're positioning for.",
+				benefit: "How clear your competitive advantage is. A higher score means you've identified what makes you uniquely valuable.",
+				belief: "How distinct your brand differentiation is. A higher score means you stand out clearly from competitors.",
+				impact: "How compelling your value proposition is. A higher score means customers understand why they should choose you."
+			},
+			personality: {
+				audience: "How well-defined your brand traits are. A higher score means you have clear personality characteristics.",
+				benefit: "How consistent your communication style is. A higher score means your voice is recognizable and coherent.",
+				belief: "How strong your brand values are. A higher score means your beliefs guide your personality authentically.",
+				impact: "How distinctive your brand attitude is. A higher score means your personality creates a memorable impression."
+			},
+			"product-market-fit": {
+				audience: "How well you understand the market need. A higher score means you've identified a real, pressing problem.",
+				benefit: "How well your solution addresses the need. A higher score means your product solves the problem effectively.",
+				belief: "How clear your target customer definition is. A higher score means you know exactly who needs your solution.",
+				impact: "How distinct your differentiation is. A higher score means you offer something competitors don't."
+			},
+			perception: {
+				audience: "How aware you are of current brand perception. A higher score means you understand how you're currently seen.",
+				benefit: "How clear your desired brand image is. A higher score means you know exactly how you want to be perceived.",
+				belief: "How well you recognize perception gaps. A higher score means you understand what needs to change.",
+				impact: "How strong your customer evidence is. A higher score means you have proof of how customers actually see you."
+			},
+			presentation: {
+				audience: "How consistent your visual identity is. A higher score means your brand looks cohesive across touchpoints.",
+				benefit: "How clear your messaging is. A higher score means your communication is easy to understand and remember.",
+				belief: "How strategic your touchpoint approach is. A higher score means you're intentional about where you show up.",
+				impact: "How unified your brand experience is. A higher score means everything works together seamlessly."
+			},
+			proof: {
+				audience: "How strong your evidence is. A higher score means you have compelling proof of your claims.",
+				benefit: "How credible your brand appears. A higher score means customers trust what you say.",
+				belief: "How significant your achievements are. A higher score means you've accomplished meaningful milestones.",
+				impact: "How measurable your results are. A higher score means you can demonstrate clear outcomes."
+			}
+		};
+		
+		return explanationMap[cardSlug] || explanationMap.purpose;
+	};
+
 	// Get score labels based on card type
 	const getScoreLabels = (cardSlug: string) => {
 		const labelMap: { [key: string]: { [key: string]: string } } = {
@@ -211,30 +263,33 @@ function ScoreWidgets({ scores, cardSlug }: ScoreWidgetsProps) {
 	};
 
 	const labels = getScoreLabels(cardSlug);
+	const explanations = getScoreExplanations(cardSlug);
 	const maxScore = 2; // Each dimension is scored 0-2
 
 	const scoreItems = [
-		{ key: 'audience', label: labels.audience, score: scores.audience },
-		{ key: 'benefit', label: labels.benefit, score: scores.benefit },
-		{ key: 'belief', label: labels.belief, score: scores.belief },
-		{ key: 'impact', label: labels.impact, score: scores.impact }
+		{ key: 'audience', label: labels.audience, score: scores.audience, explanation: explanations.audience },
+		{ key: 'benefit', label: labels.benefit, score: scores.benefit, explanation: explanations.benefit },
+		{ key: 'belief', label: labels.belief, score: scores.belief, explanation: explanations.belief },
+		{ key: 'impact', label: labels.impact, score: scores.impact, explanation: explanations.impact }
 	];
 
 	return (
-		<View className="flex-row flex-wrap gap-4">
-			{scoreItems.map((item) => (
-				<View 
-					key={item.key}
-					className="flex-1 min-w-[45%] rounded-2xl p-4 flex-row items-center"
-					style={{ minWidth: '45%', backgroundColor: '#383838' }}
-				>
+		<>
+			<View className="flex-row flex-wrap gap-4">
+				{scoreItems.map((item) => (
+					<Pressable
+						key={item.key}
+						className="flex-1 min-w-[45%] rounded-2xl p-4 flex-row items-center"
+						style={{ minWidth: '45%', backgroundColor: '#383838' }}
+						onPress={() => setActivePopup(item.key)}
+					>
 					{/* Circular Progress */}
 					<View className="mr-3">
 						<CircularProgress
 							value={item.score}
 							maxValue={maxScore}
-							size={36}
-							strokeWidth={6}
+							size={28}
+							strokeWidth={4}
 							color={colors.primary}
 							backgroundColor="#444444"
 						/>
@@ -244,9 +299,59 @@ function ScoreWidgets({ scores, cardSlug }: ScoreWidgetsProps) {
 					<Text style={{ color: colors.background }} className="text-sm font-medium leading-tight flex-1">
 						{item.label}
 					</Text>
-				</View>
+					
+					{/* Help Circle Icon - Right aligned */}
+					<View 
+						className="items-center justify-center rounded-full"
+						style={{ 
+							width: 20, 
+							height: 20, 
+							backgroundColor: '#444444' 
+						}}
+					>
+						<Text 
+							style={{ 
+								color: '#383838', 
+								fontSize: 12, 
+								fontWeight: 'bold' 
+							}}
+						>
+							?
+						</Text>
+					</View>
+				</Pressable>
 			))}
 		</View>
+
+		{/* Score Explanation Modal */}
+		<Modal
+			visible={activePopup !== null}
+			transparent={true}
+			animationType="fade"
+			onRequestClose={() => setActivePopup(null)}
+		>
+			<View className="flex-1 justify-center items-center" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+				<View className="mx-4 rounded-3xl p-6 max-w-sm w-full" style={{ backgroundColor: colors.surface }}>
+					{activePopup && (
+						<>
+							<Text className="text-xl font-bold mb-4" style={{ color: colors.background }}>
+								{scoreItems.find(item => item.key === activePopup)?.label}
+							</Text>
+							<Text className="text-base leading-relaxed mb-6" style={{ color: colors.background }}>
+								{scoreItems.find(item => item.key === activePopup)?.explanation}
+							</Text>
+							<PrimaryButton
+								onPress={() => setActivePopup(null)}
+								className="py-3"
+							>
+								<Text className="font-medium" style={{ color: '#000000' }}>Got it</Text>
+							</PrimaryButton>
+						</>
+					)}
+				</View>
+			</View>
+		</Modal>
+	</>
 	);
 }
 
@@ -778,8 +883,9 @@ export function GuidedDiscovery({
 	const stackContainerStyle = useAnimatedStyle(() => {
 		const numberOfCards = stackCards.length;
 		
-		// Fixed base height for collapsed state - matches typical card content
-		const baseCollapsedHeight = 280;
+		// Get the current card's height or use default
+		const currentCardKey = `${stackCards[stackCards.length - 1]?.timestamp}-${stackCards.length - 1}`;
+		const currentCardHeight = cardHeights.value[currentCardKey] || defaultCardHeight;
 		
 		// Calculate expansion with each card 6px above the previous one
 		let maxConstrainedOffset = 0;
@@ -794,7 +900,7 @@ export function GuidedDiscovery({
 			translateY.value,
 			[0, 80, 160, 240],
 			[
-				0, // No expansion when collapsed
+				0, // No expansion when collapsed - fit to current card
 				maxConstrainedOffset * 0.1, // Very light fanning (10%)
 				maxConstrainedOffset * 0.4, // Medium fanning (40%)
 				maxConstrainedOffset // Max fanning with exact 6px gaps
@@ -802,9 +908,9 @@ export function GuidedDiscovery({
 			Extrapolate.CLAMP
 		);
 		
-		// Always set explicit height: base + expansion
+		// Height fits to current card when collapsed, expands when fanning
 		return {
-			height: baseCollapsedHeight + fanExpansion,
+			height: currentCardHeight + fanExpansion,
 		};
 	});
 
@@ -878,10 +984,9 @@ export function GuidedDiscovery({
 				<View className="flex-1 p-4">
 														{/* Animated FlatList Deck - Show during discovery and refinement phases */}
 				{(conversationState.step === "opening" || conversationState.step === "follow_up" || conversationState.step === "refinement") && (
-					<>
+					<View className="mb-2">
 						<PanGestureHandler onGestureEvent={gestureHandler}>
 							<Animated.View 
-								className="mb-6" 
 								style={[stackContainerStyle, stackTranslationStyle]}
 							>
 								{stackCards.map((qa, index) => {
@@ -986,7 +1091,7 @@ export function GuidedDiscovery({
 
 														{/* Action Buttons - Below the stack, only show for current question */}
 						{currentStackIndex === stackCards.length - 1 && (
-							<View className="flex-row gap-3 mb-6 mt-2">
+							<View className="flex-row justify-between items-center mb-3" style={{ marginTop: 12 }}>
 										{/* Examples Button */}
 										<PrimaryButton
 											onPress={() => {
@@ -994,7 +1099,7 @@ export function GuidedDiscovery({
 												setInput("I'd like to explore this question further with some guidance.");
 												handleSubmit({ preventDefault: () => {} } as any);
 											}}
-											className="flex-1 py-3 px-6"
+											className="py-3 px-6"
 											style={{ height: 44 }}
 											disabled={isLoading}
 										>
@@ -1003,7 +1108,7 @@ export function GuidedDiscovery({
 											</Text>
 										</PrimaryButton>
 										
-										{/* Submit/Arrow Button */}
+										{/* Submit/Send Button */}
 										<PrimaryButton
 											onPress={() => {
 												if (!input.trim() || isLoading) return;
@@ -1013,14 +1118,13 @@ export function GuidedDiscovery({
 											disabled={isLoading || !input.trim()}
 										>
 											<Text className="font-bold text-lg" style={{ color: '#000000' }}>
-												→
+												↗
 											</Text>
 										</PrimaryButton>
 									</View>
 								)}
-
-							</>
-										)}
+					</View>
+				)}
 
 				{/* Scrollable Content Below Stack */}
 				<ScrollView 

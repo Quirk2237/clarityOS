@@ -30,7 +30,8 @@
         "image": "./assets/splash.png",
         "resizeMode": "cover",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.clarityos.radianthillsoftware"
     },
     "experiments": {
       "typedRoutes": true
