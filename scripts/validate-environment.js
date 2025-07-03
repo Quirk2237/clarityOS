@@ -19,11 +19,6 @@ if (!envExists) {
   console.log('\n📝 Creating .env.local template...');
   
   const envTemplate = `# ==========================================
-# OpenAI Configuration (Server-side only)
-# ==========================================
-OPENAI_API_KEY=sk-your-openai-api-key-here
-
-# ==========================================
 # Supabase Configuration
 # ==========================================
 EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
@@ -33,13 +28,20 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key-here
 # Development Configuration
 # ==========================================
 NODE_ENV=development
+
+# ==========================================
+# NOTE: OpenAI API Key Configuration
+# ==========================================
+# The OpenAI API key is now configured as a Supabase secret.
+# Set it using: pnpm supabase secrets set OPENAI_API_KEY sk-your-key-here
+# This is more secure than storing it in local environment files.
 `;
 
   fs.writeFileSync(envPath, envTemplate);
   console.log('✅ Created .env.local template');
-  console.log('\n🚨 IMPORTANT: Please update .env.local with your actual API keys');
-  console.log('1. Get OpenAI API key from: https://platform.openai.com/api-keys');
-  console.log('2. Get Supabase credentials from your Supabase dashboard');
+  console.log('\n🚨 IMPORTANT: Please update .env.local with your Supabase credentials');
+  console.log('1. Get Supabase URL and anon key from your Supabase dashboard');
+  console.log('2. Set OpenAI API key as Supabase secret: pnpm supabase secrets set OPENAI_API_KEY sk-your-key');
   process.exit(1);
 }
 
@@ -62,12 +64,6 @@ try {
 
 // Validation checks
 const checks = {
-  openaiKey: {
-    name: "OpenAI API Key",
-    check: () => !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-openai-api-key-here',
-    message: "OPENAI_API_KEY should be set with a valid API key from OpenAI",
-    critical: true
-  },
   supabaseUrl: {
     name: "Supabase URL",
     check: () => !!process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_URL !== 'https://your-project-id.supabase.co',
@@ -82,8 +78,8 @@ const checks = {
   },
   noPublicOpenAI: {
     name: "No Public OpenAI Key",
-    check: () => !process.env.NEXT_PUBLIC_OPENAI_API_KEY && !process.env.EXPO_PUBLIC_OPENAI_API_KEY,
-    message: "OpenAI API key should NOT be exposed in public environment variables (security risk)",
+    check: () => !process.env.NEXT_PUBLIC_OPENAI_API_KEY && !process.env.EXPO_PUBLIC_OPENAI_API_KEY && !process.env.OPENAI_API_KEY,
+    message: "OpenAI API key should NOT be in local environment (now handled as Supabase secret)",
     critical: true
   },
   nodeEnv: {
@@ -102,31 +98,30 @@ console.log('🧪 Running Environment Checks...\n');
 Object.entries(checks).forEach(([key, { name, check, message, critical }]) => {
   const passed = check();
   const icon = passed ? "✅" : "❌";
-  const priority = critical ? "[CRITICAL]" : "[WARNING]";
-  
-  console.log(`${icon} ${priority} ${name}: ${passed ? "PASS" : "FAIL"}`);
+  console.log(`${icon} ${name}: ${passed ? "PASS" : "FAIL"}`);
   
   if (!passed) {
     console.log(`   → ${message}`);
     allPassed = false;
-    if (critical) criticalFailed = true;
+    if (critical) {
+      criticalFailed = true;
+    }
   }
 });
-
-console.log("\n" + "=".repeat(60));
 
 if (allPassed) {
   console.log("🎉 All environment checks passed! Your setup is ready.");
   console.log("\n✅ Next steps:");
-  console.log("1. Run: pnpm start");
-  console.log("2. Test AI conversations in the app");
-  console.log("3. Monitor console for any runtime errors");
+  console.log("1. Ensure OpenAI API key is set as Supabase secret");
+  console.log("2. Run: pnpm start");
+  console.log("3. Test AI conversations in the app");
+  console.log("4. Monitor console for any runtime errors");
 } else if (criticalFailed) {
   console.log("🚨 CRITICAL: Some required environment variables are missing or invalid.");
   console.log("\n🔧 To fix:");
-  console.log("1. Edit .env.local with your actual API keys");
-  console.log("2. Get OpenAI API key: https://platform.openai.com/api-keys");
-  console.log("3. Get Supabase credentials from your project dashboard");
+  console.log("1. Edit .env.local with your Supabase credentials");
+  console.log("2. Get Supabase credentials from your project dashboard");
+  console.log("3. Set OpenAI API key: pnpm supabase secrets set OPENAI_API_KEY sk-your-key");
   console.log("4. Re-run this script: node scripts/validate-environment.js");
   process.exit(1);
 } else {
@@ -134,4 +129,5 @@ if (allPassed) {
   console.log("\n💡 Consider fixing the warnings above for optimal performance.");
 }
 
-console.log("\n📖 For detailed setup instructions: docs/ai-sdk-setup.md"); 
+console.log("\n📖 For detailed setup instructions: docs/ai-sdk-setup.md");
+console.log("🔑 OpenAI API key is now managed as a Supabase secret for enhanced security"); 

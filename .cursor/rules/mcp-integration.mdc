@@ -1,0 +1,166 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# MCP (Model Context Protocol) Integration Guidelines
+
+## 🎯 MCP Tool Priority
+
+**CRITICAL**: Always prefer MCP tools over local CLI commands when available. MCP tools provide:
+- ✅ No Docker dependency
+- ✅ Consistent cross-platform functionality
+- ✅ Better error handling and debugging
+- ✅ Direct integration with development environment
+
+---
+
+## 📋 Supabase MCP Tools Priority List
+
+### **ALWAYS USE MCP INSTEAD OF LOCAL CLI:**
+
+| Local CLI Command | MCP Tool Alternative | Use Case |
+|------------------|---------------------|----------|
+| `pnpm supabase functions deploy` | `mcp_supabase_deploy_edge_function` | Deploy Edge Functions |
+| `pnpm supabase secrets set` | Use Supabase Dashboard | Set environment variables |
+| `pnpm supabase list projects` | `mcp_supabase_list_projects` | Get project information |
+| `pnpm supabase list functions` | `mcp_supabase_list_edge_functions` | List Edge Functions |
+| `pnpm supabase logs` | `mcp_supabase_get_logs` | Get Edge Function logs |
+| `pnpm supabase db push` | `mcp_supabase_apply_migration` | Apply database migrations |
+
+### **MCP Tool Usage Patterns:**
+
+```typescript
+// ✅ PREFERRED: Use MCP for Edge Function deployment
+mcp_supabase_deploy_edge_function({
+  project_id: "your-project-id",
+  name: "function-name", 
+  files: [{ name: "index.ts", content: "..." }]
+})
+
+// ❌ AVOID: Local CLI that requires Docker
+// pnpm supabase functions deploy function-name
+```
+
+---
+
+## 🚫 Docker-Free Development
+
+### **NEVER require Docker for:**
+- Edge Function deployment
+- Database migrations
+- Supabase project management
+- Development workflows
+
+### **Alternative Solutions:**
+- Use MCP tools for all Supabase operations
+- Deploy Edge Functions via MCP or Supabase Dashboard
+- Use web-based tools when MCP isn't available
+- Document Docker-free workflows in all guides
+
+---
+
+## 📖 Documentation Standards
+
+### **All documentation MUST:**
+1. **Primary Method**: List MCP tool usage first
+2. **Fallback Method**: Provide CLI commands as secondary option
+3. **Docker Warning**: Clearly state when Docker is required
+4. **MCP Benefits**: Explain advantages of MCP approach
+
+### **Example Documentation Pattern:**
+```markdown
+## Deploy Edge Function
+
+### 🎯 Preferred Method (No Docker Required)
+Use MCP tool for deployment:
+`mcp_supabase_deploy_edge_function`
+
+### 🔄 Alternative Method (Requires Docker)
+If MCP is unavailable:
+`pnpm supabase functions deploy ai-handler`
+
+**Note**: The MCP method is preferred as it works without Docker and provides better error handling.
+```
+
+---
+
+## 🛠 Script Development Guidelines
+
+### **When creating scripts:**
+1. **Check MCP Availability**: Always check if MCP tools can accomplish the task
+2. **Graceful Fallback**: Provide CLI fallback only when necessary
+3. **Clear Messaging**: Inform users about method being used
+4. **Error Handling**: Handle MCP errors gracefully
+
+### **Script Template:**
+```javascript
+async function deployEdgeFunction() {
+  try {
+    // Try MCP first (preferred)
+    await mcp_supabase_deploy_edge_function(config);
+    console.log('✅ Deployed via MCP (no Docker required)');
+  } catch (mcpError) {
+    console.log('⚠️ MCP unavailable, falling back to CLI');
+    console.log('🐳 Note: This requires Docker to be running');
+    // Fallback to CLI only if MCP fails
+    await exec('pnpm supabase functions deploy ai-handler');
+  }
+}
+```
+
+---
+
+## 🔍 Development Environment Priorities
+
+### **Tool Selection Order:**
+1. **MCP Tools** (highest priority)
+2. **Web Dashboard** (when MCP unavailable)
+3. **Local CLI** (lowest priority, requires Docker)
+
+### **Benefits Explanation:**
+- **MCP**: Works everywhere, no dependencies, better integration
+- **Dashboard**: Visual interface, no setup required
+- **CLI**: Full control but requires Docker setup
+
+---
+
+## ⚡ Performance Considerations
+
+### **MCP Advantages:**
+- No Docker startup time
+- No container overhead
+- Direct API calls
+- Better error messages
+- Integrated debugging
+
+### **When to Document Docker Alternative:**
+- Only for completeness
+- Always mark as "requires Docker"
+- Never as the primary method
+- Include setup complexity warnings
+
+---
+
+## 🎯 AI Assistant Instructions
+
+### **When helping users:**
+1. **Always suggest MCP tools first**
+2. **Explain Docker-free benefits**
+3. **Show MCP tool usage examples**
+4. **Only mention CLI as fallback**
+5. **Update documentation to reflect MCP priority**
+
+### **Example Response Pattern:**
+```
+I'll help you deploy that Edge Function. I'll use the Supabase MCP tool 
+which doesn't require Docker and works more reliably:
+
+`mcp_supabase_deploy_edge_function(...)` 
+
+This is preferred over `pnpm supabase functions deploy` because:
+- ✅ No Docker required
+- ✅ Better error handling  
+- ✅ Works on all platforms
+- ✅ Faster execution
+```

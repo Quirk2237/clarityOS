@@ -1,6 +1,6 @@
-# 🚀 Quick Start: Fixing Network Errors
+# 🚀 Quick Start: Fixing AI Connection Issues
 
-If you're seeing "Network request failed" errors, follow these steps:
+If you're seeing "Network request failed" or "Missing authorization header" errors, follow these steps:
 
 ## ✅ **Immediate Fix (5 minutes)**
 
@@ -10,11 +10,28 @@ If you're seeing "Network request failed" errors, follow these steps:
 node scripts/validate-environment.js
 ```
 
-This will create a `.env.local` file if it doesn't exist. Update it with:
-- Your OpenAI API key from [platform.openai.com](https://platform.openai.com/api-keys)
-- Your Supabase credentials from your project dashboard
+This will create a `.env.local` file if it doesn't exist. Update it with your Supabase credentials from your project dashboard.
 
-### 2. **Clear Cache and Restart**
+### 2. **Set OpenAI API Key as Supabase Secret**
+The OpenAI API key is now securely managed as a Supabase secret:
+
+#### 🎯 Preferred Method (No Docker Required)
+1. **Set API Key**: Use Supabase Dashboard → Project Settings → Secrets & Environment Variables
+   - Add `OPENAI_API_KEY` with your OpenAI API key value
+2. **Deploy Edge Function**: AI assistant can deploy via MCP tools (no local setup required)
+
+#### 🔄 Alternative Method (Requires Docker)
+```bash
+# Set your OpenAI API key as a Supabase secret
+pnpm supabase secrets set OPENAI_API_KEY sk-your-openai-api-key
+
+# Deploy the Edge Function (requires Docker Desktop)
+pnpm supabase functions deploy ai-handler
+```
+
+Get your OpenAI API key from [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+
+### 3. **Clear Cache and Restart**
 ```bash
 # Clear all caches
 pnpm clean
@@ -23,7 +40,7 @@ pnpm clean
 pnpm start --clear
 ```
 
-### 3. **Test the Fix**
+### 4. **Test the Fix**
 - Open the app
 - Navigate to any brand card
 - Start a guided discovery session
@@ -31,36 +48,38 @@ pnpm start --clear
 
 ## 🔧 **If Issues Persist**
 
-### Check Network Connectivity
+### Check Supabase Configuration
 ```bash
-# Test in production mode
-pnpm run debug-network
+# Test Supabase connection and Edge Function
+node scripts/test-ai-connection.js
 ```
 
-### Verify API Configuration
+### Verify Environment Setup
 ```bash
-# Run comprehensive checks
-pnpm setup
+# Run comprehensive environment checks
+node scripts/verify-ai-setup.js
 ```
 
 ### Check Console Logs
 Look for these specific errors:
-- `OPENAI_API_KEY not found` → Update .env.local
-- `Network request failed` → Check internet connection
-- `404 Invalid URL` → Clear cache and restart
+- `Missing authorization header` → OpenAI key not set as Supabase secret
+- `Network request failed` → Check internet connection or Supabase URL
+- `Edge Function not found` → Deploy the ai-handler function
 
 ## 📞 **Still Having Issues?**
 
 1. Check the [AI SDK Setup Guide](docs/ai-sdk-setup.md)
-2. Run the test suite: `pnpm test-api`
-3. Create an issue with error logs
+2. Verify your `.env.local` file has correct Supabase credentials
+3. Ensure OpenAI API key is set as Supabase secret (not in `.env.local`)
+4. Create an issue with error logs
 
 ## 🎉 **Success Indicators**
 
 You'll know it's working when you see:
+- ✅ Settings page shows "OpenAI API Key: ✅ Supabase Secret"
 - ✅ AI responds to your messages
 - ✅ Conversation flows smoothly
-- ✅ No network errors in console
+- ✅ No authorization errors in console
 - ✅ Progress tracking works
 
 ## 🔍 **Troubleshooting Steps**
@@ -74,68 +93,89 @@ ls -la .env.local
 node scripts/validate-environment.js
 ```
 
-### Step 2: Validate API Keys
+### Step 2: Validate Supabase Configuration
 Make sure your `.env.local` contains:
 ```env
-OPENAI_API_KEY=sk-proj-your-actual-key-here
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+NODE_ENV=development
 ```
 
-### Step 3: Clear All Caches
+**Important:** Do NOT add `OPENAI_API_KEY` to this file anymore.
+
+### Step 3: Set OpenAI Key as Supabase Secret
+#### 🎯 Preferred Method (No Docker Required)
+- **Set API Key**: Via Supabase Dashboard → Project Settings → Secrets
+- **Deploy Function**: Request AI assistant to deploy via MCP tools
+
+#### 🔄 Alternative Method (Requires Docker)
+```bash
+# Set the API key securely
+pnpm supabase secrets set OPENAI_API_KEY sk-your-openai-api-key
+
+# Deploy the Edge Function (requires Docker Desktop)
+pnpm supabase functions deploy ai-handler
+```
+
+### Step 4: Clear All Caches
 ```bash
 # Clear Expo cache
-rm -rf .expo
-
-# Clear Node modules
-rm -rf node_modules
-pnpm install
-
-# Clear Metro cache
 pnpm start --clear
+
+# If that doesn't work, try
+rm -rf node_modules/.cache
+pnpm clean
 ```
 
-### Step 4: Test Connection
+## 🔒 **Security Note**
+
+**New Architecture:** AI now runs through a Supabase Edge Function with the OpenAI API key stored as a secure Supabase secret. This means:
+
+- ✅ **More Secure**: API key never exposed to client
+- ✅ **Easier Deployment**: No environment variables to manage in production
+- ✅ **Better Performance**: Centralized AI logic
+- ✅ **Scalable**: Add new cards without code changes
+
+## 🆘 **Common Error Solutions**
+
+### "Missing authorization header"
+**🎯 Preferred Solution (No Docker Required):**
+1. Set OpenAI API key via Supabase Dashboard → Project Settings → Secrets
+2. Request AI assistant to redeploy the Edge Function using MCP tools
+
+**🔄 Alternative Solution (Requires Docker):**
 ```bash
-# Test basic setup
-pnpm verify-ai
-
-# Test API security
-pnpm test-api
+# The OpenAI API key is not set as a Supabase secret
+pnpm supabase secrets set OPENAI_API_KEY sk-your-key
+pnpm supabase functions deploy ai-handler
 ```
 
-## 🐛 **Common Error Solutions**
+### "Edge Function not found"
+**🎯 Preferred Solution (No Docker Required):**
+Request AI assistant to deploy the ai-handler function using MCP tools
 
-### "Network request failed"
-- ✅ Check internet connection
-- ✅ Verify API key is correct
-- ✅ Restart development server
+**🔄 Alternative Solution (Requires Docker):**
+```bash
+# Deploy the AI handler function (requires Docker Desktop)
+pnpm supabase functions deploy ai-handler
+```
 
-### "API configuration error"
-- ✅ Run `node scripts/validate-environment.js`
-- ✅ Update `.env.local` with real API keys
+### "Invalid Supabase URL/Key"
+```bash
+# Check your Supabase project dashboard for correct values
+# Update .env.local with the correct URLs and keys
+```
 
-### "Module AppRegistry is not a registered callable module"
-- ✅ Run `expo start --no-dev --minify`
-- ✅ Check for Babel configuration errors
-
-### "Metro bundler ECONNREFUSED"
-- ✅ Run `rm -rf .expo`
-- ✅ Check for firewall/proxy issues
-
-## 💡 **Pro Tips**
-
-1. **Always restart after env changes**: Environment variables require a server restart
-2. **Check API key format**: OpenAI keys start with `sk-proj-` or `sk-`
-3. **Monitor console logs**: Watch for specific error messages
-4. **Use production mode**: Test with `expo start --no-dev --minify`
-
-## 📱 **Testing on Device**
-
-1. Make sure your device and computer are on the same network
-2. Check firewall settings aren't blocking the connection
-3. Use device logs for more detailed error information
+### Local OpenAI Key Warning
+If you see "⚠️ Local Env" in Settings:
+1. Remove `OPENAI_API_KEY` from `.env.local`
+2. Restart the development server
+3. Should now show "✅ Supabase Secret"
 
 ---
 
-**Need help?** See [AI SDK Setup Guide](docs/ai-sdk-setup.md) for detailed instructions. 
+**Next Steps:**
+1. ✅ Set OpenAI key as Supabase secret
+2. ✅ Deploy Edge Function  
+3. ✅ Test AI conversations
+4. 🚀 Build amazing brand experiences! 

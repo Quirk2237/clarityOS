@@ -9,8 +9,8 @@ import { colors } from "@/constants/colors";
 import { useState, useEffect } from "react";
 
 interface DebugInfo {
-	hasOpenAI: boolean;
 	hasSupabase: boolean;
+	openaiKeyLocation: 'local_environment' | 'supabase_secret' | 'unknown';
 	nodeEnv: string;
 	timestamp: string;
 }
@@ -18,7 +18,7 @@ interface DebugInfo {
 interface TestResult {
 	success: boolean;
 	message: string;
-	details?: string;
+	details: string;
 	timestamp: string;
 }
 
@@ -43,8 +43,8 @@ export default function Settings() {
 			} else {
 				// Fallback for client-side info
 				setDebugInfo({
-					hasOpenAI: false, // We can't check server env vars from client
 					hasSupabase: !!(process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY),
+					openaiKeyLocation: 'unknown',
 					nodeEnv: process.env.NODE_ENV || 'unknown',
 					timestamp: new Date().toISOString()
 				});
@@ -52,8 +52,8 @@ export default function Settings() {
 		} catch (error) {
 			console.error('Debug info error:', error);
 			setDebugInfo({
-				hasOpenAI: false,
 				hasSupabase: false,
+				openaiKeyLocation: 'unknown',
 				nodeEnv: 'error',
 				timestamp: new Date().toISOString()
 			});
@@ -100,7 +100,7 @@ export default function Settings() {
 
 				setTestResult({
 					success: true,
-					message: "✅ OpenAI API is working!",
+					message: "✅ AI connection is working!",
 					details: `Received response: ${fullResponse.slice(0, 100)}${fullResponse.length > 100 ? '...' : ''}`,
 					timestamp: new Date().toLocaleTimeString()
 				});
@@ -108,7 +108,7 @@ export default function Settings() {
 				const errorText = await response.text();
 				setTestResult({
 					success: false,
-					message: "❌ OpenAI API Error",
+					message: "❌ AI Connection Error",
 					details: `Status: ${response.status}, Error: ${errorText}`,
 					timestamp: new Date().toLocaleTimeString()
 				});
@@ -125,35 +125,28 @@ export default function Settings() {
 		}
 	};
 
-	const copyDebugInfo = () => {
-		const info = `
-Debug Info:
-- OpenAI API: ${debugInfo?.hasOpenAI ? '✅ Configured' : '❌ Not found'}
-- Supabase: ${debugInfo?.hasSupabase ? '✅ Configured' : '❌ Not found'}
-- Node Env: ${debugInfo?.nodeEnv}
-- Timestamp: ${debugInfo?.timestamp}
-
-Test Result:
-- Success: ${testResult?.success ? 'Yes' : 'No'}
-- Message: ${testResult?.message}
-- Details: ${testResult?.details}
-- Test Time: ${testResult?.timestamp}
-
-AI Response: ${aiResponse}
-		`.trim();
-
-		Alert.alert("Debug Info", info, [
-			{ text: "OK" }
-		]);
+	const handleSignOut = () => {
+		Alert.alert(
+			"Sign Out",
+			"Are you sure you want to sign out?",
+			[
+				{
+					text: "Cancel",
+					style: "cancel",
+				},
+				{
+					text: "Sign Out",
+					style: "destructive",
+					onPress: () => signOut(),
+				},
+			],
+		);
 	};
 
 	return (
-		<SafeAreaView className="flex-1" style={{ backgroundColor: colors.surface }}>
-			<ScrollView className="flex-1 p-4">
-				{/* Header */}
-				<View className="items-center mb-6">
-					<Title className="text-center text-white">Settings & Debug</Title>
-				</View>
+		<SafeAreaView className="flex-1">
+			<ScrollView className="flex-1 p-4" style={{ backgroundColor: colors.background }}>
+				<Title className="text-center mb-6">Settings</Title>
 
 				{/* Environment Status */}
 				<View className="bg-white rounded-2xl p-5 shadow-lg mb-4">
@@ -162,8 +155,10 @@ AI Response: ${aiResponse}
 					<View className="space-y-2">
 						<View className="flex-row justify-between items-center">
 							<Text className="text-gray-600">OpenAI API Key:</Text>
-							<Text className={debugInfo?.hasOpenAI ? "text-green-600" : "text-red-600"}>
-								{debugInfo?.hasOpenAI ? "✅ Set" : "❌ Missing"}
+							<Text className={debugInfo?.openaiKeyLocation === 'supabase_secret' ? "text-green-600" : "text-orange-600"}>
+								{debugInfo?.openaiKeyLocation === 'supabase_secret' ? "✅ Supabase Secret" : 
+								 debugInfo?.openaiKeyLocation === 'local_environment' ? "⚠️ Local Env" :
+								 "❓ Unknown"}
 							</Text>
 						</View>
 						
@@ -189,90 +184,64 @@ AI Response: ${aiResponse}
 					</Button>
 				</View>
 
-				{/* OpenAI Test */}
+				{/* AI Connection Test */}
 				<View className="bg-white rounded-2xl p-5 shadow-lg mb-4">
-					<Subtitle className="text-center mb-4 text-gray-800">OpenAI Connection Test</Subtitle>
+					<Subtitle className="text-center mb-4 text-gray-800">AI Connection Test</Subtitle>
 					
-					<View className="mb-4">
-						<Text className="text-gray-600 mb-2">Test Message:</Text>
-						<Input
-							value={testMessage}
-							onChangeText={setTestMessage}
-							placeholder="Enter test message..."
-							className="bg-gray-50 border border-gray-200"
-						/>
-					</View>
+					<Input
+						placeholder="Enter test message"
+						value={testMessage}
+						onChangeText={setTestMessage}
+						className="mb-4"
+					/>
 
 					<Button
-						variant="dark"
+						variant="white"
 						onPress={testOpenAIConnection}
 						disabled={isLoading}
 						className="mb-4"
 					>
-						<Text className="text-white">
-							{isLoading ? "Testing..." : "Test OpenAI API"}
+						<Text className="text-gray-800">
+							{isLoading ? "Testing..." : "Test AI Connection"}
 						</Text>
 					</Button>
 
 					{testResult && (
-						<View className={`p-3 rounded-lg ${testResult.success ? 'bg-green-50' : 'bg-red-50'}`}>
-							<Text className={`font-semibold ${testResult.success ? 'text-green-800' : 'text-red-800'}`}>
+						<View className="mt-4 p-3 rounded-lg" style={{
+							backgroundColor: testResult.success ? '#f0f9ff' : '#fef2f2'
+						}}>
+							<Text className={testResult.success ? "text-blue-800" : "text-red-800"}>
 								{testResult.message}
 							</Text>
-							{testResult.details && (
-								<Text className="text-gray-600 text-sm mt-1">
-									{testResult.details}
-								</Text>
-							)}
-							<Text className="text-gray-500 text-xs mt-2">
+							<Text className="text-xs text-gray-600 mt-1">
+								{testResult.details}
+							</Text>
+							<Text className="text-xs text-gray-500 mt-1">
 								{testResult.timestamp}
 							</Text>
 						</View>
 					)}
 
 					{aiResponse && (
-						<View className="mt-4 p-3 bg-blue-50 rounded-lg">
-							<Text className="text-blue-800 font-semibold mb-2">AI Response:</Text>
-							<Text className="text-gray-700">{aiResponse}</Text>
+						<View className="mt-4 p-3 bg-gray-50 rounded-lg">
+							<Text className="text-gray-700 text-sm">
+								<Text className="font-semibold">AI Response: </Text>
+								{aiResponse}
+							</Text>
 						</View>
 					)}
 				</View>
 
-				{/* Actions */}
-				<View className="bg-white rounded-2xl p-5 shadow-lg mb-4">
-					<Subtitle className="text-center mb-4 text-gray-800">Debug Actions</Subtitle>
+				{/* Sign Out */}
+				<View className="bg-white rounded-2xl p-5 shadow-lg">
+					<Subtitle className="text-center mb-4 text-gray-800">Account</Subtitle>
 					
-					<View className="space-y-3">
-						<Button
-							variant="white"
-							onPress={copyDebugInfo}
-							className="border border-gray-200"
-						>
-							<Text className="text-gray-800">Copy Debug Info</Text>
-						</Button>
-
-						<Button
-							variant="white"
-							onPress={() => {
-								setTestResult(null);
-								setAiResponse("");
-								loadDebugInfo();
-							}}
-							className="border border-gray-200"
-						>
-							<Text className="text-gray-800">Clear Results</Text>
-						</Button>
-					</View>
-				</View>
-
-				{/* Sign Out Button */}
-				<View className="bg-red-500 rounded-2xl p-5 shadow-lg">
 					<Button
 						variant="white"
-						onPress={() => signOut()}
-						className="w-full"
+						onPress={handleSignOut}
+						className="bg-red-50 border-red-200"
 					>
-						<Text className="text-red-600 font-semibold">Sign Out</Text>
+						<Text className="text-red-600">Sign Out</Text>
 					</Button>
 				</View>
 			</ScrollView>

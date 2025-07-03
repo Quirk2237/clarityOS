@@ -55,6 +55,9 @@ alwaysApply: true
 
 - pnpm start should run with no TypeScript errors or warnings.
 - Document key decisions and architecture in README.md or docs/.
+- **CRITICAL**: Always prefer MCP tools over Docker-dependent CLI commands.
+- Use `pnpm deploy-mcp` for Edge Function deployment (Docker-free).
+- Prioritize cross-platform compatibility and reduced dependencies.
 
 ---
 

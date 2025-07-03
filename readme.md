@@ -10,6 +10,28 @@ This repository serves as a comprehensive starter project for developing React N
 
 This is not supposed to be a template, boilerplate or a framework. It is an opinionated guide that shows how to do some things in a certain way. You are not forced to do everything exactly as it is shown here, decide what works best for you and your team and stay consistent with your style.
 
+## 🚀 Quick Start (Docker-Free)
+
+### 🎯 Preferred Development Workflow
+1. **Install Dependencies**: `pnpm install`
+2. **Validate Environment**: `pnpm validate-env` 
+3. **Configure Supabase**: Update `.env.local` with your project credentials
+4. **Set API Keys**: Via Supabase Dashboard → Project Settings → Secrets
+5. **Deploy Edge Functions**: `pnpm deploy-mcp` (uses MCP tools, no Docker required)
+6. **Start Development**: `pnpm start`
+
+### 🎯 Why Docker-Free?
+- ✅ **Faster Setup**: No Docker Desktop installation required
+- ✅ **Cross-Platform**: Works on all development environments  
+- ✅ **Better Performance**: No container overhead
+- ✅ **Simplified Workflow**: MCP tools handle deployment seamlessly
+
+### 🔧 Available Scripts
+- `pnpm deploy-mcp` - Deploy Edge Functions without Docker
+- `pnpm verify-ai` - Check AI SDK configuration
+- `pnpm validate-env` - Validate environment setup
+- `pnpm setup` - Complete environment validation
+
 ## Table of Contents
 
 - [💻 Application Overview](docs/application-overview.md)

@@ -38,9 +38,10 @@ export default function AppLayout() {
 		Inter_700Bold,
 		...Feather.font,
 	});
-
+	
 	useEffect(() => {
 		if (fontsLoaded) {
+			console.log('🚀 App ready - hiding splash screen');
 			SplashScreen.hideAsync();
 		}
 	}, [fontsLoaded]);
@@ -63,7 +64,7 @@ export default function AppLayout() {
 						headerStyle: {
 							backgroundColor: colors.background,
 						},
-						headerTintColor: colors.foreground,
+						headerTintColor: colors.text,
 						gestureEnabled: true,
 					}}
 				/>
@@ -76,7 +77,7 @@ export default function AppLayout() {
 						headerStyle: {
 							backgroundColor: colors.background,
 						},
-						headerTintColor: colors.foreground,
+						headerTintColor: colors.text,
 						gestureEnabled: true,
 					}}
 				/>
