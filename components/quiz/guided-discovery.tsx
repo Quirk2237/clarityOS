@@ -95,6 +95,7 @@ interface ConversationState {
 	validationFeedback?: "yes" | "no" | "not_sure";
 	refinementArea?: "audience" | "what" | "why" | "belief";
 	questionHistory: QuestionAnswer[];
+	currentQuestion?: string; // ✅ ADD: Store the current question in state
 }
 
 // ScoreWidgets component for displaying the 4 scoring dimensions
@@ -387,6 +388,7 @@ export function GuidedDiscovery({
 			step: "opening",
 			scores: { audience: 0, benefit: 0, belief: 0, impact: 0 },
 			questionHistory: [],
+			currentQuestion: undefined, // Will be set when conversation loads or initializes
 		},
 	);
 	const [isCompleted, setIsCompleted] = useState(false);
@@ -482,15 +484,8 @@ export function GuidedDiscovery({
 		return cardExamples[cardSlug as keyof typeof cardExamples] || "Share your thoughts here...";
 	};
 
-	// Component initialization
+	// ✅ FIX: Component initialization - don't set question immediately
 	useEffect(() => {
-		// Set initial question
-		setCurrentQuestion(
-			card.slug === "purpose"
-				? "Imagine your brand disappeared tomorrow. What would your customers miss most, and why would that matter?"
-				: `Tell me about your brand and what makes it unique in the ${card.name.toLowerCase()} space.`
-		);
-
 		setIsInitialized(true);
 	}, [card]);
 
@@ -608,10 +603,18 @@ export function GuidedDiscovery({
 			// Update current question from structured response
 			if (aiResponse.question && aiResponse.question !== currentQuestion) {
 				setCurrentQuestion(aiResponse.question);
-				setCurrentStackIndex(0); // Reset to show current question
+				// ✅ FIX: Clear input for new question
+				setInput("");
+				// ✅ FIX: Let the useEffect handle currentStackIndex automatically
 				console.log("Question Updated from JSON", {
 					newQuestion: aiResponse.question,
 				});
+				
+				// ✅ FIX: Update conversation state with new current question
+				setConversationState(prev => ({
+					...prev,
+					currentQuestion: aiResponse.question
+				}));
 			}
 
 			// Don't auto-complete anymore - let user validate the statement first
@@ -685,16 +688,15 @@ export function GuidedDiscovery({
 	// ✅ Load existing conversation from appropriate storage
 	const loadExistingConversation = async () => {
 		try {
+			let conversationLoaded = false;
+			
 			if (isAuthenticated) {
 				const progressManager = new ProgressManager(session);
 				const { data, error } = await progressManager.getAIConversation(card.id);
 
 				if (error) {
 					console.error("Load Conversation Error", error);
-					return;
-				}
-
-				if (data && data.conversation_data?.conversationState) {
+				} else if (data && data.conversation_data?.conversationState) {
 					console.log("Previous Database Conversation Found", {
 						conversationId: data.id,
 						step: data.current_step,
@@ -709,8 +711,16 @@ export function GuidedDiscovery({
 					if (!loadedState.questionHistory) {
 						loadedState.questionHistory = [];
 					}
+					
 					setConversationState(loadedState);
 					setIsCompleted(data.is_completed);
+					
+					// ✅ FIX: Restore current question from saved state
+					if (loadedState.currentQuestion) {
+						setCurrentQuestion(loadedState.currentQuestion);
+						console.log("Restored current question:", loadedState.currentQuestion);
+					}
+					conversationLoaded = true;
 				}
 			} else {
 				const localConversation = await LocalAIStorage.getConversation(card.id);
@@ -730,12 +740,47 @@ export function GuidedDiscovery({
 					if (!loadedState.questionHistory) {
 						loadedState.questionHistory = [];
 					}
+					
 					setConversationState(loadedState);
 					setIsCompleted(localConversation.isCompleted);
+					
+					// ✅ FIX: Restore current question from saved state
+					if (loadedState.currentQuestion) {
+						setCurrentQuestion(loadedState.currentQuestion);
+						console.log("Restored current question:", loadedState.currentQuestion);
+					}
+					conversationLoaded = true;
 				}
+			}
+			
+			// ✅ FIX: If no conversation was loaded, set the initial question
+			if (!conversationLoaded) {
+				const initialQuestion = card.slug === "purpose"
+					? "Imagine your brand disappeared tomorrow. What would your customers miss most, and why would that matter?"
+					: `Tell me about your brand and what makes it unique in the ${card.name.toLowerCase()} space.`;
+				
+				setCurrentQuestion(initialQuestion);
+				// ✅ FIX: Update conversation state with initial question
+				setConversationState(prev => ({
+					...prev,
+					currentQuestion: initialQuestion
+				}));
+				console.log("Set initial question for new conversation:", initialQuestion);
 			}
 		} catch (error: any) {
 			console.error("Load Conversation Exception", error);
+			
+			// ✅ FIX: Set initial question on error as fallback
+			const initialQuestion = card.slug === "purpose"
+				? "Imagine your brand disappeared tomorrow. What would your customers miss most, and why would that matter?"
+				: `Tell me about your brand and what makes it unique in the ${card.name.toLowerCase()} space.`;
+			
+			setCurrentQuestion(initialQuestion);
+			// ✅ FIX: Update conversation state with initial question
+			setConversationState(prev => ({
+				...prev,
+				currentQuestion: initialQuestion
+			}));
 		}
 	};
 
@@ -749,18 +794,20 @@ export function GuidedDiscovery({
 	const handleRestart = () => {
 		synthesisForced.current = false;
 		console.log("🔄 Restarting Card", { cardId: card.id });
+		
+		const initialQuestion = card.slug === "purpose"
+			? "Imagine your brand disappeared tomorrow. What would your customers miss most, and why would that matter?"
+			: `Tell me about your brand and what makes it unique in the ${card.name.toLowerCase()} space.`;
+			
 		setConversationState({
 			step: "opening",
 			scores: { audience: 0, benefit: 0, belief: 0, impact: 0 },
 			questionHistory: [],
+			currentQuestion: initialQuestion, // ✅ FIX: Include current question in state
 		});
 		setIsCompleted(false);
 		// currentStackIndex will be reset by useEffect when stackCards changes
-		setCurrentQuestion(
-			card.slug === "purpose"
-				? "Imagine your brand disappeared tomorrow. What would your customers miss most, and why would that matter?"
-				: `Tell me about your brand and what makes it unique in the ${card.name.toLowerCase()} space.`,
-		);
+		setCurrentQuestion(initialQuestion);
 		setInput(""); // Clear user input
 	};
 
@@ -868,12 +915,19 @@ export function GuidedDiscovery({
 
 	// Prepare stack cards
 	const stackCards = React.useMemo(() => {
-		const allCards = [...conversationState.questionHistory].reverse().concat([{ question: currentQuestion, answer: '', timestamp: Date.now() }]);
+		// ✅ STEP 1: Remove .reverse() so current question is at highest index
+		// Only include current question if it exists
+		const allCards = currentQuestion 
+			? [...conversationState.questionHistory].concat([{ question: currentQuestion, answer: '', timestamp: Date.now() }])
+			: [...conversationState.questionHistory];
 		
 		console.log("Stack Debug:", {
 			historyLength: conversationState.questionHistory.length,
 			totalCards: allCards.length,
 			currentStackIndex,
+			currentQuestion: currentQuestion ? currentQuestion.substring(0, 50) + '...' : 'None',
+			// ✅ ADD: Debug the order
+			cardOrder: allCards.map((card, i) => `${i}: ${card.question ? card.question.substring(0, 30) + '...' : 'No question'}`)
 		});
 		
 		return allCards;
@@ -882,17 +936,20 @@ export function GuidedDiscovery({
 	// Create animated style for the expanding stack container
 	const stackContainerStyle = useAnimatedStyle(() => {
 		const numberOfCards = stackCards.length;
+		const visibleCardCount = Math.min(3, numberOfCards); // Show max 3 cards
 		
 		// Get the current card's height or use default
 		const currentCardKey = `${stackCards[stackCards.length - 1]?.timestamp}-${stackCards.length - 1}`;
 		const currentCardHeight = cardHeights.value[currentCardKey] || defaultCardHeight;
 		
-		// Calculate expansion with each card 6px above the previous one
+		// ✅ FIX: Always reserve minimum space for stacked cards, even when collapsed
+		const minimumStackHeight = currentCardHeight + (visibleCardCount - 1) * 12; // 12px offset per card
+		
+		// Calculate expansion with each card for fanning animation
 		let maxConstrainedOffset = 0;
 		for (let j = 0; j < numberOfCards - 1; j++) {
 			const cardKey = `${stackCards[j]?.timestamp}-${j}`;
 			const cardHeight = cardHeights.value[cardKey] || defaultCardHeight;
-			// Each card positioned 6px below the bottom of the card below it
 			maxConstrainedOffset += cardHeight + gapBetweenCards;
 		}
 		
@@ -900,7 +957,7 @@ export function GuidedDiscovery({
 			translateY.value,
 			[0, 80, 160, 240],
 			[
-				0, // No expansion when collapsed - fit to current card
+				0, // No extra expansion when collapsed
 				maxConstrainedOffset * 0.1, // Very light fanning (10%)
 				maxConstrainedOffset * 0.4, // Medium fanning (40%)
 				maxConstrainedOffset // Max fanning with exact 6px gaps
@@ -908,22 +965,34 @@ export function GuidedDiscovery({
 			Extrapolate.CLAMP
 		);
 		
-		// Height fits to current card when collapsed, expands when fanning
+		// ✅ FIX: Use minimum stack height + fan expansion to prevent content overlap
 		return {
-			height: currentCardHeight + fanExpansion,
+			height: minimumStackHeight + fanExpansion,
 		};
 	});
 
 	// Create animated style for the whole stack translation
 	const stackTranslationStyle = useAnimatedStyle(() => {
 		return {
-			transform: [{ translateY: translateY.value * 0.3 }], // Gentle overall movement
+			// ✅ FIX: Remove translation - let individual cards handle positioning
+			// transform: [{ translateY: translateY.value * 0.3 }], // This was moving entire deck
 		};
 	});
 
 	// Create multiple animated styles for different card positions (Apple Wallet fanning)
 	const cardFanStyles = Array.from({ length: 6 }, (_, i) => {
 		return useAnimatedStyle(() => {
+			// ✅ FIX: Bottom card (index 0) stays completely fixed - NO translateY movement
+			if (i === 0) {
+				return {
+					transform: [
+						{ translateY: 0 }, // Force zero movement
+						{ scale: 0.95 }
+					],
+					opacity: 1,
+				};
+			}
+			
 			// Bottom card (index 0) stays fixed, others fan down progressively
 			const fanMultiplier = i; // 0 for bottom card, increases for cards above
 			
@@ -953,9 +1022,9 @@ export function GuidedDiscovery({
 				translateY.value,
 				[0, 120, 240],
 				[
-					i === 0 ? 0.95 : (i === 5 ? 1 : 0.97), // Bottom card smaller, current card normal
-					i === 0 ? 0.97 : (i === 5 ? 1 : 0.98), // Cards grow when being revealed  
-					i === 0 ? 0.98 : (i === 5 ? 1 : 1.0)   // All cards reach good size when fully revealed
+					i === 5 ? 1 : 0.97, // Current card normal, others smaller
+					i === 5 ? 1 : 0.98, // Cards grow when being revealed  
+					i === 5 ? 1 : 1.0   // All cards reach good size when fully revealed
 				],
 				Extrapolate.CLAMP
 			);
@@ -970,6 +1039,42 @@ export function GuidedDiscovery({
 				],
 				opacity: staticOpacity,
 			};
+		});
+	});
+
+	// ✅ FIXED: Create height constraint styles for previous cards (fixed array to avoid hook violations)
+	const cardHeightStyles = Array.from({ length: 6 }, (_, i) => {
+		return useAnimatedStyle(() => {
+			// Get the current card index in the stack
+			const currentCardIndex = stackCards.length - 1;
+			
+			// Never constrain the current (top) card - check if this style array index matches a current card
+			const cardAtThisPosition = stackCards[i];
+			if (!cardAtThisPosition || i === currentCardIndex) {
+				return {}; // No height constraint for current card or non-existent cards
+			}
+			
+			// Get current card height to constrain previous cards
+			const currentCardKey = `${stackCards[currentCardIndex]?.timestamp}-${currentCardIndex}`;
+			const currentCardHeight = cardHeights.value[currentCardKey] || defaultCardHeight;
+			
+			// Height constraint based on fanning state - only for previous cards
+			const heightConstraint = interpolate(
+				translateY.value,
+				[0, 80, 160, 240],
+				[
+					Math.min(currentCardHeight * 0.8, 180), // Constrained when collapsed (80% of current or 180px max)
+					currentCardHeight * 0.9, // Slightly less constrained
+					currentCardHeight, // Approaching full height
+					9999 // Large number = no constraint when fully fanned
+				],
+				Extrapolate.CLAMP
+			);
+			
+			return heightConstraint < 9999 ? {
+				maxHeight: heightConstraint,
+				overflow: 'hidden'
+			} : {};
 		});
 	});
 
@@ -997,24 +1102,31 @@ export function GuidedDiscovery({
 									
 									if (!isVisible) return null;
 									
-									const zIndex = stackCards.length - distanceFromCurrent;
+									// ✅ STEP 2: Fix z-index - higher index should have higher z-index
+									const zIndex = index + 1; // Simple: index 0 = z-index 1, index 1 = z-index 2, etc.
 									
 									// Get the appropriate animated style for this card position
-									// Map actual stack index to style index (bottom card = 0, current card = highest)
-									const cardStyleIndex = Math.max(0, Math.min(5, index)); // Use actual index, clamp to 0-5 range
+									// ✅ STEP 3: Simplify card style mapping
+									const cardStyleIndex = Math.min(5, index); // Just use index directly, cap at 5
 									const cardFanStyle = cardFanStyles[cardStyleIndex];
-									const baseOffset = cardRelativeIndex * 12;
+									const cardHeightStyle = cardHeightStyles[cardStyleIndex]; // ✅ FIXED: Back to array access
+									// ✅ FIX: Static offset for stacked appearance when collapsed
+									const staticOffset = index * 4;
 									
 									return (
 																			<Animated.View
 										key={`${qa.timestamp}-${index}`}
 										className="absolute w-full rounded-3xl p-4"
 										style={[
-											cardFanStyle, // Apple Wallet fanning animation
+											// ✅ FIX: Only apply fan animation to non-bottom cards
+											index === 0 ? {} : cardFanStyle, // Skip fan animation for bottom card
+											cardHeightStyle, // ✅ NEW: Height constraint for previous cards
 											{
 												backgroundColor: '#FFFFFF',
 												zIndex: zIndex,
-												top: baseOffset, // Static card stacking
+												top: staticOffset, // ✅ FIX: Static offset for collapsed state
+												// ✅ FIX: Apply scale directly to bottom card
+												...(index === 0 ? { transform: [{ scale: 0.95 }] } : {}),
 												shadowColor: '#000',
 												shadowOffset: {
 													width: 0,
@@ -1039,7 +1151,8 @@ export function GuidedDiscovery({
 											className="rounded-2xl p-3 mb-3" 
 											style={{ backgroundColor: '#F5F5F5' }}
 										>
-												{isCurrentQuestion && cardRelativeIndex === 0 && isLoading ? (
+												{/* ✅ STEP 5: Simplify loading condition */}
+												{isCurrentQuestion && isLoading ? (
 													<View className="items-center justify-center py-4">
 														<Text className="text-lg mb-2 text-gray-800">Thinking...</Text>
 														<View className="w-6 h-6 rounded-full" style={{ 
@@ -1049,7 +1162,9 @@ export function GuidedDiscovery({
 														}} />
 													</View>
 												) : (
-													<Text className="text-lg font-medium leading-relaxed text-gray-800">
+													<Text 
+														className={`${isCurrentQuestion ? 'text-lg font-medium' : 'text-base font-medium'} leading-relaxed text-gray-800`}
+													>
 														{qa.question}
 													</Text>
 												)}
@@ -1057,7 +1172,8 @@ export function GuidedDiscovery({
 
 											{/* Input Area or Answer */}
 											<View>
-												{isCurrentQuestion && cardRelativeIndex === 0 ? (
+												{/* ✅ STEP 5: Simplify input condition - just use isCurrentQuestion */}
+												{isCurrentQuestion ? (
 													// Current question - show input
 													<Textarea
 														value={input}
@@ -1089,9 +1205,17 @@ export function GuidedDiscovery({
 							</Animated.View>
 						</PanGestureHandler>
 
-														{/* Action Buttons - Below the stack, only show for current question */}
-						{currentStackIndex === stackCards.length - 1 && (
-							<View className="flex-row justify-between items-center mb-3" style={{ marginTop: 12 }}>
+														{/* ✅ STEP 4: Fix Action Buttons - Always show during card phases */}
+						{/* CHANGE: Remove the conditional check that hides buttons */}
+						<View 
+							className="flex-row justify-between items-center mb-3" 
+							style={{ 
+								marginTop: 12,
+								// ✅ ADD: Ensure buttons stay above cards
+								position: 'relative',
+								zIndex: 1000 
+							}}
+						>
 										{/* Examples Button */}
 										<PrimaryButton
 											onPress={() => {
@@ -1122,16 +1246,11 @@ export function GuidedDiscovery({
 											</Text>
 										</PrimaryButton>
 									</View>
-								)}
 					</View>
 				)}
 
-				{/* Scrollable Content Below Stack */}
-				<ScrollView 
-					className="flex-1" 
-					contentContainerStyle={{ paddingBottom: 20 }}
-					showsVerticalScrollIndicator={false}
-				>
+				{/* ✅ FIX: Replace ScrollView with View - content should not be scrollable */}
+				<View style={{ paddingBottom: 20 }}>
 					{/* Progress Scores - Always show */}
 					<View className="mb-6">
 						<ScoreWidgets scores={conversationState.scores} cardSlug={card.slug} />
@@ -1218,9 +1337,14 @@ export function GuidedDiscovery({
 									
 									<Button
 										onPress={() => {
+											const newQuestion = "What aspects of the tone or style would you like to adjust?";
 											setInput("I'd like to polish the tone and style of this statement.");
-											setCurrentQuestion("What aspects of the tone or style would you like to adjust?");
-											setConversationState(prev => ({ ...prev, step: "refinement" }));
+											setCurrentQuestion(newQuestion);
+											setConversationState(prev => ({ 
+												...prev, 
+												step: "refinement",
+												currentQuestion: newQuestion // ✅ FIX: Update conversation state
+											}));
 										}}
 										variant="white"
 										className="py-3"
@@ -1241,9 +1365,15 @@ export function GuidedDiscovery({
 								<View className="gap-3">
 									<Button
 										onPress={() => {
+											const newQuestion = "Tell me more about who you really serve. What's not quite right about how I described your audience?";
 											setInput("The audience/who we serve doesn't feel quite right.");
-											setCurrentQuestion("Tell me more about who you really serve. What's not quite right about how I described your audience?");
-											setConversationState(prev => ({ ...prev, step: "refinement", refinementArea: "audience" }));
+											setCurrentQuestion(newQuestion);
+											setConversationState(prev => ({ 
+												...prev, 
+												step: "refinement", 
+												refinementArea: "audience",
+												currentQuestion: newQuestion // ✅ FIX: Update conversation state
+											}));
 										}}
 										variant="white"
 										className="py-3"
@@ -1253,9 +1383,15 @@ export function GuidedDiscovery({
 									
 									<Button
 										onPress={() => {
+											const newQuestion = "Help me understand better what you actually do or offer. What's missing or incorrect in my description?";
 											setInput("What we do/offer doesn't feel quite right.");
-											setCurrentQuestion("Help me understand better what you actually do or offer. What's missing or incorrect in my description?");
-											setConversationState(prev => ({ ...prev, step: "refinement", refinementArea: "what" }));
+											setCurrentQuestion(newQuestion);
+											setConversationState(prev => ({ 
+												...prev, 
+												step: "refinement", 
+												refinementArea: "what",
+												currentQuestion: newQuestion // ✅ FIX: Update conversation state
+											}));
 										}}
 										variant="white"
 										className="py-3"
@@ -1265,9 +1401,15 @@ export function GuidedDiscovery({
 									
 									<Button
 										onPress={() => {
+											const newQuestion = "What's the real reason you exist? What feels off about the 'why' I described?";
 											setInput("The why/purpose doesn't feel quite right.");
-											setCurrentQuestion("What's the real reason you exist? What feels off about the 'why' I described?");
-											setConversationState(prev => ({ ...prev, step: "refinement", refinementArea: "why" }));
+											setCurrentQuestion(newQuestion);
+											setConversationState(prev => ({ 
+												...prev, 
+												step: "refinement", 
+												refinementArea: "why",
+												currentQuestion: newQuestion // ✅ FIX: Update conversation state
+											}));
 										}}
 										variant="white"
 										className="py-3"
@@ -1277,9 +1419,15 @@ export function GuidedDiscovery({
 									
 									<Button
 										onPress={() => {
+											const newQuestion = "What do you really believe? What values are most important to your brand that I might have missed?";
 											setInput("The belief/values don't feel quite right.");
-											setCurrentQuestion("What do you really believe? What values are most important to your brand that I might have missed?");
-											setConversationState(prev => ({ ...prev, step: "refinement", refinementArea: "belief" }));
+											setCurrentQuestion(newQuestion);
+											setConversationState(prev => ({ 
+												...prev, 
+												step: "refinement", 
+												refinementArea: "belief",
+												currentQuestion: newQuestion // ✅ FIX: Update conversation state
+											}));
 										}}
 										variant="white"
 										className="py-3"
@@ -1318,10 +1466,15 @@ export function GuidedDiscovery({
 								<View className="gap-3">
 									<PrimaryButton
 										onPress={() => {
+											const newQuestion = "What aspects of your statement would you like to refine?";
 											// Logic to refine statement
 											setInput(conversationState.draftStatement || "");
-											setCurrentQuestion("What aspects of your statement would you like to refine?");
-											setConversationState(prev => ({ ...prev, step: "refinement" }));
+											setCurrentQuestion(newQuestion);
+											setConversationState(prev => ({ 
+												...prev, 
+												step: "refinement",
+												currentQuestion: newQuestion // ✅ FIX: Update conversation state
+											}));
 											setIsCompleted(false);
 										}}
 										className="py-3"
@@ -1347,7 +1500,7 @@ export function GuidedDiscovery({
 								</View>
 							</>
 						)}
-				</ScrollView>
+				</View>
 			</View>
 			</AIErrorBoundary>
 		</GestureHandlerRootView>

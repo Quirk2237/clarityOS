@@ -34,11 +34,6 @@ export const HapticTab = ({ children, onPress, style, ...props }: HapticTabProps
         backgroundColor: colors.surface, // Use surface color from design system
         borderTopWidth: 0.5,
         borderTopColor: 'rgba(255, 255, 255, 0.15)',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 8,
       }}
     >
       <Pressable

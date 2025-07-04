@@ -14,6 +14,16 @@ import { ProgressManager } from "../../lib/progress-manager";
 import { Database } from "../../lib/database.types";
 import { colors } from "@/constants/colors";
 
+// Add shuffle function
+const shuffleArray = <T,>(array: T[]): T[] => {
+	const shuffled = [...array];
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+	}
+	return shuffled;
+};
+
 type Card = Database["public"]["Tables"]["cards"]["Row"] & {
 	card_sections: (Database["public"]["Tables"]["card_sections"]["Row"] & {
 		questions: (Database["public"]["Tables"]["questions"]["Row"] & {
@@ -57,15 +67,28 @@ export function EducationalQuiz({
 	const [showCompletionModal, setShowCompletionModal] = useState(false);
 	const [finalScore, setFinalScore] = useState(0);
 	const [isLoadingProgress, setIsLoadingProgress] = useState(true);
+	
+	// Add state to store shuffled answer choices
+	const [shuffledAnswerChoices, setShuffledAnswerChoices] = useState<any[]>([]);
+	
+	// STATE FOR UNLIMITED RETRY FUNCTIONALITY
+	const [shouldTryAgain, setShouldTryAgain] = useState(false);
 
 	const questions = section.questions.sort(
 		(a, b) => a.order_index - b.order_index,
 	);
 	const currentQuestion = questions[currentQuestionIndex];
-	const answerChoices =
-		currentQuestion?.answer_choices?.sort(
-			(a, b) => a.order_index - b.order_index,
-		) || [];
+
+	// Function to shuffle current question's answer choices
+	const shuffleCurrentAnswerChoices = () => {
+		if (currentQuestion?.answer_choices) {
+			const sortedChoices = currentQuestion.answer_choices.sort(
+				(a, b) => a.order_index - b.order_index,
+			);
+			const shuffled = shuffleArray(sortedChoices);
+			setShuffledAnswerChoices(shuffled);
+		}
+	};
 
 	// Load saved progress when component mounts
 	useEffect(() => {
@@ -115,58 +138,81 @@ export function EducationalQuiz({
 		loadProgress();
 	}, [session?.user?.id, card.id, section.id, questions]);
 
+	// Shuffle answer choices when question changes
+	useEffect(() => {
+		shuffleCurrentAnswerChoices();
+	}, [currentQuestion]);
+
 	const handleAnswerSelect = async (answerId: string) => {
-		if (showResult) return;
+		if (showResult && !shouldTryAgain) return;
 
 		// Add haptic feedback when answer is selected
 		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
 		setSelectedAnswer(answerId);
 		const isCorrect =
-			answerChoices.find((a) => a.id === answerId)?.is_correct || false;
+			shuffledAnswerChoices.find((a) => a.id === answerId)?.is_correct || false;
 
-		// Record the attempt
-		const attempt: QuestionAttempt = {
-			questionId: currentQuestion.id,
-			selectedAnswerId: answerId,
-			isCorrect,
-		};
+		if (isCorrect) {
+			// Correct answer - record attempt and proceed
+			const attempt: QuestionAttempt = {
+				questionId: currentQuestion.id,
+				selectedAnswerId: answerId,
+				isCorrect: true,
+			};
 
-		setAttempts((prev) => [...prev, attempt]);
-
-		// Save progress using ProgressManager
-		try {
-			const progressManager = new ProgressManager(session);
+			setAttempts((prev) => [...prev, attempt]);
 			
-			await progressManager.recordQuestionAttempt(
-				currentQuestion.id,
-				answerId,
-				undefined,
-				isCorrect,
-				isCorrect ? 10 : 0,
-			);
+			// Save progress
+			try {
+				const progressManager = new ProgressManager(session);
+				await progressManager.recordQuestionAttempt(
+					currentQuestion.id,
+					answerId,
+					undefined,
+					true,
+					10,
+				);
 
-			await progressManager.updateProgress(
-				card.id,
-				{
-					status: "in_progress",
-					questionId: currentQuestion.id,
-				},
-				section.id,
-				currentQuestion.id,
-			);
-		} catch (error) {
-			console.error("Error saving progress:", error);
+				await progressManager.updateProgress(
+					card.id,
+					{
+						status: "in_progress",
+						questionId: currentQuestion.id,
+					},
+					section.id,
+					currentQuestion.id,
+				);
+			} catch (error) {
+				console.error("Error saving progress:", error);
+			}
+
+			setShowResult(true);
+			setShouldTryAgain(false);
+		} else {
+			// Wrong answer - always allow retry, don't record attempt yet
+			setShouldTryAgain(true);
+			setShowResult(true);
 		}
+	};
 
-		setShowResult(true);
+	const handleTryAgain = () => {
+		setSelectedAnswer(null);
+		setShowResult(false);
+		setShouldTryAgain(false);
+		// Shuffle choices again when trying again
+		shuffleCurrentAnswerChoices();
 	};
 
 	const handleNext = () => {
-		if (currentQuestionIndex < questions.length - 1) {
+		if (shouldTryAgain) {
+			handleTryAgain();
+		} else if (currentQuestionIndex < questions.length - 1) {
 			setCurrentQuestionIndex((prev) => prev + 1);
 			setSelectedAnswer(null);
 			setShowResult(false);
+			setShouldTryAgain(false);
+			// Shuffling will happen automatically via useEffect when currentQuestion changes
 		} else {
 			completeQuiz();
 		}
@@ -279,14 +325,10 @@ export function EducationalQuiz({
 
 				{/* Answer Choices Grid */}
 				<View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 }}>
-					{answerChoices.map((choice, idx) => {
+					{shuffledAnswerChoices.map((choice, idx) => {
 						const isSelected = selectedAnswer === choice.id;
 						const isCorrect = showResult && isSelected && choice.is_correct;
 						const isWrong = showResult && isSelected && !choice.is_correct;
-						const shouldShowCorrectAnswer = showResult && !isSelected && choice.is_correct && selectedAnswer && !answerChoices.find(a => a.id === selectedAnswer)?.is_correct;
-						
-						// Determine card styling based on state
-						let cardStyle = 'bg-white';
 
 						return (
 							<View 
@@ -298,13 +340,15 @@ export function EducationalQuiz({
 								}}
 							>
 								<Pressable
-									onPress={() => !showResult && handleAnswerSelect(choice.id)}
-									disabled={showResult}
-									className={`w-full rounded-3xl p-4 ${cardStyle}`}
+									onPress={() => handleAnswerSelect(choice.id)}
+									disabled={showResult && !shouldTryAgain}
+									className="w-full rounded-3xl bg-white"
 									style={{
-										minHeight: 120,
+										minHeight: 140, // Minimum height
+										padding: 16,
+										flexDirection: 'column',
+										justifyContent: 'space-between',
 										alignItems: 'flex-start',
-										justifyContent: 'flex-start',
 										...(isWrong && {
 											borderWidth: 2,
 											borderColor: colors.error,
@@ -318,21 +362,21 @@ export function EducationalQuiz({
 										})
 									}}
 								>
-									{/* Icon/Image */}
-									<View className="mb-6">
+									{/* Icon/Image - will be pushed to top by justifyContent: 'space-between' */}
+									<View>
 										{choice.icon && (
 											<Image
 												source={{ uri: choice.icon }}
 												contentFit="contain"
 												style={{
-													width: 40,
-													height: 40,
+													width: 35,
+													height: 35,
 												}}
 											/>
 										)}
 									</View>
 									
-									{/* Text */}
+									{/* Text - will be pushed to bottom by justifyContent: 'space-between' */}
 									<Text 
 										className="text-black leading-tight"
 										style={{ 
@@ -377,21 +421,7 @@ export function EducationalQuiz({
 									</View>
 								)}
 
-								{/* Show Correct Answer when user was wrong */}
-								{shouldShowCorrectAnswer && (
-									<View 
-										className="absolute rounded-full items-center justify-center"
-										style={{
-											width: 28,
-											height: 28,
-											top: 12,
-											right: 12,
-											backgroundColor: '#9EEC5A',
-										}}
-									>
-										<Text className="text-white text-lg font-bold">✓</Text>
-									</View>
-								)}
+
 
 
 							</View>
@@ -419,6 +449,7 @@ export function EducationalQuiz({
 							}}
 						>
 							{showResult ? (
+								shouldTryAgain ? "Try Again" : 
 								currentQuestionIndex < questions.length - 1 ? "Next Question" : "Complete Quiz"
 							) : "Select an Answer"}
 						</Text>
@@ -430,8 +461,8 @@ export function EducationalQuiz({
 			{/* Progress Dots */}
 			<View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
 				{questions.map((_, index) => {
-					const isCompleted = index < currentQuestionIndex || (index === currentQuestionIndex && showResult);
-					const isCurrent = index === currentQuestionIndex && !showResult;
+					const isCompleted = index < currentQuestionIndex || (index === currentQuestionIndex && showResult && !shouldTryAgain);
+					const isCurrent = index === currentQuestionIndex && (!showResult || shouldTryAgain);
 					
 					return (
 						<View

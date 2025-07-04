@@ -179,7 +179,7 @@ const TransparentIcon = React.forwardRef<
 		<Pressable
 			onPress={handlePress}
 			disabled={disabled}
-			className={cn("bg-white/20 rounded-full items-center justify-center active:bg-white/30", className)}
+			className={cn("bg-black/5 rounded-full items-center justify-center active:bg-black/5", className)}
 			style={[
 				{
 					width: 50,

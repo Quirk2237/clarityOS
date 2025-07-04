@@ -32,21 +32,10 @@ export function QuizCompletionModal({
 				className="w-full max-w-xl rounded-3xl p-6 shadow-lg" 
 				style={{ backgroundColor: colors.primary }}
 			>
-				{/* Close Button */}
-				<View style={{ position: 'absolute', left: 20, top: 20, zIndex: 10 }}>
-					<Button
-						variant="white"
-						size="icon"
-						onPress={onClose}
-						className="w-12 h-12 rounded-full items-center justify-center"
-						style={{ backgroundColor: "rgba(255, 255, 255, 0.3)" }}
-					>
-						<Text className="text-2xl text-black">✕</Text>
-					</Button>
-				</View>
+				
 
 				{/* Content Container */}
-				<View className="items-center" style={{ paddingTop: 40 }}>
+				<View className="items-center" style={{ paddingTop: 24 }}>
 					{/* Badge */}
 					<View className="mb-8">
 						<View 

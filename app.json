@@ -2,7 +2,7 @@
   "expo": {
     "name": "ClarityOS",
     "slug": "canopyOS",
-    "scheme": "canopyOS",
+    "scheme": "canopyos",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,13 +10,6 @@
       "**/*"
     ],
     "newArchEnabled": true,
-    "fonts": [
-      "./assets/fonts/FunnelSans-Regular.ttf",
-      "./assets/fonts/FunnelSans-Medium.ttf",
-      "./assets/fonts/FunnelSans-Bold.ttf",
-      "./assets/fonts/FunnelDisplay-Regular.ttf",
-      "./assets/fonts/FunnelDisplay-Bold.ttf"
-    ],
     "ios": {
       "supportsTablet": true,
       "config": {
