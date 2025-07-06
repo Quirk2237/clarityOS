@@ -6,13 +6,33 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "gradleCommand": ":app:assembleDebug",
+        "env": {
+          "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Xms4g -Xmx8g -Dfile.encoding=UTF-8"
+        }
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "env": {
+          "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Xms4g -Xmx8g -Dfile.encoding=UTF-8"
+        }
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildType": "aab",
+        "gradleCommand": ":app:bundleRelease",
+        "env": {
+          "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Xms4g -Xmx8g -Dfile.encoding=UTF-8"
+        }
+      }
     }
   },
   "submit": {

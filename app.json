@@ -31,7 +31,17 @@
         "resizeMode": "cover",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.clarityos.radianthillsoftware"
+      "package": "com.clarityos.radianthillsoftware",
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0",
+      "kotlinVersion": "1.9.22",
+      "versionCode": 1,
+      "config": {
+        "gradle": {
+          "useDeprecatedNdk": false
+        }
+      }
     },
     "experiments": {
       "typedRoutes": true
