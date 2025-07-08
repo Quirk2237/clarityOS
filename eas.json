@@ -27,7 +27,7 @@
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "aab",
+        "buildType": "app-bundle",
         "gradleCommand": ":app:bundleRelease",
         "env": {
           "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -Xms4g -Xmx8g -Dfile.encoding=UTF-8"
