@@ -582,20 +582,26 @@ export function GuidedDiscovery({
 					impact: Math.max(prev.scores.impact, aiResponse.scores.impact),
 				};
 
-				// Update step and draft statement based on completion status
-				if (aiResponse.isComplete) {
-					// Always go to synthesis phase for validation when AI completes
-					newState.step = "synthesis";
-					newState.draftStatement = aiResponse.draftStatement;
-					// Reset validation state for fresh review
-					newState.validationFeedback = undefined;
-					newState.refinementArea = undefined;
-					console.log("Synthesis Phase Started", {
-						isComplete: aiResponse.isComplete,
-						draftStatement: aiResponse.draftStatement,
-						previousStep: prev.step,
-					});
+							// Update step and draft statement based on completion status
+			if (aiResponse.isComplete) {
+				// Always go to synthesis phase for validation when AI completes
+				newState.step = "synthesis";
+				newState.draftStatement = aiResponse.draftStatement;
+				// Reset validation state for fresh review
+				newState.validationFeedback = undefined;
+				newState.refinementArea = undefined;
+				console.log("Synthesis Phase Started", {
+					isComplete: aiResponse.isComplete,
+					draftStatement: aiResponse.draftStatement,
+					hasDraftStatement: !!aiResponse.draftStatement,
+					previousStep: prev.step,
+				});
+				
+				// If no draft statement provided, request one
+				if (!aiResponse.draftStatement) {
+					console.warn("AI marked complete but no draft statement provided - requesting synthesis");
 				}
+			}
 
 				return newState;
 			});

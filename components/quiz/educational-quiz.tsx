@@ -29,6 +29,7 @@ type Card = Database["public"]["Tables"]["cards"]["Row"] & {
 		questions: (Database["public"]["Tables"]["questions"]["Row"] & {
 			answer_choices: (Database["public"]["Tables"]["answer_choices"]["Row"] & {
 				icon: string | null;
+				selectedIcon: string | null;
 			})[];
 		})[];
 	})[];
@@ -36,7 +37,9 @@ type Card = Database["public"]["Tables"]["cards"]["Row"] & {
 
 type Section = Database["public"]["Tables"]["card_sections"]["Row"] & {
 	questions: (Database["public"]["Tables"]["questions"]["Row"] & {
-		answer_choices: Database["public"]["Tables"]["answer_choices"]["Row"][];
+		answer_choices: (Database["public"]["Tables"]["answer_choices"]["Row"] & {
+			selectedIcon: string | null;
+		})[];
 	})[];
 };
 
@@ -63,6 +66,7 @@ export function EducationalQuiz({
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 	const [showResult, setShowResult] = useState(false);
+	const [hasCheckedAnswer, setHasCheckedAnswer] = useState(false);
 	const [attempts, setAttempts] = useState<QuestionAttempt[]>([]);
 	const [showCompletionModal, setShowCompletionModal] = useState(false);
 	const [finalScore, setFinalScore] = useState(0);
@@ -144,20 +148,34 @@ export function EducationalQuiz({
 	}, [currentQuestion]);
 
 	const handleAnswerSelect = async (answerId: string) => {
-		if (showResult && !shouldTryAgain) return;
+		if (hasCheckedAnswer && !shouldTryAgain) return;
 
 		// Add haptic feedback when answer is selected
 		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
 		setSelectedAnswer(answerId);
-		const isCorrect =
-			shuffledAnswerChoices.find((a) => a.id === answerId)?.is_correct || false;
+		
+		// If user selects a different answer after getting one wrong, reset the checked state
+		if (shouldTryAgain && hasCheckedAnswer) {
+			setHasCheckedAnswer(false);
+			setShowResult(false);
+			setShouldTryAgain(false);
+		}
+	};
+
+	const handleCheckAnswer = async () => {
+		if (!selectedAnswer) return;
+
+		const isCorrect = shuffledAnswerChoices.find((a) => a.id === selectedAnswer)?.is_correct || false;
+		
+		setHasCheckedAnswer(true);
+		setShowResult(true);
 
 		if (isCorrect) {
-			// Correct answer - record attempt and proceed
+			// Correct answer - record attempt
 			const attempt: QuestionAttempt = {
 				questionId: currentQuestion.id,
-				selectedAnswerId: answerId,
+				selectedAnswerId: selectedAnswer,
 				isCorrect: true,
 			};
 
@@ -168,7 +186,7 @@ export function EducationalQuiz({
 				const progressManager = new ProgressManager(session);
 				await progressManager.recordQuestionAttempt(
 					currentQuestion.id,
-					answerId,
+					selectedAnswer,
 					undefined,
 					true,
 					10,
@@ -187,18 +205,17 @@ export function EducationalQuiz({
 				console.error("Error saving progress:", error);
 			}
 
-			setShowResult(true);
 			setShouldTryAgain(false);
 		} else {
-			// Wrong answer - always allow retry, don't record attempt yet
+			// Wrong answer - allow retry
 			setShouldTryAgain(true);
-			setShowResult(true);
 		}
 	};
 
 	const handleTryAgain = () => {
 		setSelectedAnswer(null);
 		setShowResult(false);
+		setHasCheckedAnswer(false);
 		setShouldTryAgain(false);
 		// Shuffle choices again when trying again
 		shuffleCurrentAnswerChoices();
@@ -211,6 +228,7 @@ export function EducationalQuiz({
 			setCurrentQuestionIndex((prev) => prev + 1);
 			setSelectedAnswer(null);
 			setShowResult(false);
+			setHasCheckedAnswer(false);
 			setShouldTryAgain(false);
 			// Shuffling will happen automatically via useEffect when currentQuestion changes
 		} else {
@@ -327,8 +345,8 @@ export function EducationalQuiz({
 				<View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 }}>
 					{shuffledAnswerChoices.map((choice, idx) => {
 						const isSelected = selectedAnswer === choice.id;
-						const isCorrect = showResult && isSelected && choice.is_correct;
-						const isWrong = showResult && isSelected && !choice.is_correct;
+						const isCorrect = hasCheckedAnswer && showResult && isSelected && choice.is_correct;
+						const isWrong = hasCheckedAnswer && showResult && isSelected && !choice.is_correct;
 
 						return (
 							<View 
@@ -341,40 +359,51 @@ export function EducationalQuiz({
 							>
 								<Pressable
 									onPress={() => handleAnswerSelect(choice.id)}
-									disabled={showResult && !shouldTryAgain}
-									className="w-full rounded-3xl bg-white"
+									disabled={hasCheckedAnswer && !shouldTryAgain}
+									className="w-full rounded-3xl"
 									style={{
 										minHeight: 140, // Minimum height
 										padding: 16,
 										flexDirection: 'column',
 										justifyContent: 'space-between',
 										alignItems: 'flex-start',
+										backgroundColor: 'white',
+										borderWidth: isSelected && !hasCheckedAnswer ? 3 : 0,
+										borderColor: isSelected && !hasCheckedAnswer ? colors.primary : 'transparent',
 										...(isWrong && {
 											borderWidth: 2,
 											borderColor: colors.error,
+											backgroundColor: 'white',
 										}),
 										...(isSelected && {
 											shadowColor: '#000',
-											shadowOffset: { width: 0, height: 2 },
-											shadowOpacity: 0.1,
-											shadowRadius: 8,
-											elevation: 3,
+											shadowOffset: { width: 0, height: 4 },
+											shadowOpacity: 0.15,
+											shadowRadius: 12,
+											elevation: 6,
 										})
 									}}
 								>
-									{/* Icon/Image - will be pushed to top by justifyContent: 'space-between' */}
-									<View>
-										{choice.icon && (
-											<Image
-												source={{ uri: choice.icon }}
-												contentFit="contain"
-												style={{
-													width: 35,
-													height: 35,
-												}}
-											/>
-										)}
-									</View>
+														{/* Icon/Image - will be pushed to top by justifyContent: 'space-between' */}
+					<View>
+						{(() => {
+							// Determine which icon to show based on selection state
+							const iconToShow = isSelected && choice.selectedIcon
+								? choice.selectedIcon  // Use selectedIcon if available and answer is selected
+								: choice.icon;         // Fall back to regular icon
+							
+							return iconToShow && (
+								<Image
+									source={{ uri: iconToShow }}
+									contentFit="contain"
+									style={{
+										width: 35,
+										height: 35,
+									}}
+								/>
+							);
+						})()}
+					</View>
 									
 									{/* Text - will be pushed to bottom by justifyContent: 'space-between' */}
 									<Text 
@@ -434,24 +463,30 @@ export function EducationalQuiz({
 				{/* Continue Button */}
 				<View style={{ marginBottom: 20, marginTop: 8 }}>
 					<Pressable
-						onPress={showResult ? handleNext : undefined}
+						onPress={
+							hasCheckedAnswer && showResult 
+								? handleNext 
+								: selectedAnswer && !hasCheckedAnswer 
+									? handleCheckAnswer
+									: undefined
+						}
 						className="w-full rounded-2xl py-4 items-center justify-center"
 						style={{ 
-							backgroundColor: showResult ? "rgba(255, 255, 255, 1)" : "rgba(255, 255, 255, 0.3)",
-							opacity: showResult ? 1 : 0.5,
+							backgroundColor: (selectedAnswer || showResult) ? "rgba(255, 255, 255, 1)" : "rgba(255, 255, 255, 0.3)",
+							opacity: (selectedAnswer || showResult) ? 1 : 0.5,
 							minHeight: 56,
 						}}
 					>
 						<Text 
 							className="font-semibold text-lg"
 							style={{ 
-								color: showResult ? "#000" : "#666",
+								color: (selectedAnswer || showResult) ? "#000" : "#666",
 							}}
 						>
-							{showResult ? (
+							{hasCheckedAnswer && showResult ? (
 								shouldTryAgain ? "Try Again" : 
 								currentQuestionIndex < questions.length - 1 ? "Next Question" : "Complete Quiz"
-							) : "Select an Answer"}
+							) : selectedAnswer && !hasCheckedAnswer ? "Check Answer" : "Select an Answer"}
 						</Text>
 					</Pressable>
 				</View>

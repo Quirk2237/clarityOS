@@ -102,6 +102,7 @@ export type Database = {
           is_correct: boolean
           order_index: number
           question_id: string
+          selectedIcon: string | null
           updated_at: string
         }
         Insert: {
@@ -113,6 +114,7 @@ export type Database = {
           is_correct?: boolean
           order_index: number
           question_id: string
+          selectedIcon?: string | null
           updated_at?: string
         }
         Update: {
@@ -124,6 +126,7 @@ export type Database = {
           is_correct?: boolean
           order_index?: number
           question_id?: string
+          selectedIcon?: string | null
           updated_at?: string
         }
         Relationships: [
