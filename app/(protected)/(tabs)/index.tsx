@@ -21,6 +21,7 @@ import {
 import { showNativeCardMenu } from "../../../components/ui/native-card-menu";
 import { Database } from "../../../lib/database.types";
 import { registerTabResetCallback, unregisterTabResetCallback } from "./_layout";
+import { Platform } from "react-native";
 
 // Types
 type Card = Database["public"]["Tables"]["cards"]["Row"] & {
@@ -244,6 +245,14 @@ export default function Home() {
 		try {
 			// Set loading to true at the start of the operation
 			setLoading(true);
+			
+			// 🔍 DEBUG: Check environment variables on web
+			console.log('🔍 Environment Debug:', {
+				platform: Platform.OS,
+				supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+				hasAnonKey: !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+				isPlaceholder: process.env.EXPO_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co'
+			});
 			
 			const progressManager = new ProgressManager(session);
 			console.log('ProgressManager created with session:', !!session, 'userId:', session?.user?.id);
