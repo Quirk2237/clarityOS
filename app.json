@@ -5,6 +5,7 @@
     "scheme": "canopyos",
     "version": "1.0.0",
     "orientation": "portrait",
+    "platforms": ["ios", "android", "web"],
     "icon": "./assets/icon.png",
     "assetBundlePatterns": [
       "**/*"
@@ -60,7 +61,18 @@
       }
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png",
+      "name": "ClarityOS",
+      "shortName": "ClarityOS",
+      "lang": "en",
+      "scope": "/",
+      "themeColor": "#ffffff",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/"
     },
     "owner": "untrue6165"
   }

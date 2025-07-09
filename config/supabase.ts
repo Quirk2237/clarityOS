@@ -1,4 +1,4 @@
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 
 import "react-native-get-random-values";
 import * as aesjs from "aes-js";
@@ -9,8 +9,54 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
 
+// Helper function to check if localStorage is available
+const isLocalStorageAvailable = (): boolean => {
+	if (Platform.OS !== 'web') return false;
+	
+	try {
+		return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+	} catch {
+		return false;
+	}
+};
+
+// Web-compatible storage that falls back to in-memory storage
+class WebStorage {
+	private memoryStorage: Map<string, string> = new Map();
+
+	getItem(key: string): string | null {
+		if (isLocalStorageAvailable()) {
+			return localStorage.getItem(key);
+		}
+		return this.memoryStorage.get(key) || null;
+	}
+
+	setItem(key: string, value: string): void {
+		if (isLocalStorageAvailable()) {
+			localStorage.setItem(key, value);
+		} else {
+			this.memoryStorage.set(key, value);
+		}
+	}
+
+	removeItem(key: string): void {
+		if (isLocalStorageAvailable()) {
+			localStorage.removeItem(key);
+		} else {
+			this.memoryStorage.delete(key);
+		}
+	}
+}
+
 class LargeSecureStore {
+	private webStorage = new WebStorage();
+
 	private async _encrypt(key: string, value: string) {
+		// On web, skip encryption for simplicity (localStorage is used directly)
+		if (Platform.OS === 'web') {
+			return value;
+		}
+		
 		const encryptionKey = crypto.getRandomValues(new Uint8Array(256 / 8));
 		const cipher = new aesjs.ModeOfOperation.ctr(
 			encryptionKey,
@@ -24,6 +70,11 @@ class LargeSecureStore {
 		return aesjs.utils.hex.fromBytes(encryptedBytes);
 	}
 	private async _decrypt(key: string, value: string) {
+		// On web, skip decryption for simplicity
+		if (Platform.OS === 'web') {
+			return value;
+		}
+		
 		const encryptionKeyHex = await SecureStore.getItemAsync(key);
 		if (!encryptionKeyHex) {
 			return encryptionKeyHex;
@@ -36,6 +87,10 @@ class LargeSecureStore {
 		return aesjs.utils.utf8.fromBytes(decryptedBytes);
 	}
 	async getItem(key: string) {
+		if (Platform.OS === 'web') {
+			return this.webStorage.getItem(key);
+		}
+		
 		const encrypted = await AsyncStorage.getItem(key);
 		if (!encrypted) {
 			return encrypted;
@@ -43,10 +98,20 @@ class LargeSecureStore {
 		return await this._decrypt(key, encrypted);
 	}
 	async removeItem(key: string) {
+		if (Platform.OS === 'web') {
+			this.webStorage.removeItem(key);
+			return;
+		}
+		
 		await AsyncStorage.removeItem(key);
 		await SecureStore.deleteItemAsync(key);
 	}
 	async setItem(key: string, value: string) {
+		if (Platform.OS === 'web') {
+			this.webStorage.setItem(key, value);
+			return;
+		}
+		
 		const encrypted = await this._encrypt(key, value);
 		await AsyncStorage.setItem(key, encrypted);
 	}
@@ -57,14 +122,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 		storage: new LargeSecureStore(),
 		autoRefreshToken: true,
 		persistSession: true,
-		detectSessionInUrl: false,
+		detectSessionInUrl: Platform.OS === 'web',
 	},
 });
 
-AppState.addEventListener("change", (state) => {
-	if (state === "active") {
-		supabase.auth.startAutoRefresh();
-	} else {
-		supabase.auth.stopAutoRefresh();
-	}
-});
+// Only add AppState listener on mobile platforms
+if (Platform.OS !== 'web') {
+	AppState.addEventListener("change", (state) => {
+		if (state === "active") {
+			supabase.auth.startAutoRefresh();
+		} else {
+			supabase.auth.stopAutoRefresh();
+		}
+	});
+}

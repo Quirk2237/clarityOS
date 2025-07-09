@@ -1,0 +1,13 @@
+{
+  "buildCommand": "expo export:web",
+  "outputDirectory": "web-build",
+  "devCommand": "expo start --web",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+} 
