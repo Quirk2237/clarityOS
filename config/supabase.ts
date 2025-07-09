@@ -6,20 +6,6 @@ import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 
-// Environment variable validation with fallbacks for build process
-const getEnvVar = (name: string, fallback?: string): string => {
-	const value = process.env[name] || fallback;
-	if (!value) {
-		console.warn(`Environment variable ${name} is not defined`);
-		return fallback || '';
-	}
-	return value;
-};
-
-// Use fallbacks during build process
-const supabaseUrl = getEnvVar('EXPO_PUBLIC_SUPABASE_URL', 'https://placeholder.supabase.co');
-const supabaseAnonKey = getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY', 'placeholder-anon-key');
-
 // Helper function to check if localStorage is available
 const isLocalStorageAvailable = (): boolean => {
 	if (Platform.OS !== 'web') return false;
@@ -128,7 +114,37 @@ class LargeSecureStore {
 	}
 }
 
-// Create Supabase client with validation
+// Function to get runtime environment variables
+const getRuntimeEnvVars = () => {
+	const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+	
+	// Log the values for debugging
+	console.log('🔧 Supabase Config Debug:', {
+		url: supabaseUrl,
+		hasKey: !!supabaseAnonKey,
+		urlIsPlaceholder: supabaseUrl === 'https://placeholder.supabase.co',
+		keyIsPlaceholder: supabaseAnonKey === 'placeholder-anon-key'
+	});
+	
+	// Only use placeholders if no environment variables are available at all
+	if (!supabaseUrl || !supabaseAnonKey) {
+		console.warn('⚠️ Supabase environment variables not found, using placeholders');
+		return {
+			url: 'https://placeholder.supabase.co',
+			key: 'placeholder-anon-key'
+		};
+	}
+	
+	return {
+		url: supabaseUrl,
+		key: supabaseAnonKey
+	};
+};
+
+// Create Supabase client with runtime environment variables
+const { url: supabaseUrl, key: supabaseAnonKey } = getRuntimeEnvVars();
+
 let supabase: ReturnType<typeof createClient>;
 
 try {
@@ -140,8 +156,10 @@ try {
 			detectSessionInUrl: Platform.OS === 'web',
 		},
 	});
+	
+	console.log('✅ Supabase client created successfully');
 } catch (error) {
-	console.error('Failed to create Supabase client:', error);
+	console.error('❌ Failed to create Supabase client:', error);
 	// Create a dummy client for build process
 	supabase = createClient('https://placeholder.supabase.co', 'placeholder-key', {
 		auth: {
