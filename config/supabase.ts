@@ -6,8 +6,19 @@ import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
+// Environment variable validation with fallbacks for build process
+const getEnvVar = (name: string, fallback?: string): string => {
+	const value = process.env[name] || fallback;
+	if (!value) {
+		console.warn(`Environment variable ${name} is not defined`);
+		return fallback || '';
+	}
+	return value;
+};
+
+// Use fallbacks during build process
+const supabaseUrl = getEnvVar('EXPO_PUBLIC_SUPABASE_URL', 'https://placeholder.supabase.co');
+const supabaseAnonKey = getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY', 'placeholder-anon-key');
 
 // Helper function to check if localStorage is available
 const isLocalStorageAvailable = (): boolean => {
@@ -117,14 +128,32 @@ class LargeSecureStore {
 	}
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-	auth: {
-		storage: new LargeSecureStore(),
-		autoRefreshToken: true,
-		persistSession: true,
-		detectSessionInUrl: Platform.OS === 'web',
-	},
-});
+// Create Supabase client with validation
+let supabase: ReturnType<typeof createClient>;
+
+try {
+	supabase = createClient(supabaseUrl, supabaseAnonKey, {
+		auth: {
+			storage: new LargeSecureStore(),
+			autoRefreshToken: true,
+			persistSession: true,
+			detectSessionInUrl: Platform.OS === 'web',
+		},
+	});
+} catch (error) {
+	console.error('Failed to create Supabase client:', error);
+	// Create a dummy client for build process
+	supabase = createClient('https://placeholder.supabase.co', 'placeholder-key', {
+		auth: {
+			storage: new LargeSecureStore(),
+			autoRefreshToken: false,
+			persistSession: false,
+			detectSessionInUrl: false,
+		},
+	});
+}
+
+export { supabase };
 
 // Only add AppState listener on mobile platforms
 if (Platform.OS !== 'web') {
