@@ -72,7 +72,7 @@ serve(async (req: Request) => {
 			});
 		}
 
-		const { messages, task, userId } = requestBody;
+		const { messages, task, userId, businessContext } = requestBody;
 
 		// ✅ Validate required fields
 		if (!messages || !Array.isArray(messages)) {
@@ -99,6 +99,14 @@ serve(async (req: Request) => {
 			});
 		}
 
+		// ✅ Log business context information
+		console.log('🏢 Business context received:', {
+			hasData: businessContext?.hasData || false,
+			businessName: businessContext?.businessName || 'Not provided',
+			businessStage: businessContext?.businessStage || 'Not provided',
+			source: businessContext?.source || 'unknown'
+		});
+
 		// ✅ Check OpenAI API key
 		const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 		if (!openaiApiKey) {
@@ -115,11 +123,11 @@ serve(async (req: Request) => {
 			apiKey: openaiApiKey,
 		});
 
-		// Get the appropriate system prompt based on the card/task
+		// Get the appropriate system prompt based on the card/task and business context
 		let systemPrompt;
 		try {
-			systemPrompt = getSystemPrompt(task);
-			console.log('📝 System prompt loaded for task:', task);
+			systemPrompt = getSystemPrompt(task, businessContext);
+			console.log('📝 System prompt loaded for task:', task, 'with business context');
 		} catch (promptError) {
 			console.error('❌ Failed to get system prompt:', promptError);
 			return new Response(JSON.stringify({ error: 'Invalid task or prompt error' }), {

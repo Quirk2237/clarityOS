@@ -25,6 +25,7 @@ import { LocalAIStorage } from "../../lib/local-storage";
 import { Database } from "../../lib/database.types";
 import { AIErrorBoundary } from "../ai-error-boundary";
 import { colors } from "../../constants/colors";
+import { useBusinessContext, getBusinessDescription } from "../../lib/use-business-context";
 
 // Zod schema for the structured response from the AI
 const ClaritySchema = z.object({
@@ -382,6 +383,7 @@ export function GuidedDiscovery({
 	}
 
 	const { session } = useAuth();
+	const businessContext = useBusinessContext(); // Add business context hook
 	const synthesisForced = useRef(false);
 	const [conversationState, setConversationState] = useState<ConversationState>(
 		{
@@ -513,7 +515,7 @@ export function GuidedDiscovery({
 		}
 	};
 
-	// ✅ Replace useObject with custom hook
+	// ✅ Replace useObject with custom hook and include business context
 	const { 
 		input, 
 		setInput, 
@@ -528,6 +530,15 @@ export function GuidedDiscovery({
 		body: {
 			task: card.slug,
 			userId: effectiveUserId,
+			businessContext: {
+				hasData: businessContext.hasData,
+				businessName: businessContext.business_name,
+				businessStage: businessContext.business_stage,
+				businessStageOther: businessContext.business_stage_other,
+				whatYourBusinessDoes: businessContext.what_your_business_does,
+				source: businessContext.source,
+				businessDescription: getBusinessDescription(businessContext),
+			},
 		},
 		onError: (error) => {
 			console.error("❌ AI Chat Error", {

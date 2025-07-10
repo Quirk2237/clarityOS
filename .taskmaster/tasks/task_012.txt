@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Integrate User Onboarding Data into Guided Discovery Sessions
+# Status: pending
+# Dependencies: 6, 7, 11
+# Priority: medium
+# Description: Enhance the guided discovery experience by incorporating user onboarding data (business name, stage, description) into the AI prompts. This will personalize Mouse's questions and guidance for both anonymous and authenticated users.
+# Details:
+Create a new unified hook, e.g., `useBusinessContext()`, that retrieves the user's business context. This hook should abstract the data source: for authenticated users, it will read from the central Zustand/Context store (Task 7); for anonymous users, it will read from AsyncStorage (Task 11). The hook will return an object containing `business_name`, `business_stage`, and `business_description`. Refactor the guided discovery session components to use this hook. Update the AI service calls to expand on the pattern from Task 6, injecting the full business context into the system prompt. The prompt should be structured to include the business stage, for example: `System: The user's business is '${name}' at the '${stage}' stage. Description: '${description}'.` Additionally, implement conditional logic within the chat flow to tailor Mouse's questions based on the `business_stage` value.
+
+# Test Strategy:
+1. Authenticated User Test: Log in as a user with completed onboarding data. Start a guided discovery session. Use developer tools to inspect the network request to the AI service and verify the system prompt contains the correct business name, stage, and description. Confirm the AI's questions are relevant to the specified business stage. 2. Anonymous User Test: As a new user, complete the onboarding flow without creating an account. Start a discovery session. Verify the network request payload contains the context saved to AsyncStorage and that the questions are appropriately personalized. 3. Fallback Test: Manually clear the context for a test user and ensure the guided discovery session still functions with generic, non-personalized prompts without crashing.
