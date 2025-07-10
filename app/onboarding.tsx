@@ -89,22 +89,8 @@ export default function OnboardingScreen() {
 			
 			console.log('✅ Anonymous user: Onboarding information saved to session storage');
 			
-			// For anonymous users, we'll show a success message and allow them to continue
-			// without navigating to protected routes
-			Alert.alert(
-				"Information Saved!", 
-				"Your business information has been saved. You can create an account later to access additional features.",
-				[
-					{
-						text: "Continue",
-						onPress: () => {
-							// Navigate back to welcome screen or stay here
-							// This could be customized based on your app's flow
-							router.replace("/welcome");
-						}
-					}
-				]
-			);
+			// Navigate to the main app - anonymous users with onboarding data can now access protected routes
+			router.replace("/");
 		} catch (error) {
 			console.error('❌ Error saving anonymous onboarding information:', error);
 			throw error;
