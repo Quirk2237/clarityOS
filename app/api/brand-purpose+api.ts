@@ -1,5 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
+import { getBrandContextForAI, enhanceSystemPromptWithBrandContext } from "@/lib/ai-brand-context";
 
 const BRAND_PURPOSE_SYSTEM_PROMPT = `
 ROLE:
@@ -141,8 +142,19 @@ export async function POST(req: Request) {
 			});
 		}
 
+		// Get brand context for AI personalization
+		const brandContext = sessionUserId && !sessionUserId.startsWith('anonymous_')
+			? await getBrandContextForAI(sessionUserId)
+			: '';
+
+		// Enhance system prompt with brand context
+		const enhancedSystemPrompt = enhanceSystemPromptWithBrandContext(
+			BRAND_PURPOSE_SYSTEM_PROMPT,
+			brandContext
+		);
+
 		const messagesWithSystem = [
-			{ role: "system", content: BRAND_PURPOSE_SYSTEM_PROMPT },
+			{ role: "system", content: enhancedSystemPrompt },
 			...sanitizedMessages,
 		];
 

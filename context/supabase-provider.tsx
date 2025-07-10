@@ -11,6 +11,7 @@ import { Session } from "@supabase/supabase-js";
 
 import { supabase } from "@/config/supabase";
 import { DataMigrator } from "../lib/data-migration";
+import { useProfileStore } from "../stores/profile-store";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,6 +37,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
 	const [initialized, setInitialized] = useState(false);
 	const [session, setSession] = useState<Session | null>(null);
 	const router = useRouter();
+	
+	// Profile store integration
+	const { 
+		profile, 
+		fetchProfile, 
+		clearProfile, 
+		isInitialized: profileInitialized 
+	} = useProfileStore();
 
 	// ✅ Data migration trigger
 	const triggerDataMigration = async (userSession: Session) => {
@@ -83,6 +92,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
 				name: null,
 				company_name: null,
 				subscription_status: "free",
+				business_name: null,
+				business_stage: null,
+				business_stage_other: null,
+				what_your_business_does: null,
+				is_onboarded: false,
 			});
 
 			if (profileError) {
@@ -131,6 +145,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 			return;
 		} else {
 			console.log("User signed out");
+			// Clear profile store on logout
+			clearProfile();
 		}
 	};
 
@@ -146,16 +162,34 @@ export function AuthProvider({ children }: PropsWithChildren) {
 		setInitialized(true);
 	}, []);
 
+	// Fetch profile when user logs in
+	useEffect(() => {
+		if (session?.user?.id) {
+			fetchProfile(session.user.id);
+		}
+	}, [session, fetchProfile]);
+
 	useEffect(() => {
 		const handleNavigation = async () => {
 			if (initialized) {
+				console.log('🏠 Supabase Provider - Handling navigation:', {
+					initialized,
+					hasSession: !!session,
+					userId: session?.user?.id
+				});
+				
 				SplashScreen.hideAsync();
 				if (session) {
-					// Go directly to home screen - no onboarding
+					console.log('✅ Supabase Provider - User authenticated, navigating to protected route');
+					// User is authenticated - let the protected layout handle onboarding logic
 					router.replace("/" as any);
 				} else {
+					console.log('🚫 Supabase Provider - No session, showing welcome screen');
+					// No session - show welcome screen
 					router.replace("/welcome" as any);
 				}
+			} else {
+				console.log('⏳ Supabase Provider - Not initialized yet');
 			}
 		};
 

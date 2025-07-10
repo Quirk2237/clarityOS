@@ -1,0 +1,221 @@
+ClarityOS is an app that offers Brand Strategy for the everyday business owner.
+
+We exist to help business owners gain brand clarity through a simple, accessible, and scalable tool — because we believe branding should be ASS: accessible, scalable, and simple.
+
+Tools.
+For all AI logic we will be using ChatGPT
+Supabase
+ReactNative
+RevuCat
+Expo
+AI SDK
+Resend
+
+
+Screens:
+
+Welcome screen
+
+Login screen
+
+Signup screen
+
+Onboarding Screen
+(Q1) What's your goal?
+-get clarity
+-build confidence in what I'm selling
+-Be able to explain what I do
+-Boost my career
+-Other
+
+(Q2) What stage is your business in?
+-Still conceptualizing
+-Just launched
+-1-5 years in
+-industry pro
+-Local household name
+
+Status bar to show progress with a back and continue button.
+
+Home screen
+7 cards each for a different brand category
+Each card has a start button to begin the card function, which navigates to its respective card screen. 
+Home screen includes a navbar
+- settings
+- home
+- dashboard 
+
+The 7 card screens are as follows.
+
+Purpose
+Positioning
+Personality
+Product-Market Fit
+Perception
+Presentation
+Proof
+
+Card screen 
+A gamified process similar to Duolingo to help users learn more about the card they selected and how it offers value, with a scoring system. Progress is auto saved to the database. Include a progress bar for the slides. Have an X button to exit back to the home screen at all times.
+
+Here are the multiple-choice slides for the Purpose card
+The correct answer is underlined. 
+
+Question: What is a brand's purpose?
+Answer choices:
+ A tagline you put under your logo
+ The reason your brand exists beyond making money
+ The product you sell
+ The mission of your marketing team
+
+Slide 2
+Question: Which of the following is a strong example of brand purpose?
+Answer choices:
+ "We aim to dominate market share."
+ "We want to make healthy eating fun and accessible."
+ "We offer discounts every weekend."
+ "We launched in 2020 with a vision to grow."
+
+Slide 3
+Question: Which factor matters most when uncovering your brand's purpose?
+Answer choices:
+ Your founder's favorite quote
+ The change you want to see in the world
+ How many Instagram followers you have
+ How big your competitor's market is
+
+Slide 4
+Question: A clear brand purpose statement is MOST likely to include:
+Answer choices:
+ A product feature list
+ A vision of how your offering improves lives
+ A list of job titles on your team
+ Your company's profit margin goals
+
+Slide 5
+Question: Why is brand purpose important?
+Answer choices:
+ It helps you write longer bios
+ It motivates your team and guides decision-making
+ It makes your packaging look more premium
+ It helps you go viral on social media
+
+Congratulations page
+You unlocked Positioning Mastery!
+Score badge display
+
+Continue page
+Now that you know what Positioning means... let's figure out what it means for you.
+
+Once the educational section is done, it moves on to the guided section yo guid the user through a series of q's and a detailed logi formula toi arrive at their own unique purpose with the gamification aspect setting the tonme for this section so they dont start the detailed guided section with zero knowledge about general brand purposes. 
+
+
+Here is the logic that will rate each answer and based on the users respons it will elicit a further targeted question.
+
+"ROLE:
+You are a thoughtful, strategic brand guide. Your job is to help the user uncover their brand's purpose — without asking "what's your brand purpose?" directly. Instead, guide them step-by-step through reflective prompts. Always ask only one question at a time, wait for the user's full response, then decide the next best move based on what's missing or vague.
+
+GOAL:
+Arrive at a clear, emotionally resonant Brand Purpose Statement that communicates:
+regardless of what the user says, your should start with the opening question.
+
+Why the brand exists
+
+Who it serves
+
+What it stands for
+
+How it positively changes the world (even in a small way)
+
+STEP 1: OPENING QUESTION
+
+Ask:
+
+"Imagine your brand disappeared tomorrow. What would your customers miss most — and why would that matter?"
+
+Then:
+
+Wait for the user's response.
+
+Score the response across these 4 dimensions:
+
+Audience (who it serves): 0–2
+
+Benefit (how it helps): 0–2
+
+Belief (what it stands for): 0–2
+
+Impact (why it matters): 0–2
+
+Total possible score: 8.
+If total < 6 or any category scores 0, move to STEP 2 and ask the appropriate follow-up.
+Otherwise, go to STEP 3.
+
+STEP 2: FOLLOW-UP QUESTION LOGIC
+
+Choose a follow-up based on what's missing:
+
+If this is missing...	Ask this follow-up
+Audience (score 0)	"Who exactly would feel that loss most? Who is this really for?"
+Benefit (score 0)	"What does your brand help them do, feel, or become?"
+Belief (score 0)	"What does that say about what your brand stands for or believes in?"
+Impact (score 0)	"How are their lives different because your brand exists?"
+Multiple areas weak	"Can you describe a time your brand truly made a difference for someone?"
+
+→ After user responds, update your scores. If any dimension is still weak, continue asking the appropriate follow-up from the list above until all areas are covered clearly.
+
+STEP 3: SYNTHESIZE DRAFT PURPOSE STATEMENT
+
+Once all 4 areas are present and clear (score ≥ 1 each), say:
+
+"Thanks — based on everything you've shared, here's a first draft of your brand purpose statement. Let me know how it feels to you."
+
+Format the statement like this:
+
+"We exist to [transform/help/support] [audience] by [what you do/offer], because we believe [value/belief]."
+
+Example:
+
+"We exist to help busy new moms feel in control of their lives again by offering beautifully designed, time-saving home tools — because we believe confidence starts at home."
+
+STEP 4: VALIDATION AND REFINEMENT
+
+Ask:
+
+"Does this feel true to your brand?"
+
+If user says:
+
+Yes: Offer to polish tone or style.
+
+Not sure / No: Ask:
+
+"Which part doesn't feel quite right — the who, the what, the why, or the belief?"
+
+Then dig deeper using custom clarification questions.
+
+Update the statement and loop back until the user says it feels aligned.
+
+Optional:
+Once confirmed, offer:
+
+"Would you like to save this, refine it into shorter taglines, or explore how to bring this purpose to life across your brand?"
+
+(end of logic prompt)
+
+Complete card screen
+You have now completed this card. Go back to home screen.
+
+
+Setting screen
+Name 
+Email
+Account settings
+Password chang
+Profile updates
+Email changing
+Log out
+Feedback 
+
+Dashboard screen
+User progress stats 

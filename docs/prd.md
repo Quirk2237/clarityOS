@@ -1,221 +1,298 @@
-ClarityOS is an app that offers Brand Strategy for the everyday business owner.
-
-We exist to help business owners gain brand clarity through a simple, accessible, and scalable tool — because we believe branding should be ASS: accessible, scalable, and simple.
-
-Tools.
-For all AI logic we will be using ChatGPT
-Supabase
-ReactNative
-RevuCat
-Expo
-AI SDK
-Resend
-
-
-Screens:
-
-Welcome screen
-
-Login screen
-
-Signup screen
-
-Onboarding Screenß
-(Q1) What's your goal?
--get clarity
--build confidence in what I'm selling
--Be able to explain what I do
--Boost my career
--Other
-
-(Q2) What stage is your business in?
--Still conceptualizing
--Just launched
--1-5 years in
--industry pro
--Local household name
-
-Status bar to show progress with a back and continue button.
-
-Home screen
-7 cards each for a different brand category
-Each card has a start button to begin the card function, which navigates to its respective card screen. 
-Home screen includes a navbar
-- settings
-- home
-- dashboard 
-
-The 7 card screens are as follows.
-
-Purpose
-Positioning
-Personality
-Product-Market Fit
-Perception
-Presentation
-Proof
-
-Card screen 
-A gamified process similar to Duolingo to help users learn more about the card they selected and how it offers value, with a scoring system. Progress is auto saved to the database. Include a progress bar for the slides. Have an X button to exit back to the home screen at all times.
-
-Here are the multiple-choice slides for the Purpose card
-The correct answer is underlined. 
-
-Question: What is a brand’s purpose?
-Answer choices:
- A tagline you put under your logo
- The reason your brand exists beyond making money
- The product you sell
- The mission of your marketing team
-
-Slide 2
-Question: Which of the following is a strong example of brand purpose?
-Answer choices:
- “We aim to dominate market share.”
- “We want to make healthy eating fun and accessible.”
- “We offer discounts every weekend.”
- “We launched in 2020 with a vision to grow.”
-
-Slide 3
-Question: Which factor matters most when uncovering your brand’s purpose?
-Answer choices:
- Your founder’s favorite quote
- The change you want to see in the world
- How many Instagram followers you have
- How big your competitor’s market is
-
-Slide 4
-Question: A clear brand purpose statement is MOST likely to include:
-Answer choices:
- A product feature list
- A vision of how your offering improves lives
- A list of job titles on your team
- Your company's profit margin goals
-
-Slide 5
-Question: Why is brand purpose important?
-Answer choices:
- It helps you write longer bios
- It motivates your team and guides decision-making
- It makes your packaging look more premium
- It helps you go viral on social media
-
-Congratulations page
-You unlocked Positioning Mastery!
-Score badge display
-
-Continue page
-Now that you know what Positioning means... let’s figure out what it means for you.
-
-Once the educational section is done, it moves on to the guided section yo guid the user through a series of q’s and a detailed logi formula toi arrive at their own unique purpose with the gamification aspect setting the tonme for this section so they dont start the detailed guided section with zero knowledge about general brand purposes. 
-
-
-Here is the logic that will rate each answer and based on the users respons it will elicit a further targeted question.
-
-“ROLE:
-You are a thoughtful, strategic brand guide. Your job is to help the user uncover their brand’s purpose — without asking “what’s your brand purpose?” directly. Instead, guide them step-by-step through reflective prompts. Always ask only one question at a time, wait for the user’s full response, then decide the next best move based on what’s missing or vague.
-
-GOAL:
-Arrive at a clear, emotionally resonant Brand Purpose Statement that communicates:
-regardless of what the user says, your should start with the opening question.
-
-Why the brand exists
-
-Who it serves
-
-What it stands for
-
-How it positively changes the world (even in a small way)
-
-STEP 1: OPENING QUESTION
-
-Ask:
-
-“Imagine your brand disappeared tomorrow. What would your customers miss most — and why would that matter?”
-
-Then:
-
-Wait for the user's response.
-
-Score the response across these 4 dimensions:
-
-Audience (who it serves): 0–2
-
-Benefit (how it helps): 0–2
-
-Belief (what it stands for): 0–2
-
-Impact (why it matters): 0–2
-
-Total possible score: 8.
-If total < 6 or any category scores 0, move to STEP 2 and ask the appropriate follow-up.
-Otherwise, go to STEP 3.
-
-STEP 2: FOLLOW-UP QUESTION LOGIC
-
-Choose a follow-up based on what’s missing:
-
-If this is missing...	Ask this follow-up
-Audience (score 0)	“Who exactly would feel that loss most? Who is this really for?”
-Benefit (score 0)	“What does your brand help them do, feel, or become?”
-Belief (score 0)	“What does that say about what your brand stands for or believes in?”
-Impact (score 0)	“How are their lives different because your brand exists?”
-Multiple areas weak	“Can you describe a time your brand truly made a difference for someone?”
-
-→ After user responds, update your scores. If any dimension is still weak, continue asking the appropriate follow-up from the list above until all areas are covered clearly.
-
-STEP 3: SYNTHESIZE DRAFT PURPOSE STATEMENT
-
-Once all 4 areas are present and clear (score ≥ 1 each), say:
-
-“Thanks — based on everything you’ve shared, here’s a first draft of your brand purpose statement. Let me know how it feels to you.”
-
-Format the statement like this:
-
-“We exist to [transform/help/support] [audience] by [what you do/offer], because we believe [value/belief].”
-
-Example:
-
-“We exist to help busy new moms feel in control of their lives again by offering beautifully designed, time-saving home tools — because we believe confidence starts at home.”
-
-STEP 4: VALIDATION AND REFINEMENT
-
-Ask:
-
-“Does this feel true to your brand?”
-
-If user says:
-
-Yes: Offer to polish tone or style.
-
-Not sure / No: Ask:
-
-“Which part doesn’t feel quite right — the who, the what, the why, or the belief?”
-
-Then dig deeper using custom clarification questions.
-
-Update the statement and loop back until the user says it feels aligned.
-
-Optional:
-Once confirmed, offer:
-
-“Would you like to save this, refine it into shorter taglines, or explore how to bring this purpose to life across your brand?”
-
-(end of logic prompt)
-
-Complete card screen
-You have now completed this card. Go back to home screen.
-
-
-Setting screen
-Name 
-Email
-Account settings
-Password chang
-Profile updates
-Email changing
-Log out
-Feedback 
-
-Dashboard screen
-User progress stats
+# CanopyOS (formerly ClarityOS) - Product Requirements Document
+
+## Vision Statement
+CanopyOS is an AI-powered brand strategy app that helps everyday business owners gain brand clarity through a simple, accessible, and scalable tool — because we believe branding should be ASS: accessible, scalable, and simple.
+
+## Technology Stack
+- **AI Logic:** OpenAI GPT-4o via AI SDK
+- **Backend:** Supabase (PostgreSQL, Auth, RLS)
+- **Frontend:** React Native with Expo Router
+- **Payment Processing:** RevenueCat (planned)
+- **Deployment:** Expo
+- **Email:** Resend (planned)
+
+## Core Features Implemented
+
+### 1. Authentication & Onboarding
+**Status: ✅ IMPLEMENTED**
+
+#### Welcome Screen
+- Beautiful landing page with "mouse" branding
+- "Get Started" CTA button
+- Animated SVG illustration
+
+#### Authentication Flow
+- Sign up / Sign in modals
+- Email/password authentication
+- Session management with Supabase Auth
+- Automatic profile creation on signup
+
+#### Onboarding Flow
+- **Question 1:** What's your goal?
+  - Get clarity
+  - Build confidence in what I'm selling
+  - Be able to explain what I do
+  - Boost my career
+  - Other (with text input)
+- **Question 2:** What stage is your business in?
+  - Still conceptualizing
+  - Just launched
+  - 1-5 years in
+  - Industry pro
+  - Local household name
+- Progress indicator
+- Back/Continue navigation
+- Data saved to `onboarding_responses` table
+
+### 2. Home Screen & Navigation
+**Status: ✅ IMPLEMENTED**
+
+#### Main Interface
+- Tab-based navigation (Cards, Dashboard, Settings)
+- "mouse" header with tap-to-return functionality
+- Card-based layout with Apple Wallet-style design
+- Dark theme with vibrant green (`#ACFF64`) accent color
+
+#### Card System
+- 7 brand strategy cards in defined order:
+  1. **Purpose** (Status: Open)
+  2. **Positioning** (Status: Coming Soon)
+  3. **Personality** (Status: Coming Soon)
+  4. **Product-Market Fit** (Status: Coming Soon)
+  5. **Perception** (Status: Coming Soon)
+  6. **Presentation** (Status: Coming Soon)
+  7. **Proof** (Status: Coming Soon)
+
+#### Card Features
+- Dynamic status management (open/coming_soon/completed)
+- Progress tracking with visual indicators
+- Card colors and cover images
+- Three-dot menu with "Start Over" functionality
+- Auto-prioritization of next available card
+
+### 3. Educational Quiz System
+**Status: ✅ FULLY IMPLEMENTED**
+
+#### Purpose Card Educational Content
+- 5 multiple-choice questions with scoring
+- Gamified experience similar to Duolingo
+- Progress bar and navigation
+- Immediate feedback on answers
+- "Try Again" functionality for incorrect answers
+- Score calculation and storage
+
+#### Quiz Questions (Purpose Card)
+1. "What is a brand's purpose?"
+2. "Which of the following is a strong example of brand purpose?"
+3. "Which factor matters most when uncovering your brand's purpose?"
+4. "A clear brand purpose statement is MOST likely to include:"
+5. "Why is brand purpose important?"
+
+#### Features
+- Shuffled answer choices
+- Unlimited retries
+- Progress auto-save to database
+- Completion modal with score display
+- Smooth transitions between questions
+
+### 4. AI-Powered Guided Discovery
+**Status: ✅ FULLY IMPLEMENTED**
+
+#### Conversation Engine
+- Structured AI conversations using OpenAI GPT-4o
+- Custom prompts for each brand category
+- Real-time scoring across 4 dimensions:
+  - **Audience** (who it serves): 0-2 points
+  - **Benefit** (how it helps): 0-2 points
+  - **Belief** (what it stands for): 0-2 points
+  - **Impact** (why it matters): 0-2 points
+
+#### Interactive Features
+- Apple Wallet-style card stack interface
+- Gesture-based navigation (pan to reveal previous questions)
+- Real-time score widgets with explanations
+- Conversation state persistence
+- Anonymous user support
+
+#### AI Logic Flow
+**STEP 1: Opening Question**
+"Imagine your brand disappeared tomorrow. What would your customers miss most — and why would that matter?"
+
+**STEP 2: Follow-up Logic**
+Dynamic follow-up questions based on missing elements:
+- Audience gaps: "Who exactly would feel that loss most?"
+- Benefit gaps: "What does your brand help them do, feel, or become?"
+- Belief gaps: "What does that say about what your brand stands for?"
+- Impact gaps: "How are their lives different because your brand exists?"
+
+**STEP 3: Synthesis**
+AI generates draft brand purpose statement:
+"We exist to [transform/help/support] [audience] by [what you do/offer], because we believe [value/belief]."
+
+**STEP 4: Validation & Refinement**
+User validates statement with refinement options for specific areas
+
+#### Brand-Specific AI Prompts
+Each card has customized AI prompts:
+- **Purpose:** Focus on why the brand exists and its impact
+- **Positioning:** Market position and competitive advantage
+- **Personality:** Brand character and communication style
+- **Product-Market Fit:** Market need validation and solution fit
+- **Perception:** Current vs. desired brand perception
+- **Presentation:** Visual identity and consistency
+- **Proof:** Credibility and trust signals
+
+### 5. Progress Management System
+**Status: ✅ IMPLEMENTED**
+
+#### User Progress Tracking
+- Individual card progress (not_started/in_progress/completed)
+- Section-level progress (educational vs. guided)
+- Score tracking for educational sections
+- Conversation state persistence
+- Achievement system framework
+
+#### Data Storage
+- **Local Storage:** Anonymous users via AsyncStorage
+- **Database Storage:** Authenticated users via Supabase
+- **Brand Purpose Statements:** Scored and versioned storage
+- **AI Conversations:** Full conversation history with state management
+
+### 6. Database Architecture
+**Status: ✅ IMPLEMENTED**
+
+#### Core Tables
+- `profiles` - User account information
+- `onboarding_responses` - Onboarding survey data
+- `cards` - Brand strategy card definitions
+- `card_sections` - Educational and guided sections
+- `questions` & `answer_choices` - Quiz content
+- `user_progress` - Progress tracking
+- `question_attempts` - Quiz attempt history
+- `ai_conversations` - AI conversation state
+- `brand_purpose_statements` - Generated brand statements
+- `user_sessions` - Usage analytics
+- `achievements` - Gamification system
+
+#### Advanced Features
+- Row Level Security (RLS) policies
+- Automatic timestamp management
+- Soft deletes with `deleted_at` fields
+- Comprehensive indexing for performance
+
+## New Features Discovered in Implementation
+
+### 1. Anonymous User Support
+- Guest users can use the app without authentication
+- Progress saved locally with automatic sync on signup
+- Anonymous session IDs for AI conversations
+
+### 2. Apple Wallet-Style Interface
+- Sophisticated card stack with gesture controls
+- Real-time score visualization
+- Animated transitions and feedback
+
+### 3. Comprehensive AI System
+- Multiple specialized AI endpoints for each brand card
+- Structured response parsing with Zod schemas
+- Error handling and retry logic
+- Context-aware conversation management
+
+### 4. Advanced Progress System
+- Intelligent next-card prioritization
+- Fresh data loading for accurate progress
+- Reset functionality with confirmation
+- Visual progress indicators
+
+## Planned Features (Not Yet Implemented)
+
+### 1. Dashboard Screen
+**Status: 🚧 PLACEHOLDER**
+- User progress statistics
+- Achievement badges
+- Brand statement gallery
+- Usage analytics
+
+### 2. Settings Screen
+**Status: 🚧 PLACEHOLDER**
+- Profile management
+- Account settings
+- Password changes
+- Email updates
+- Logout functionality
+- Feedback system
+
+### 3. Premium Features
+**Status: 📋 PLANNED**
+- RevenueCat integration
+- Subscription management
+- Premium card unlocking
+- Advanced AI features
+
+### 4. Social Features
+**Status: 📋 PLANNED**
+- Brand statement sharing
+- Progress sharing
+- Community features
+
+### 5. Content Expansion
+**Status: 📋 PLANNED**
+- Complete educational content for all 7 cards
+- Additional brand categories
+- Personalized recommendations
+
+## Technical Implementation Notes
+
+### UI/UX Design System
+- Dark theme with `#1A1A1A` background
+- Vibrant green (`#ACFF64`) primary color
+- FunnelSans typography
+- Consistent spacing and animations
+- Platform-specific optimizations
+
+### Performance Optimizations
+- Intelligent caching for card data
+- Lazy loading for large datasets
+- Optimized database queries
+- Efficient state management
+
+### Error Handling
+- Graceful fallbacks for AI failures
+- Offline capability for core features
+- User-friendly error messages
+- Automatic retry mechanisms
+
+## Success Metrics
+
+### User Engagement
+- Card completion rates
+- Time spent in guided discovery
+- Return user percentage
+- Educational quiz scores
+
+### Product Quality
+- AI conversation satisfaction
+- Brand statement quality ratings
+- User feedback scores
+- Support ticket volume
+
+### Business Metrics
+- User acquisition cost
+- Retention rates
+- Conversion to premium
+- Viral coefficient
+
+## Next Development Priorities
+
+1. **Complete All 7 Cards** - Implement full educational and guided content
+2. **Dashboard Implementation** - Build comprehensive progress dashboard
+3. **Settings Screen** - Complete user account management
+4. **Premium Integration** - Implement RevenueCat subscription system
+5. **Content Quality** - Refine AI prompts and educational materials
+6. **Performance Optimization** - Improve loading times and responsiveness
+7. **Social Features** - Add sharing and community capabilities
+
+---
+
+*Last Updated: January 2025*
+*Status: Version 2.0 - Comprehensive Implementation Review*

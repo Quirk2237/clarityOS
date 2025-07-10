@@ -60,6 +60,7 @@
     "expo-splash-screen": "0.30.10",
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.10",
+    "expo-updates": "0.28.17",
     "nativewind": "^4.1.23",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -77,7 +78,8 @@
     "react-native-web": "^0.20.0",
     "tailwind-merge": "^3.2.0",
     "tailwindcss": "~3.4.17",
-    "zod": "^3.24.3"
+    "zod": "^3.24.3",
+    "zustand": "5.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -103,6 +105,11 @@
     "overrides": {
       "react": "19.0.0",
       "react-dom": "19.0.0"
+    },
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "expo"
+      ]
     }
   },
   "private": true

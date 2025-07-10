@@ -6,7 +6,6 @@ export const STORAGE_KEYS = {
   QUESTION_ATTEMPTS: 'canopy_question_attempts',
   AI_CONVERSATIONS: 'canopy_ai_conversations',
   BRAND_PURPOSE_STATEMENTS: 'canopy_brand_purpose_statements',
-  ONBOARDING_RESPONSES: 'canopy_onboarding_responses',
   USER_SESSIONS: 'canopy_user_sessions',
   SYNC_QUEUE: 'canopy_sync_queue',
   CARDS_CACHE: 'canopy_cards_cache',
@@ -60,14 +59,7 @@ export interface LocalBrandPurposeStatement {
   createdAt: string;
 }
 
-export interface LocalOnboardingResponse {
-  id: string;
-  goal: string;
-  goalOtherText?: string;
-  businessStage: string;
-  businessStageOtherText?: string;
-  completedAt: string;
-}
+
 
 export interface LocalCardCache {
   cards: any[];

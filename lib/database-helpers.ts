@@ -80,34 +80,34 @@ export async function updateUserProfile(
 }
 
 // Onboarding Operations
-export async function saveOnboardingResponse(
+export async function saveOnboardingData(
 	userId: string,
-	goal: Tables["onboarding_responses"]["Insert"]["goal"],
-	goalOtherText: string | null,
-	businessStage: Tables["onboarding_responses"]["Insert"]["business_stage"],
-	businessStageOtherText: string | null,
+	businessName: string,
+	businessStage: Tables["profiles"]["Insert"]["business_stage"],
+	businessStageOther: string | null,
+	whatYourBusinessDoes: string,
 ) {
 	const { data, error } = await supabase
-		.from("onboarding_responses")
-		.upsert({
-			user_id: userId,
-			goal,
-			goal_other_text: goalOtherText,
+		.from("profiles")
+		.update({
+			business_name: businessName,
 			business_stage: businessStage,
-			business_stage_other_text: businessStageOtherText,
-			completed_at: new Date().toISOString(),
+			business_stage_other: businessStageOther,
+			what_your_business_does: whatYourBusinessDoes,
+			is_onboarded: true,
 		})
+		.eq("id", userId)
 		.select()
 		.single();
 
 	return { data, error };
 }
 
-export async function getOnboardingResponse(userId: string) {
+export async function getOnboardingData(userId: string) {
 	const { data, error } = await supabase
-		.from("onboarding_responses")
-		.select("*")
-		.eq("user_id", userId)
+		.from("profiles")
+		.select("business_name, business_stage, business_stage_other, what_your_business_does, is_onboarded")
+		.eq("id", userId)
 		.single();
 
 	return { data, error };
@@ -537,16 +537,16 @@ export async function getAllCardsWithProgress(userId: string) {
 export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
 	try {
 		const { data, error } = await supabase
-			.from("onboarding_responses")
-			.select("id")
-			.eq("user_id", userId)
-			.maybeSingle();
+			.from("profiles")
+			.select("is_onboarded")
+			.eq("id", userId)
+			.single();
 
 		if (error) {
 			return false;
 		}
 
-		return !!data;
+		return !!data?.is_onboarded;
 	} catch (error) {
 		return false;
 	}

@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Integrate Brand Context into AI Prompts
+# Status: done
+# Dependencies: 5
+# Priority: medium
+# Description: Modify the existing AI prompt infrastructure to include the user's brand name and description in all AI-related API calls.
+# Details:
+Create a centralized hook, e.g., `useAIContext()`, that retrieves the user's profile (ideally from a global state/context to avoid re-fetching). This hook will return the `brand_name` and `brand_description`. Refactor all AI service call sites to use this hook. The brand information should be prepended to the prompt as system-level context, for example: `System: The user's brand is '${brand_name}'. It is described as: '${brand_description}'.\n\nUser: ${user_prompt}`.
+
+# Test Strategy:
+In a development environment, monitor the network requests being sent to the AI service. Confirm that the payload for each request now includes the brand context. Manually test several guided discovery sections and verify that the AI's responses are more personalized and relevant to the test user's brand.

@@ -1,0 +1,77 @@
+{
+	"meta": {
+		"generatedAt": "2025-07-09T16:25:04.190Z",
+		"tasksAnalyzed": 8,
+		"totalTasks": 8,
+		"analysisCount": 8,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Update Database Schema for Brand Information",
+			"complexityScore": 2,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Break this task into two subtasks: one for creating and applying the SQL migration script to add the new columns, and another for thoroughly verifying and, if necessary, updating the Row Level Security policies on the 'profiles' table.",
+			"reasoning": "The task is low complexity as it involves standard, well-defined SQL operations and a verification step within a managed platform (Supabase). The steps are clear and risk is minimal. Breaking it into scripting and verification ensures each distinct action is tracked."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Implement API Endpoint for Updating Brand Profile",
+			"complexityScore": 1,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "This task is atomic and does not require further expansion.",
+			"reasoning": "This task leverages a fully auto-generated API provided by Supabase, requiring no new backend code. It is a single, atomic unit of work that represents the simplest form of API implementation and does not benefit from further decomposition."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Build Brand Onboarding UI Screen",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand this UI task into three subtasks: 1. Create the basic component structure with `SafeAreaView`, `TextInput`s, and a `Button`. 2. Apply styling from the design system and ensure the layout is responsive on both iOS and Android. 3. Implement and verify accessibility features like labels, hints, and keyboard avoidance.",
+			"reasoning": "Standard UI development involves multiple concerns beyond basic structure, including responsive styling for different devices, keyboard handling, and accessibility. A score of 4 reflects this multi-faceted nature. Breaking it down helps focus on each aspect sequentially."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Implement Onboarding Form Logic and API Submission",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break this task into four subtasks: 1. Integrate `react-hook-form` to manage the state of the input fields. 2. Implement validation rules for all required fields. 3. Create the `onSubmit` handler that calls the Supabase update function. 4. Implement UI feedback for loading, success, and error states.",
+			"reasoning": "The complexity comes from orchestrating multiple asynchronous states (loading, error, success) and user interactions with a form library. This requires careful state management to provide a good user experience. Breaking it down into setup, validation, API call, and state handling creates a clear implementation plan."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Update Navigation Flow with Onboarding Logic",
+			"complexityScore": 3,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Expand this task into two subtasks: 1. Implement the logic to fetch the user's profile immediately after login. 2. Add the conditional check to the root navigator that uses the fetched profile data to route the user to either the onboarding screen or the dashboard.",
+			"reasoning": "While the conditional logic itself is simple, modifying the core application navigator is a critical path that carries a moderate level of risk. It requires careful testing of different user paths to avoid regressions. The complexity score reflects the criticality over the technical difficulty."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Integrate Brand Context into AI Prompts",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break this refactoring task into three subtasks: 1. Create the centralized `useAIContext` hook to provide brand information. 2. Identify all AI service call sites in the codebase. 3. Refactor each call site to use the new hook and prepend the brand context to the prompt, testing each one after modification.",
+			"reasoning": "The complexity score is driven by the cross-cutting nature of this refactoring task. It touches multiple, potentially disparate, parts of the application, increasing the risk of introducing regressions. A systematic approach is required to ensure all call sites are updated correctly."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Centralize User Profile State Management",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand this architectural task into four subtasks: 1. Set up the chosen state management library and create a `profileStore`. 2. Implement logic within the store to fetch the profile on login and handle updates. 3. Refactor the navigation logic (from Task 5) to read profile data from the store. 4. Refactor the `useAIContext` hook (from Task 6) to read profile data from the store.",
+			"reasoning": "This is a foundational architectural change that introduces a new, core data management pattern. The complexity lies in designing the store correctly and carefully refactoring critical parts of the application (like navigation and AI context) to use it, which carries significant risk if done improperly."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "End-to-End Testing and Final Polish",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break this QA task into four subtasks: 1. Write a detailed E2E test plan covering new and existing user flows. 2. Execute the E2E test for the new user onboarding path on both iOS and Android. 3. Execute the E2E test for the existing user login path. 4. Perform a final UI polish and accessibility audit using device inspector tools.",
+			"reasoning": "The complexity of this task comes from its comprehensive scope and the need for meticulous execution, not from writing complex code. It requires validating the integration of all previous tasks across multiple platforms and can uncover unexpected bugs. A structured approach is essential for ensuring quality."
+		}
+	]
+}

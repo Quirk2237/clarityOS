@@ -8,18 +8,45 @@ import { Text } from "../components/ui/text";
 import { Title, Caption } from "@/components/ui/typography";
 import WelcomeIllustration from "@/assets/welcome.svg";
 import { colors } from "@/constants/colors";
+import { useAuth } from "../context/supabase-provider";
 
 export default function WelcomeScreen() {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
+	const { session } = useAuth();
+
+	// Debug logging
+	console.log('👋 Welcome Screen - Debug Info:', {
+		hasSession: !!session,
+		userId: session?.user?.id,
+		userEmail: session?.user?.email
+	});
 
 	const handleGetStarted = async () => {
+		console.log('🚀 Welcome Screen - Get Started clicked');
 		setIsLoading(true);
-		// Small delay for better UX
-		setTimeout(() => {
+		
+		try {
+			// Check if user is authenticated
+			if (!session) {
+				console.log('🚫 Welcome Screen - No session, redirecting to sign-in');
+				router.replace("/sign-in");
+				return;
+			}
+
+			console.log('✅ Welcome Screen - User authenticated, navigating to protected route');
+			// Simply navigate to the protected route
+			// The Supabase Provider will automatically handle routing logic:
+			// - If user has brand info: goes to main app
+			// - If user needs onboarding: goes to onboarding
 			router.replace("/");
+		} catch (error) {
+			console.error('Error in handleGetStarted:', error);
+			// Fallback navigation
+			router.replace("/");
+		} finally {
 			setIsLoading(false);
-		}, 500);
+		}
 	};
 
 	return (
@@ -53,7 +80,7 @@ export default function WelcomeScreen() {
 					disabled={isLoading}
 				>
 					<Text className="text-subtitle font-semibold text-white">
-						{isLoading ? "Loading..." : "Get Started"}
+						{isLoading ? "Loading..." : session ? "Get Started" : "Sign In to Continue"}
 					</Text>
 				</Button>
 			</View>

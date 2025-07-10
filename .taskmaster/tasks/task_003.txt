@@ -1,0 +1,31 @@
+# Task ID: 3
+# Title: Build Brand Onboarding UI Screen
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Develop a new, responsive React Native screen component for the brand onboarding form. This screen will be presented to new users after the welcome screen.
+# Details:
+Create a new file, e.g., `BrandOnboardingScreen.js`. The component should use the existing design system for consistency. It will include a title, two `TextInput` components for 'Brand Name' and 'Brand Description', and a 'Continue' button. Implement `SafeAreaView` from `react-native-safe-area-context` for proper layout on all mobile devices. Ensure all interactive elements are accessible with appropriate labels.
+
+# Test Strategy:
+Render the component in a standalone view or using Storybook. Verify the layout is responsive and looks correct on various screen sizes for both iOS and Android. Check that keyboard avoidance is handled correctly when inputs are focused. Run an accessibility linter to check for compliance.
+
+# Subtasks:
+## 1. Create Basic Component Structure [done]
+### Dependencies: None
+### Description: Create the basic React Native component with SafeAreaView, TextInput fields for brand name and description, and submit button
+### Details:
+Create new file app/onboarding.tsx with basic structure including SafeAreaView wrapper, brand name TextInput, brand description TextArea, and submit Button following existing design patterns
+
+## 2. Apply Design System Styling and Responsiveness [done]
+### Dependencies: 3.1
+### Description: Apply consistent styling from the design system and ensure responsive layout works on both iOS and Android
+### Details:
+Use existing UI components from components/ui, apply proper spacing and typography, implement responsive design using Flexbox, test on both iOS and Android simulators
+
+## 3. Implement Accessibility Features [done]
+### Dependencies: 3.2
+### Description: Add accessibility labels, hints, keyboard navigation support, and screen reader compatibility
+### Details:
+Add accessibilityLabel and accessibilityHint props to form elements, implement proper tab order, add keyboard avoidance for form inputs, test with screen reader
+

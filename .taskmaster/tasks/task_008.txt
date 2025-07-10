@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: End-to-End Testing and Final Polish
+# Status: done
+# Dependencies: 7
+# Priority: medium
+# Description: Conduct a full end-to-end test of the entire onboarding flow and perform a final polish of the UI and accessibility features.
+# Details:
+Execute a comprehensive test plan covering all acceptance criteria. This includes the new user path through onboarding and the existing user path that bypasses it. Test on both iOS and Android physical devices or simulators. Check for responsiveness, loading states, error handling, and overall flow smoothness. Use accessibility inspector tools to identify and fix any remaining issues with contrast, focus order, or element labeling.
+
+# Test Strategy:
+Follow a scripted E2E test case for a new user registration and onboarding completion. Follow a second test case for an existing user login. Verify that in both scenarios, the AI prompts receive the correct context (or lack thereof for a user who just onboarded but hasn't used an AI feature yet). The goal is to validate the entire feature against the PRD's success metrics.

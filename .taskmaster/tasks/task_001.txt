@@ -1,0 +1,25 @@
+# Task ID: 1
+# Title: Update Database Schema for Brand Information
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Add 'brand_name' and 'brand_description' columns to the 'profiles' table in Supabase. This will store the essential brand information collected during the new onboarding flow.
+# Details:
+Create a new SQL migration script. The script should contain the following commands: `ALTER TABLE public.profiles ADD COLUMN brand_name TEXT;` and `ALTER TABLE public.profiles ADD COLUMN brand_description TEXT;`. Additionally, review and update the Row Level Security (RLS) policies on the `profiles` table to ensure users can only read and write their own brand information. The existing policy for updates should cover this, but it's crucial to verify.
+
+# Test Strategy:
+Run the migration script in a development environment. Connect to the Supabase database and verify that the `profiles` table contains the `brand_name` and `brand_description` columns. Test RLS by authenticating as a user and attempting to update another user's profile data via an API call; the request should be denied.
+
+# Subtasks:
+## 1. Create SQL Migration Script [done]
+### Dependencies: None
+### Description: Create and apply SQL migration to add brand_name and brand_description columns to profiles table
+### Details:
+Create new migration file in supabase/migrations/ with ALTER TABLE statement to add brand_name VARCHAR(255) and brand_description TEXT columns to profiles table, apply migration to database
+
+## 2. Verify and Update RLS Policies [done]
+### Dependencies: 1.1
+### Description: Review and update Row Level Security policies to ensure proper access control for new brand fields
+### Details:
+Review existing RLS policies on profiles table, ensure users can read/write their own brand information, test policy enforcement, update policies if needed for brand fields
+

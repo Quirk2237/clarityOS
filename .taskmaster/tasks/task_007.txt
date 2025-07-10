@@ -1,0 +1,37 @@
+# Task ID: 7
+# Title: Centralize User Profile State Management
+# Status: done
+# Dependencies: 5, 6
+# Priority: medium
+# Description: Implement a global state management solution to store the user's profile, including brand info, to prevent redundant API calls across the app.
+# Details:
+Use a lightweight state management library like Zustand or React's built-in Context API. Create a `ProfileProvider` or `profileStore` that fetches the user's profile upon login and makes it available globally. The navigation logic (Task 5) and the AI context hook (Task 6) should be refactored to read from this store instead of fetching data directly. When the user completes onboarding, the store should be updated with the new brand info to ensure UI consistency.
+
+# Test Strategy:
+Using React DevTools, inspect the global state to confirm the profile is loaded once on login. Navigate between screens that use profile data and verify no new network requests for the profile are made. After completing onboarding, confirm the global state is updated immediately without a page reload.
+
+# Subtasks:
+## 1. Set Up State Management Library and Initialize `profileStore` [done]
+### Dependencies: None
+### Description: Install the chosen state management library (e.g., Zustand, Redux Toolkit) and create the initial `profileStore` file with a basic structure and type definitions for the profile data.
+### Details:
+Choose and install the state management library. Create a new file for the store, such as `src/stores/profileStore.ts`. Define the state interface, including properties for the user profile, loading status, and potential errors. Initialize the store with default values.
+
+## 2. Implement Profile Fetch and Update Logic in `profileStore` [done]
+### Dependencies: 7.1
+### Description: Add asynchronous actions to the `profileStore` to fetch the user's profile data from the backend upon login and implement actions to handle profile updates and logout.
+### Details:
+Create an async action `fetchProfile` that makes an API call to the user profile endpoint, handling loading, success, and error states. Create an `updateProfile` action to send data to the backend and update the state. Implement a `clearProfile` action to reset the store on logout.
+
+## 3. Refactor Navigation Logic to Use `profileStore` [done]
+### Dependencies: 7.2
+### Description: Modify the application's navigation logic (from Task 5) to subscribe to the `profileStore` and use the profile data to control routing and display user-specific navigation elements.
+### Details:
+Identify all components and hooks related to navigation that currently manage profile state. Replace local state management with hooks to access the `profileStore`. Ensure navigation guards and conditional rendering logic read profile status from the central store.
+
+## 4. Refactor `useAIContext` Hook to Use `profileStore` [done]
+### Dependencies: 7.2
+### Description: Update the `useAIContext` hook (from Task 6) to source user profile information directly from the `profileStore` instead of fetching it independently or receiving it via props.
+### Details:
+Locate the `useAIContext` hook and remove any internal logic for fetching the user profile. Integrate the state management library's hook to connect to the `profileStore`. Pull necessary profile data (e.g., user ID, preferences) from the store to configure the AI context.
+

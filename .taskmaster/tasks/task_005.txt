@@ -1,0 +1,25 @@
+# Task ID: 5
+# Title: Update Navigation Flow with Onboarding Logic
+# Status: done
+# Dependencies: 4
+# Priority: high
+# Description: Update the application's navigation logic to conditionally show the onboarding screen. New users will be directed to it, while existing users with brand data will skip it.
+# Details:
+Using the Expo routing system, modify the initial navigator for authenticated users. After a user logs in, fetch their profile from Supabase. Check if `profile.brand_name` is null or an empty string. If it is, use `router.replace('/onboarding')` to navigate to the onboarding screen. Otherwise, use `router.replace('/dashboard')` to proceed to the main dashboard.
+
+# Test Strategy:
+Test with two user accounts. User A: A new user with no brand data in the database; verify they are redirected to the onboarding screen after login. User B: An existing user with `brand_name` populated; verify they are redirected directly to the dashboard, bypassing the onboarding screen.
+
+# Subtasks:
+## 1. Implement Profile Fetch Logic [done]
+### Dependencies: None
+### Description: Add logic to fetch user profile data immediately after login to check for brand information
+### Details:
+Create function to fetch user profile from Supabase after authentication, check if brand_name and brand_description exist, implement loading state during profile fetch
+
+## 2. Add Conditional Navigation Logic [done]
+### Dependencies: 5.1
+### Description: Update root navigator to conditionally route users to onboarding or dashboard based on profile data
+### Details:
+Modify app/_layout.tsx to check profile data after authentication, route new users to onboarding screen if brand info is missing, route existing users directly to dashboard if brand info exists
+

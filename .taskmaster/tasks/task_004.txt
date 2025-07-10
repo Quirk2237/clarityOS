@@ -1,0 +1,37 @@
+# Task ID: 4
+# Title: Implement Onboarding Form Logic and API Submission
+# Status: done
+# Dependencies: 2, 3
+# Priority: high
+# Description: Integrate form state management, validation, and the API call into the Brand Onboarding screen. This task makes the UI functional.
+# Details:
+Use a library like `react-hook-form` to manage form state and validation. Both `brand_name` and `brand_description` fields must be required. On button press, `handleSubmit` will trigger validation. If successful, it will call the Supabase update function from Task 2. Implement loading and disabled states for the button during the API call. Display clear, user-friendly error messages for both validation failures and API errors.
+
+# Test Strategy:
+Unit test the validation rules. Manually test the complete form flow: 1) Try to submit with empty fields and verify error messages appear. 2) Fill the form and submit; verify a loading indicator shows and the user is navigated away on success. 3) Mock an API error and verify a user-friendly error message is displayed.
+
+# Subtasks:
+## 1. Integrate Form State Management [done]
+### Dependencies: None
+### Description: Set up react-hook-form or similar form library to manage input field state and form submission
+### Details:
+Install and configure react-hook-form, create form schema with useForm hook, bind form inputs to state management, implement form reset functionality
+
+## 2. Implement Form Validation Rules [done]
+### Dependencies: 4.1
+### Description: Add validation rules for required fields and implement real-time validation feedback
+### Details:
+Create validation schema with required field validation for brand name and description, implement error message display, add real-time validation feedback during typing
+
+## 3. Create API Submission Handler [done]
+### Dependencies: 4.2
+### Description: Implement the onSubmit handler that calls Supabase to update user profile with brand information
+### Details:
+Create async onSubmit function that calls Supabase client to update profiles table, handle API response and errors, implement proper error logging and user feedback
+
+## 4. Implement UI Feedback States [done]
+### Dependencies: 4.3
+### Description: Add loading states, success feedback, and error handling UI components
+### Details:
+Implement loading spinner during form submission, show success message on completion, display error messages for failed submissions, disable form during loading state
+

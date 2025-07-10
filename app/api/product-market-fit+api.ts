@@ -1,5 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
+import { getBrandContextForAI, enhanceSystemPromptWithBrandContext } from "@/lib/ai-brand-context";
 
 const PRODUCT_MARKET_FIT_SYSTEM_PROMPT = `
 ROLE:
@@ -107,8 +108,19 @@ export async function POST(req: Request) {
 			return new Response("No valid messages provided", { status: 400 });
 		}
 
+		// Get brand context for AI personalization
+		const brandContext = sessionUserId && sessionUserId !== `anonymous_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` 
+			? await getBrandContextForAI(sessionUserId.replace('anonymous_', '').split('_')[0])
+			: '';
+
+		// Enhance system prompt with brand context
+		const enhancedSystemPrompt = enhanceSystemPromptWithBrandContext(
+			PRODUCT_MARKET_FIT_SYSTEM_PROMPT,
+			brandContext
+		);
+
 		const messagesWithSystem = [
-			{ role: "system", content: PRODUCT_MARKET_FIT_SYSTEM_PROMPT },
+			{ role: "system", content: enhancedSystemPrompt },
 			...sanitizedMessages,
 		];
 

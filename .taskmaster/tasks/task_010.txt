@@ -1,0 +1,11 @@
+# Task ID: 10
+# Title: Integrate Onboarding Screen into Main Navigation Stack
+# Status: pending
+# Dependencies: 3, 5
+# Priority: high
+# Description: Add the Brand Onboarding screen to the main authenticated navigation stack configuration. This makes the '/onboarding' route available to the application, enabling the conditional navigation logic.
+# Details:
+Locate the primary layout file for the authenticated user routes, likely `app/(app)/_layout.js` or a similar file managing the main `Stack`. Within the `Stack` component, add a new `<Stack.Screen />` entry for the onboarding flow. Set the `name` prop to 'onboarding' to match the route used in the navigation logic from Task 5. Configure the screen options to provide a seamless onboarding experience by setting `headerShown: false`.
+
+# Test Strategy:
+1. After implementation, run the application and log in as a new user (one without brand data). Verify that you are automatically redirected to and can see the Brand Onboarding screen, confirming the logic from Task 5 now works. 2. Log in as an existing user (with brand data). Verify that you are taken to the main dashboard, correctly bypassing the onboarding screen. 3. Manually verify that the rendered onboarding screen has no header, providing a full-screen view as intended.

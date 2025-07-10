@@ -1,0 +1,11 @@
+# Task ID: 9
+# Title: Fix Welcome Screen Navigation to Honor Onboarding Status
+# Status: done
+# Dependencies: 3, 5, 7
+# Priority: high
+# Description: Correct the navigation from the welcome screen's 'Get Started' button. It currently bypasses the onboarding check and should instead route users to either the onboarding flow or the main dashboard based on their profile status.
+# Details:
+The 'Get Started' button on the initial welcome screen is incorrectly hardcoded to navigate to the main application content. This needs to be updated to use the established onboarding logic. Refactor the `onPress` handler for the 'Get Started' button. It should read the user's profile from the global state store implemented in Task 7. Based on the presence of `brand_name` in the profile, use the Expo router to either `router.replace('/onboarding')` for new users or `router.replace('/dashboard')` for existing users, mirroring the logic from Task 5.
+
+# Test Strategy:
+1. Log in as a new user with no brand information in their profile. Verify that tapping 'Get Started' on the welcome screen navigates you to the Brand Onboarding screen. 2. Log in as an existing user whose profile has a `brand_name`. Verify that tapping 'Get Started' on the welcome screen navigates you directly to the main dashboard, completely bypassing the onboarding screen. 3. Confirm this behavior is consistent on both iOS and Android platforms.

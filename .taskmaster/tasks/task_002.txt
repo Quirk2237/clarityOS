@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Implement API Endpoint for Updating Brand Profile
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Create a backend mechanism to securely update the newly added brand fields for an authenticated user. This will be called from the new onboarding screen.
+# Details:
+Leverage the Supabase auto-generated API for the `profiles` table. The frontend will make a `PATCH` request to update the user's record. The call will look like: `const { data, error } = await supabase.from('profiles').update({ brand_name: '...', brand_description: '...' }).eq('id', user.id).select()`. No custom Edge Function is necessary unless additional server-side validation beyond RLS is required.
+
+# Test Strategy:
+Use a REST client like Postman or Insomnia to make a `PATCH` request to the `/rest/v1/profiles` endpoint with a valid user's JWT. Provide a request body with `brand_name` and `brand_description`. Verify that the database record is updated and the API returns a 200 OK response. Test failure cases, such as requests with an invalid or missing JWT.

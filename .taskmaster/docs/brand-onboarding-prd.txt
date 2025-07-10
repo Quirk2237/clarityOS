@@ -1,0 +1,63 @@
+# Brand Onboarding Feature - Product Requirements Document
+
+## Overview
+Implement an onboarding screen that captures essential brand information from users after they click "Get Started" from the welcome screen. This information will be used to personalize AI-driven guided discovery throughout the application.
+
+## Problem Statement
+Currently, users go directly from the welcome screen to the main dashboard without providing brand context. This results in generic AI prompts and less personalized guidance in the discovery sections.
+
+## Objectives
+- Capture brand name and description during user onboarding
+- Store brand information in user profiles
+- Use brand context to personalize AI interactions
+- Improve user experience with relevant, contextual guidance
+
+## User Stories
+
+### Primary User Story
+As a new user, I want to provide my brand information during onboarding so that the AI guidance throughout the app is personalized and relevant to my specific brand.
+
+### Acceptance Criteria
+1. After clicking "Get Started" from welcome screen, users see onboarding screen
+2. Onboarding form captures brand name (required) and brand description (required)
+3. Form includes proper validation and error handling
+4. Upon completion, brand information is saved to user profile
+5. Users proceed to main dashboard after successful onboarding
+6. Existing users with brand info skip onboarding automatically
+7. Brand context is used in all AI prompt interactions
+
+## Technical Requirements
+
+### Database Schema
+- Add brand_name and brand_description fields to profiles table
+- Ensure proper RLS policies for data access
+- Handle both new and existing user scenarios
+
+### UI/UX Requirements
+- Mobile-first responsive design
+- Consistent with existing design system
+- Proper safe area handling for mobile devices
+- Loading states and error handling
+- Accessibility compliance
+
+### Navigation Flow
+Welcome Screen → Brand Onboarding → Main Dashboard
+(Skip onboarding if brand info already exists)
+
+### AI Integration
+- Pass brand context to all AI prompt calls
+- Update existing AI handlers to use brand information
+- Ensure consistent context across all guided discovery sections
+
+## Success Metrics
+- 95% completion rate of onboarding flow
+- Increased user engagement with personalized AI responses
+- Reduced generic or irrelevant AI suggestions
+
+## Dependencies
+- Existing Supabase authentication system
+- Current AI prompt infrastructure
+- Expo routing system
+
+## Timeline
+Target completion: 1 week 
