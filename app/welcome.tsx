@@ -27,23 +27,20 @@ export default function WelcomeScreen() {
 		setIsLoading(true);
 		
 		try {
-			// Check if user is authenticated
-			if (!session) {
-				console.log('🚫 Welcome Screen - No session, redirecting to sign-in');
-				router.replace("/sign-in");
-				return;
+			if (session) {
+				console.log('✅ Welcome Screen - User authenticated, navigating to protected route');
+				// Authenticated users go through the existing flow
+				// The Supabase Provider will handle routing based on onboarding status
+				router.replace("/");
+			} else {
+				console.log('👤 Welcome Screen - Anonymous user, navigating to onboarding');
+				// Anonymous users go directly to onboarding
+				router.push("/onboarding");
 			}
-
-			console.log('✅ Welcome Screen - User authenticated, navigating to protected route');
-			// Simply navigate to the protected route
-			// The Supabase Provider will automatically handle routing logic:
-			// - If user has brand info: goes to main app
-			// - If user needs onboarding: goes to onboarding
-			router.replace("/");
 		} catch (error) {
 			console.error('Error in handleGetStarted:', error);
-			// Fallback navigation
-			router.replace("/");
+			// Fallback navigation for anonymous users
+			router.push("/onboarding");
 		} finally {
 			setIsLoading(false);
 		}
@@ -80,7 +77,7 @@ export default function WelcomeScreen() {
 					disabled={isLoading}
 				>
 					<Text className="text-subtitle font-semibold text-white">
-						{isLoading ? "Loading..." : session ? "Get Started" : "Sign In to Continue"}
+						{isLoading ? "Loading..." : "Get Started"}
 					</Text>
 				</Button>
 			</View>

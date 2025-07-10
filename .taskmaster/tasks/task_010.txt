@@ -1,6 +1,6 @@
 # Task ID: 10
 # Title: Integrate Onboarding Screen into Main Navigation Stack
-# Status: pending
+# Status: done
 # Dependencies: 3, 5
 # Priority: high
 # Description: Add the Brand Onboarding screen to the main authenticated navigation stack configuration. This makes the '/onboarding' route available to the application, enabling the conditional navigation logic.

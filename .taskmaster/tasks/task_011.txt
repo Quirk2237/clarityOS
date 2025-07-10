@@ -1,0 +1,11 @@
+# Task ID: 11
+# Title: Implement Anonymous Onboarding with Session Storage
+# Status: pending
+# Dependencies: 2, 3, 4, 9
+# Priority: high
+# Description: Create a new user flow where anonymous users can complete the onboarding process and have their data saved to session storage, with an option to create an account later to persist the data. This removes the initial friction of account creation.
+# Details:
+Modify the 'Get Started' button on the welcome screen to navigate to the onboarding screen without requiring authentication. Update the Brand Onboarding screen's form logic from Task 4; if the user is anonymous, `handleSubmit` should save the form data (`brand_name`, `brand_description`) to a client-side storage mechanism like AsyncStorage. After saving, navigate the anonymous user to a new, minimal 'Create Account' screen that prompts them to sign up to save their progress. Upon successful user registration, retrieve the brand data from storage and use the existing API endpoint from Task 2 to update the new user's profile, then clear the stored data.
+
+# Test Strategy:
+1. Anonymous Flow: As a new, unauthenticated user, tap 'Get Started' and verify navigation to the onboarding screen. Submit the form and use developer tools to confirm data is saved in AsyncStorage. Verify navigation to a 'Create Account' prompt. 2. Data Migration: From the prompt, create a new account. Verify the brand data from storage is successfully saved to the new user's profile in the database and that the local storage is cleared. 3. Authenticated Flow Regression: Log in as an existing user and verify the original navigation logic from Task 9 remains intact, directing them to the dashboard or onboarding based on their profile.

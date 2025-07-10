@@ -8,6 +8,7 @@ import { colors } from "@/constants/colors";
 import { useAuth } from "../context/supabase-provider";
 import { useProfileStore, type Profile } from "../stores/profile-store";
 import { useRouter } from "expo-router";
+import { saveAnonymousOnboardingData } from "@/lib/anonymous-storage";
 
 const BUSINESS_STAGES = [
 	{ value: 'conceptualizing', label: 'Conceptualizing' },
@@ -34,6 +35,8 @@ export default function OnboardingScreen() {
 	const { updateOnboardingInfo } = useProfileStore();
 	const router = useRouter();
 
+	const isAuthenticated = !!session?.user?.id;
+
 	// Validation function
 	const validateForm = () => {
 		const newErrors: typeof errors = {};
@@ -54,19 +57,8 @@ export default function OnboardingScreen() {
 		return Object.keys(newErrors).length === 0;
 	};
 
-	// Submit handler
-	const handleSubmit = async () => {
-		if (!validateForm()) {
-			return;
-		}
-
-		if (!session?.user?.id) {
-			Alert.alert("Error", "You must be signed in to continue");
-			return;
-		}
-
-		setIsLoading(true);
-
+	// Submit handler for authenticated users
+	const handleAuthenticatedSubmit = async () => {
 		try {
 			await updateOnboardingInfo({
 				business_name: businessName.trim(),
@@ -75,12 +67,66 @@ export default function OnboardingScreen() {
 				what_your_business_does: whatBusinessDoes.trim(),
 			});
 			
-			console.log('Onboarding information saved successfully');
+			console.log('✅ Authenticated user: Onboarding information saved to database');
 			
 			// Navigate to the main app
 			router.replace("/");
 		} catch (error) {
-			console.error('Error saving onboarding information:', error);
+			console.error('❌ Error saving onboarding information to database:', error);
+			throw error;
+		}
+	};
+
+	// Submit handler for anonymous users
+	const handleAnonymousSubmit = async () => {
+		try {
+			await saveAnonymousOnboardingData({
+				business_name: businessName.trim(),
+				business_stage: businessStage!,
+				business_stage_other: businessStageOther.trim() || undefined,
+				what_your_business_does: whatBusinessDoes.trim(),
+			});
+			
+			console.log('✅ Anonymous user: Onboarding information saved to session storage');
+			
+			// For anonymous users, we'll show a success message and allow them to continue
+			// without navigating to protected routes
+			Alert.alert(
+				"Information Saved!", 
+				"Your business information has been saved. You can create an account later to access additional features.",
+				[
+					{
+						text: "Continue",
+						onPress: () => {
+							// Navigate back to welcome screen or stay here
+							// This could be customized based on your app's flow
+							router.replace("/welcome");
+						}
+					}
+				]
+			);
+		} catch (error) {
+			console.error('❌ Error saving anonymous onboarding information:', error);
+			throw error;
+		}
+	};
+
+	// Main submit handler
+	const handleSubmit = async () => {
+		if (!validateForm()) {
+			return;
+		}
+
+		setIsLoading(true);
+
+		try {
+			if (isAuthenticated) {
+				await handleAuthenticatedSubmit();
+			} else {
+				await handleAnonymousSubmit();
+			}
+		} catch (error) {
+			console.error('Error in onboarding submission:', error);
 			Alert.alert(
 				"Error", 
 				"Failed to save your information. Please try again."
@@ -107,6 +153,11 @@ export default function OnboardingScreen() {
 					</Title>
 					<Subtitle className="text-gray-300 text-base leading-relaxed">
 						Help us personalize your experience by sharing some basic information about your business.
+						{!isAuthenticated && (
+							<Text className="text-gray-400 text-sm mt-2">
+								{"\n"}💡 Your information will be saved locally. Create an account later to access more features.
+							</Text>
+						)}
 					</Subtitle>
 				</View>
 

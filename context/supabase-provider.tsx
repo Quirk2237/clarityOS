@@ -12,6 +12,7 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/config/supabase";
 import { DataMigrator } from "../lib/data-migration";
 import { useProfileStore } from "../stores/profile-store";
+import { getAnonymousNavigationTarget } from "../lib/anonymous-state";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -179,14 +180,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
 				});
 				
 				SplashScreen.hideAsync();
+				
 				if (session) {
 					console.log('✅ Supabase Provider - User authenticated, navigating to protected route');
 					// User is authenticated - let the protected layout handle onboarding logic
 					router.replace("/" as any);
 				} else {
-					console.log('🚫 Supabase Provider - No session, showing welcome screen');
-					// No session - show welcome screen
-					router.replace("/welcome" as any);
+					console.log('🔍 Supabase Provider - No session, checking anonymous state...');
+					// No session - check if anonymous user has onboarding data
+					const navigationTarget = await getAnonymousNavigationTarget();
+					
+					if (navigationTarget === '/') {
+						console.log('🎯 Supabase Provider - Anonymous user with onboarding data, allowing main app access');
+					} else {
+						console.log('🚫 Supabase Provider - Anonymous user without onboarding, showing welcome screen');
+					}
+					
+					router.replace(navigationTarget as any);
 				}
 			} else {
 				console.log('⏳ Supabase Provider - Not initialized yet');
